@@ -26,7 +26,9 @@ const Gauge: React.FC<GaugeProps> = ({
                                      }) => {
     const numTiles = 8
     const ref = useRef<SVGSVGElement>(null);
-    const [hoveredTile, setHoveredTile] = useState<string | null>(null);
+    const [isTileHovered, setIsTileHovered] = useState<boolean>(false);
+    const [isBarBookedHovered, setIsBarBookedHovered] = useState<boolean>(false);
+    const [isBarPlannedHovered, setIsBarPlannedHovered] = useState<boolean>(false);
 
     if (value > max) {
         value = max
@@ -41,17 +43,13 @@ const Gauge: React.FC<GaugeProps> = ({
 
 
 
-    const getOpacity = (elementId: string, isGreen: boolean) =>{
-        if (hoveredTile === null) return 1;
-        if(hoveredTile === elementId) { return 1}
-        if(hoveredTile.startsWith('tile') && isGreen) return 1
-        return 0.2
+    const getOpacity = (isFilled: boolean, isBarBooked: boolean, isBarPlanned: boolean) =>{
+        if (isBarBookedHovered && isBarBooked) return 1;
+        if (isBarPlannedHovered && isBarPlanned) return 1;
+        if(isTileHovered && isFilled) { return 1}
+        if(isTileHovered || isBarBookedHovered || isBarPlannedHovered) { return 0.2}
+        return 1
     }
-
-    // Skala für die Farbe (grün bis rot)
-    // const colorScale = d3.scaleLinear<string>()
-    //     .domain([min, max])
-    //     .range(['green', 'red']);
 
     // Radius des Halbkreises
     const radius = Math.min(width, height) / 2;
@@ -65,47 +63,37 @@ const Gauge: React.FC<GaugeProps> = ({
         <svg ref={ref} width={width} height={height}>
             <g transform={`translate(${width / 2}, ${height / 2})`}>
                 <g>
-                    {/* Hintergrund (weiß) */}
-                    {/*<path*/}
-                    {/*    d={d3.arc<d3.DefaultArcObject>()*/}
-                    {/*        .innerRadius(radius * 0.6)*/}
-                    {/*        .outerRadius(radius * 0.7)*/}
-                    {/*        .startAngle(-Math.PI / 2)*/}
-                    {/*        .endAngle(Math.PI / 2)(null)!}*/}
-                    {/*    fill="#fff"*/}
-                    {/*/>*/}
-                    {/* Sekundärfarbe (grau) - basierend auf plannedValue */}
+
                     <path
                         d={d3.arc<d3.DefaultArcObject>()
                             .innerRadius(radius * 0.6)
                             .outerRadius(radius * 0.7)
-                            .startAngle((-Math.PI / 2)+.01)
+                            .startAngle((-Math.PI / 2) + .01)
                             .cornerRadius(5)
-                            .endAngle(angleScale(booked + planned ))(null)!}
+                            .endAngle(angleScale(booked + planned))(null)!}
                         fill="#ccc"
                         stroke={'#000'}
                         strokeWidth={0.5}
-                        opacity={getOpacity('planned', false)}
-                        onMouseEnter={() => setHoveredTile('planned')}
-                        onMouseLeave={() => setHoveredTile(null)}
+                        opacity={getOpacity(false, false, true)}
+                        onMouseEnter={() => setIsBarPlannedHovered(true)}
+                        onMouseLeave={() => setIsBarPlannedHovered(false)}
                     />
-                     {/*Hauptfarbe (schwarz) - basierend auf valueBooked*/}
+                    {/*Hauptfarbe (schwarz) - basierend auf valueBooked*/}
                     <path
                         d={d3.arc<d3.DefaultArcObject>()
                             .innerRadius(radius * 0.6)
                             .outerRadius(radius * 0.7)
-                            .startAngle((-Math.PI / 2)+.01)
+                            .startAngle((-Math.PI / 2) + .01)
                             .cornerRadius(5)
                             .endAngle(angleScale(booked))(null)!}
                         fill="#000"
                         stroke={'#000'}
                         strokeWidth={0.5}
-                        opacity={getOpacity('booked', false)}
-                        onMouseEnter={() => setHoveredTile('booked')}
-                        onMouseLeave={() => setHoveredTile(null)}
+                        onMouseEnter={() => setIsBarBookedHovered(true)}
+                        onMouseLeave={() => setIsBarBookedHovered(false)}
+                        opacity={getOpacity(false, true, false)}
 
                     />
-
 
 
                 </g>
@@ -137,16 +125,15 @@ const Gauge: React.FC<GaugeProps> = ({
                         .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
 
                     // Hover-Effekt
-                    const tileId = `tile-${index}`;
+                    const fillColor = value >= thresholdRed ? '#ff0000' : value >= thresholdYellow && value < thresholdRed ? '#ffff00' : '#00ff00';
 
                     return (
-                        <g key={index} onMouseEnter={() => setHoveredTile(tileId)}
-                           onMouseLeave={() => setHoveredTile(null)}>
+                        <g key={index}>
                             {/* Nicht gefüllter Teil des Tiles */}
                             <path
                                 d={tileBackgroundArc(null)!}
                                 stroke="#000"
-                                opacity={getOpacity(tileId)}
+                                opacity={getOpacity(false, false, false)}
                                 fill="#ddd"
                             />
                             {/* Gefüllter Teil des Tiles */}
@@ -155,12 +142,23 @@ const Gauge: React.FC<GaugeProps> = ({
                                     d={tileForegroundArc(null)!}
                                     fill={value >= thresholdRed ? '#ff0000' : value >= thresholdYellow && value < thresholdRed ? '#ffff00' : '#00ff00'}
                                     strokeWidth={1}
-                                    opacity={getOpacity(tileId, true)}
+                                    opacity={getOpacity(true, false, false)} // Gefüllte Bereiche: Opacity 1
                                 />
                             )}
                         </g>
                     );
                 })}
+
+                <path
+                    d={d3.arc<d3.DefaultArcObject>()
+                        .innerRadius(radius * 0.72)
+                        .outerRadius(radius)
+                        .startAngle(-Math.PI / 2)
+                        .endAngle(Math.PI / 2)(null)!}
+                    fill="transparent"
+                    onMouseEnter={() => setIsTileHovered(true)}
+                    onMouseLeave={() => setIsTileHovered(false)}
+                />
                 {/* Text (aktueller Wert) */}
                 <text
                     textAnchor="middle"
