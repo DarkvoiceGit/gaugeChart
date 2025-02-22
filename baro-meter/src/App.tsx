@@ -4,20 +4,28 @@ import GaugeChart from "./GaugeChart";
 
 function App() {
 
-    const planned = 5;
+    const planned = 20;
     const booked = 40;
-    const sum = booked + planned;
 
     return (
         <div className="gauge-chart">
             <GaugeChart
                 booked = {booked}
                 planned = {planned}
-                value={sum}
                 height={800}
                 width={600}
-                max={100}
-                min={0}
+                thresholdYellow={50}
+                thresholdRed={80}
+                withOpacitySwitch={true}
+                colorTileThresholdRed={'#ff0000'}
+                colorTileThresholdYellow={'#ffff00'}
+                colorTileThresholdDefault={'#00ff00'}
+                colorTileBg={'#ddd'}
+                colorBookedBar={'#000'}
+                colorPlannedBar={'#ccc'}
+                enableToolTip={true}
+                // bigArrowConfig={}
+                // smallArrowwConfig={}
             />
         </div>
     );
