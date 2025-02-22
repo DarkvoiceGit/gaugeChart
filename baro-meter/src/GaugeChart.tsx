@@ -16,10 +16,10 @@ interface GaugeProps {
     colorBookedBar: string
     colorPlannedBar: string
     enableToolTip: boolean
+    enableUnitTicks: boolean
 }
 
-const MAX = 100
-const MIN = 0
+
 const Pointer = ({x, y, color, markerId}: { x: number; y: number; color: string; markerId: string }) => (
     <>
         <line
@@ -112,8 +112,8 @@ const Gauge: React.FC<GaugeProps> = ({
                                          colorTileThresholdRed,
                                          colorTileBg,
                                          colorBookedBar,
-                                         colorPlannedBar
-
+                                         colorPlannedBar,
+                                         enableUnitTicks
                                      }) => {
     const numTiles = 8
     const ref = useRef<SVGSVGElement>(null);
@@ -128,21 +128,19 @@ const Gauge: React.FC<GaugeProps> = ({
 
 
     let value = booked + planned
-    // Normalisierungsfunktion
+
     const normalize = (value: number) => {
-        return (value - MIN) / (MAX - MIN);
+        return (value / thresholdRed);
     };
 
     // Normalisierte Werte
     const bookedNormalized = normalize(booked);
     const plannedNormalized = normalize(planned);
 
-    // if (value > max) {
-    //     value = max
-    // }
-    // if (value < min) {
-    //     value = min
-    // }
+    const sumNormalized = normalize(value);
+    const thresholdYellowNormalized = normalize(thresholdYellow)
+    const thresholdRedNormalized = 1
+
 
     const handleBarBookedMouseEnter = (event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
@@ -200,7 +198,6 @@ const Gauge: React.FC<GaugeProps> = ({
         setIsTileHovered(false);
     };
 
-    const sumNormalized = normalize(value);
     // Skala für den Winkel (von min zu max)
     const angleScale = d3.scaleLinear()
         .domain([0, 1])
@@ -221,7 +218,7 @@ const Gauge: React.FC<GaugeProps> = ({
     }
 
     // Radius des Halbkreises
-    const radius = Math.min(width, height) / 2;
+    const radius = Math.min(width, height) / 2.2;
 
     const angleOffset = 1.5; // Korrekturwert
     const bookedPointer = calculatePointerPosition(bookedNormalized, radius, angleOffset, 0.7);
@@ -229,6 +226,10 @@ const Gauge: React.FC<GaugeProps> = ({
 
     // Tiles zeichnen
     const tileAngles = d3.range(-Math.PI / 2, Math.PI / 2, (Math.PI) / numTiles);
+
+
+    const dayLabels = d3.range(0, thresholdRed + 1, 10)
+    const labelRadius = radius * 1.05
 
     return (
         <div style={{position: 'relative'}}>
@@ -277,14 +278,12 @@ const Gauge: React.FC<GaugeProps> = ({
                     {tileAngles.map((angle, index) => {
                         const tileStartAngle = angle;
                         const tileEndAngle = angle + (Math.PI / numTiles);
-
-                        // Berechne den Füllgrad des Tiles basierend auf dem Wert
-                        const tileValueRange = (MAX - MIN) / numTiles; // Wertbereich pro Tile
-                        const tileMinValue = MIN + index * tileValueRange; // Untergrenze des Tiles
-                        // const tileMaxValue = tileMinValue + tileValueRange; // Obergrenze des Tiles
-
+                        const tileValueRange = thresholdRed / numTiles; // Wertbereich pro Tile basierend auf thresholdRed
+                        const tileMinValue = index * tileValueRange;
+                        const tileMinValueNormalized = normalize(tileMinValue);
+                        const tileValueRangeNormalized = normalize(tileValueRange);
                         // Bestimme, wie viel vom Tile gefüllt werden soll
-                        const fillRatio = Math.min(1, Math.max(0, (value - tileMinValue) / tileValueRange));
+                        const fillRatio = Math.min(1, Math.max(0, (sumNormalized - tileMinValueNormalized) / tileValueRangeNormalized));
                         const tileFillEndAngle = tileStartAngle + fillRatio * (tileEndAngle - tileStartAngle);
 
                         // Tile-Hintergrund (nicht gefüllter Teil)
@@ -301,8 +300,11 @@ const Gauge: React.FC<GaugeProps> = ({
                             .startAngle(tileStartAngle)
                             .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
 
-                        const fillColor = value >= thresholdRed ? colorTileThresholdRed : value >= thresholdYellow && value < thresholdRed ? colorTileThresholdYellow : colorTileThresholdDefault;
-
+                        const fillColor = sumNormalized >= thresholdRedNormalized
+                            ? colorTileThresholdRed
+                            : sumNormalized >= thresholdYellowNormalized
+                                ? colorTileThresholdYellow
+                                : colorTileThresholdDefault;
                         return (
                             <g key={index}>
                                 {/* Nicht gefüllter Teil des Tiles */}
@@ -381,6 +383,44 @@ const Gauge: React.FC<GaugeProps> = ({
                             style={{pointerEvents: 'none'}} // Verhindert erneutes Hover
                         />
                     )}
+
+                    {enableUnitTicks && dayLabels.map((day, index) => {
+                        const normalizedDay = day / thresholdRed; // Skaliere auf den Bereich [0, 1]
+                        const angle = angleScale(normalizedDay) - Math.PI / 2;
+                        const labelX = Math.cos(angle) * labelRadius;
+                        const labelY = Math.sin(angle) * labelRadius;
+
+                        // Tick-Position
+                        const tickStartX = Math.cos(angle) * radius;
+                        const tickStartY = Math.sin(angle) * radius;
+                        const tickEndX = Math.cos(angle) * (labelRadius);
+                        const tickEndY = Math.sin(angle) * (labelRadius);
+
+                        return (
+                            <g key={index}>
+                                {/* Tick-Linie */}
+                                <line
+                                    x1={tickStartX}
+                                    y1={tickStartY}
+                                    x2={tickEndX}
+                                    y2={tickEndY}
+                                    stroke="#000"
+                                    strokeWidth={1}
+                                />
+                                {/* Beschriftung */}
+                                <text
+                                    x={labelX}
+                                    y={labelY}
+                                    textAnchor="middle"
+                                    dy="0.35em"
+                                    fill="#fff"
+                                    fontSize="12"
+                                >
+                                    {day}T
+                                </text>
+                            </g>
+                        );
+                    })}
                     <path
                         d={d3.arc<d3.DefaultArcObject>()
                             .innerRadius(radius * 0.72)
