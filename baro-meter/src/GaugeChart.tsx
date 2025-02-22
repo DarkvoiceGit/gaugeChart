@@ -300,8 +300,8 @@ const Gauge: React.FC<GaugeProps> = ({
 
                         // Tile-Vordergrund (gefüllter Teil)
                         const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
-                            .innerRadius(isTileHovered ? radius * 0.7 - 5 : radius * 0.7)
-                            .outerRadius(isTileHovered ? radius + 1 : radius)
+                            .innerRadius(isTileHovered  && withOpacitySwitch  ? radius * 0.7 - 5 : radius * 0.7)
+                            .outerRadius(isTileHovered  && withOpacitySwitch  ? radius + 1 : radius)
                             .startAngle(tileStartAngle)
                             .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
 
@@ -350,7 +350,7 @@ const Gauge: React.FC<GaugeProps> = ({
                     />
                     </g>
                     {/* Hovered Element (wird als letztes gerendert) */}
-                    {isBarPlannedHovered && (
+                    {isBarPlannedHovered && withOpacitySwitch  && (
                         <path
                             d={
 
@@ -371,7 +371,7 @@ const Gauge: React.FC<GaugeProps> = ({
                             style={{pointerEvents: 'none'}} // Verhindert erneutes Hover
                         />
                     )}
-                    {isBarBookedHovered && (
+                    {isBarBookedHovered && withOpacitySwitch && (
                         <path
                             d={d3.arc<d3.DefaultArcObject>()
                                 .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
