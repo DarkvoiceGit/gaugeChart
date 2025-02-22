@@ -4,8 +4,8 @@ import GaugeChart from "./GaugeChart";
 
 function App() {
 
-    const planned = 30;
-    const booked = 20;
+    const planned = 0;
+    const booked = 40;
 
     return (
         <div className="gauge-chart">
@@ -14,7 +14,7 @@ function App() {
                 planned = {planned}
                 height={800}
                 width={600}
-                thresholdYellow={60}
+                thresholdYellow={75}
                 thresholdRed={80}
                 withOpacitySwitch={true}
                 colorTileThresholdRed={'#ff0000'}

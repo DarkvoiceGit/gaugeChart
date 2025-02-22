@@ -82,7 +82,7 @@ const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: number }>; 
 // Skala für den Winkel (von min zu max)
 const angleScale = d3.scaleLinear()
     .domain([0, 1])
-    .range([-Math.PI / 2, Math.PI / 2]);
+    .range([-Math.PI / 2, Math.PI / 2 ]);
 
 const calculatePointer = (
     normalizedValue: number,
@@ -90,9 +90,9 @@ const calculatePointer = (
     length: number
 ) => {
 
-    const angle = angleScale(normalizedValue); // Winkel basierend auf dem normalisierten Wert
-    const pointerX = Math.cos(angle) * radius * length; // x-Position
-    const pointerY = Math.sin(angle) * radius * length; // y-Position
+    const angle = angleScale(normalizedValue) - Math.PI / 2; // Winkel basierend auf dem normalisierten Wert
+    const pointerX = (Math.cos(angle) * radius) * length; // x-Position
+    const pointerY = (Math.sin(angle) * radius) * length; // y-Position
     return { x: pointerX, y: pointerY, angle };
 };
 
@@ -216,7 +216,7 @@ const Gauge: React.FC<GaugeProps> = ({
     const radius = Math.min(width, height) / 2.2;
 
     const bookedPointer = calculatePointer(bookedNormalized, radius,  0.7);
-    const plannedPointer = calculatePointer(plannedNormalized, radius,  0.85);
+    const plannedPointer = calculatePointer(sumNormalized, radius,  0.85);
     // Debugging-Ausgaben
     console.log('bookedNormalized:', bookedNormalized);
     console.log('plannedNormalized:', plannedNormalized);
@@ -394,7 +394,8 @@ const Gauge: React.FC<GaugeProps> = ({
                         const normalizedDay = day / thresholdRed; // Skaliere auf den Bereich [0, 1]
                         const angle = angleScale(normalizedDay) - Math.PI / 2;
 
-                        const angleDeg = (angle * 180 / Math.PI).toFixed(1); // Winkel in Grad umrechnen
+                        //for debugging
+                        // const angleDeg = (angle  / Math.PI).toFixed(1); // Winkel in Grad umrechnen
 
                         const labelX = Math.cos(angle) * labelRadius;
                         const labelY = Math.sin(angle) * labelRadius;
@@ -425,7 +426,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     fill="#fff"
                                     fontSize="12"
                                 >
-                                    {angleDeg}°
+                                    {day}T
                                 </text>
                             </g>
                         );
