@@ -79,23 +79,21 @@ const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: number }>; 
         ))}
     </div>)
 }
+// Skala für den Winkel (von min zu max)
+const angleScale = d3.scaleLinear()
+    .domain([0, 1])
+    .range([-Math.PI / 2, Math.PI / 2]);
 
-
-const calculatePointerPosition = (
+const calculatePointer = (
     normalizedValue: number,
     radius: number,
-    angleOffset: number = 0,
     length: number
 ) => {
-    const angleScale = d3.scaleLinear()
-        .domain([0, 1])
-        .range([-Math.PI / 2, Math.PI / 2]);
 
-    const angle = angleScale(normalizedValue + angleOffset);
-    const pointerX = Math.cos(angle) * radius * length;
-    const pointerY = Math.sin(angle) * radius * length;
-
-    return {x: pointerX, y: pointerY};
+    const angle = angleScale(normalizedValue); // Winkel basierend auf dem normalisierten Wert
+    const pointerX = Math.cos(angle) * radius * length; // x-Position
+    const pointerY = Math.sin(angle) * radius * length; // y-Position
+    return { x: pointerX, y: pointerY, angle };
 };
 
 const Gauge: React.FC<GaugeProps> = ({
@@ -130,7 +128,7 @@ const Gauge: React.FC<GaugeProps> = ({
     let value = booked + planned
 
     const normalize = (value: number) => {
-        return (value / thresholdRed);
+        return Math.min(1, value / thresholdRed); // Begrenze den Wert auf maximal 1
     };
 
     // Normalisierte Werte
@@ -198,10 +196,7 @@ const Gauge: React.FC<GaugeProps> = ({
         setIsTileHovered(false);
     };
 
-    // Skala für den Winkel (von min zu max)
-    const angleScale = d3.scaleLinear()
-        .domain([0, 1])
-        .range([-Math.PI / 2, Math.PI / 2]);
+
 
 
     const getOpacity = (isFilled: boolean, isBarBooked: boolean, isBarPlanned: boolean) => {
@@ -220,10 +215,20 @@ const Gauge: React.FC<GaugeProps> = ({
     // Radius des Halbkreises
     const radius = Math.min(width, height) / 2.2;
 
-    const angleOffset = 1.5; // Korrekturwert
-    const bookedPointer = calculatePointerPosition(bookedNormalized, radius, angleOffset, 0.7);
-    const plannedPointer = calculatePointerPosition(sumNormalized, radius, angleOffset, .85);
+    const bookedPointer = calculatePointer(bookedNormalized, radius,  0.7);
+    const plannedPointer = calculatePointer(plannedNormalized, radius,  0.85);
+    // Debugging-Ausgaben
+    console.log('bookedNormalized:', bookedNormalized);
+    console.log('plannedNormalized:', plannedNormalized);
+    console.log('bookedPointer:', bookedPointer);
+    console.log('plannedPointer:', plannedPointer);
+    console.log('angleBookedPointer:', bookedPointer.angle);
+    console.log('anglePlannedPointer:', plannedPointer.angle);
 
+    const radToDeg = (radians) => radians * (180 / Math.PI);
+
+    console.log('angleBookedPointerDeg:', radToDeg(bookedPointer.angle));
+    console.log('anglePlannedPointerDeg:', radToDeg(plannedPointer.angle));
     // Tiles zeichnen
     const tileAngles = d3.range(-Math.PI / 2, Math.PI / 2, (Math.PI) / numTiles);
 
@@ -244,7 +249,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                 .startAngle((-Math.PI / 2) + .01)
                                 .cornerRadius(5)
                                 // @ts-ignore
-                                .endAngle(angleScale(bookedNormalized + plannedNormalized))(null)!}
+                                .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
                             fill={colorPlannedBar}
                             stroke={'#000'}
                             strokeWidth={0.5}
@@ -262,7 +267,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                 .startAngle((-Math.PI / 2) + .01)
                                 .cornerRadius(5)
                                 // @ts-ignore
-                                .endAngle(angleScale(bookedNormalized))(null)!}
+                                .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
                             fill={colorBookedBar}
                             stroke={'#000'}
                             strokeWidth={0.5}
@@ -332,17 +337,18 @@ const Gauge: React.FC<GaugeProps> = ({
                             </g>
                         );
                     })}
-                    {plannedNormalized !== 0 && (
-                        <Pointer x={bookedPointer.x} y={bookedPointer.y} color={'#025bff'} markerId={'booked'}
-                                 key={1}/>)}
-
-                    <Pointer x={plannedPointer.x} y={plannedPointer.y} color={'#0ed30e'} markerId={'planned'} key={2}/>
+                    <g>
+                        {plannedNormalized !== 0 && (
+                            <Pointer x={bookedPointer.x} y={bookedPointer.y} color={'#025bff'} markerId={'booked'} key={1} />
+                        )}
+                        <Pointer x={plannedPointer.x} y={plannedPointer.y} color={'#0ed30e'} markerId={'planned'} key={2} />
                     <circle
                         cx={0}
                         cy={0}
                         r={15}
                         fill={'black'}
                     />
+                    </g>
                     {/* Hovered Element (wird als letztes gerendert) */}
                     {isBarPlannedHovered && (
                         <path
@@ -354,7 +360,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     .startAngle(angleScale(bookedNormalized))
                                     .cornerRadius(5)
                                     // @ts-ignore
-                                    .endAngle(angleScale(bookedNormalized + plannedNormalized))(null)!
+                                    .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)! // Begrenzung auf Math.PI / 2
                             }
                             fill={colorPlannedBar}
                             stroke="#000"
@@ -373,7 +379,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                 .startAngle((-Math.PI / 2) + 0.01)
                                 .cornerRadius(5)
                                 // @ts-ignore
-                                .endAngle(angleScale(bookedNormalized))(null)!}
+                                .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
                             fill={colorBookedBar}
                             stroke="#000"
                             strokeWidth={0.5}
@@ -387,6 +393,9 @@ const Gauge: React.FC<GaugeProps> = ({
                     {enableUnitTicks && dayLabels.map((day, index) => {
                         const normalizedDay = day / thresholdRed; // Skaliere auf den Bereich [0, 1]
                         const angle = angleScale(normalizedDay) - Math.PI / 2;
+
+                        const angleDeg = (angle * 180 / Math.PI).toFixed(1); // Winkel in Grad umrechnen
+
                         const labelX = Math.cos(angle) * labelRadius;
                         const labelY = Math.sin(angle) * labelRadius;
 
@@ -416,7 +425,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     fill="#fff"
                                     fontSize="12"
                                 >
-                                    {day}T
+                                    {angleDeg}°
                                 </text>
                             </g>
                         );

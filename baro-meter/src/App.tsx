@@ -14,8 +14,8 @@ function App() {
                 planned = {planned}
                 height={800}
                 width={600}
-                thresholdYellow={50}
-                thresholdRed={90}
+                thresholdYellow={60}
+                thresholdRed={80}
                 withOpacitySwitch={true}
                 colorTileThresholdRed={'#ff0000'}
                 colorTileThresholdYellow={'#ffff00'}
