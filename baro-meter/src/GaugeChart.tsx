@@ -1,321 +1,516 @@
-import './App.css';
-import Gauge from './GaugeChart';
-import {Checkbox, FilledInput, FormControl, InputLabel, MenuItem, Select, Stack} from '@mui/material';
-import {useState} from 'react';
-
-// import Gauge from "gauge-package";
-
-function App() {
-    // Zustände für die Einstellungen
-    const [bookedValue, setBookedVal] = useState<number>(10);
-    const [plannedValue, setPlannedVal] = useState<number>(5);
-    const [heightValue, setHeightVal] = useState<number>(800);
-    const [widthValue, setWidthVal] = useState<number>(600);
-    const [thresholdYellowValue, setThresholdYellowVal] = useState<number>(60);
-    const [thresholdRedValue, setThresholdRedVal] = useState<number>(80);
-    const [withOpacitySwitchValue, setWithOpacitySwitchVal] = useState<boolean>(true);
-    const [colorTileThresholdRedValue, setColorTileThresholdRedVal] = useState<string>('#ff0c4d');
-    const [colorTileThresholdYellowValue, setColorTileThresholdYellowVal] = useState<string>('#ffff00');
-    const [colorTileThresholdDefaultValue, setColorTileThresholdDefaultVal] = useState<string>('#00ff00');
-    const [colorTileBgValue, setColorTileBgVal] = useState<string>('#ddd');
-    const [colorBookedBarValue, setColorBookedBarVal] = useState<string>('#000000');
-    const [colorPlannedBarValue, setColorPlannedBarVal] = useState<string>('#aaaaaa');
-    const [enableToolTipValue, setEnableTooltipVal] = useState<boolean>(true);
-    const [enableUnitTicksValue, setEnableUnitTicksVal] = useState<boolean>(true);
-    const [tilesValue, setTilesVal] = useState<number>(10);
-    const [tilesIsGradient, setTilesIsGradient] = useState<boolean>(false);
-    const [pointerBookedScale, setPointerBookedScale] = useState<number>(1);
-    const [pointerBookedStrokeScale, setPointerBookedStrokeScale] = useState<number>(1);
-    const [pointerBookedColor, setPointerBookedColor] = useState<string>('#0ed30e');
-    const [pointerPlannedScale, setPointerPlannedScale] = useState<number>(1);
-    const [pointerPlannedStrokeScale, setPointerPlannedStrokeScale] = useState<number>(1);
-    const [pointerPlannedColor, setPointerPlannedColor] = useState<string>('#025bff');
-    const [circleScale, setCircleScale] = useState<number>(0.5);
-    const [selectedUnit, setSelectedUnit] = useState<string>('undefined');
-    const [selectedFormatter, setSelectedFormatter] = useState<string>('undefined');
-
-    const formatterDayHourMinute = (value: number) => {
-        const days = Math.floor(value);
-        const hours = Math.floor((value - days) * 8);
-        const minutes = Math.floor(((value - days) * 8 - hours) * 60);
-
-        return `${days} T, ${hours} S, ${minutes} M`;
-    };
-    const formatterDayHour = (value: number) => {
-        const days = Math.floor(value);
-        const hours = Math.floor((value - days) * 8);
-
-        return `${days} T, ${hours} S`;
-    };
-    const formatterCelsiusToFahrenheit = (value: number) => {
-        const fahrenheit = (value * 9/5) + 32;
-        return `${fahrenheit.toFixed(1)}°F`;
-    };
-    const formatterFahrenheitToCelsius = (value: number) => {
-        const celsius = (value - 32) * 5/9;
-        return `${celsius.toFixed(1)}°C`;
-    };
-    const formatterKmToMile = (value: number) => {
-        const miles = value * 0.621371;
-        return `${miles.toFixed(2)} Meilen`;
-    };
-    const formatterMileToKm = (value: number) => {
-        const kilometers = value * 1.60934;
-        return `${kilometers.toFixed(2)} Km`;
-    };
-
-    const unitOptions = [
-        { value: 'undefined', label: 'Keine Einheit' },
-        { value: 'km', label: 'Kilometer' },
-        { value: 'mile', label: 'Meilen' },
-        { value: 'celsius', label: 'Celsius' },
-        { value: 'fahrenheit', label: 'Fahrenheit' },
-        { value: 'day', label: 'Tage' },
-    ];
-
-    const formatterOptions = {
-        km: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'kmToMile', label: 'Km zu Meilen' },
-        ],
-        mile: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'mileToKm', label: 'Meilen zu Km' },
-        ],
-        celsius: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'celsiusToFahrenheit', label: 'Celsius zu Fahrenheit' },
-        ],
-        fahrenheit: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'fahrenheitToCelsius', label: 'Fahrenheit zu Celsius' },
-        ],
-        day: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'dayHourMinute', label: 'Tage, Stunden, Minuten' },
-            { value: 'dayHour', label: 'Tage, Stunden' },
-        ],
-        undefined: [
-            { value: 'undefined', label: 'Kein Formatter' },
-        ],
-    };
-
-    const handleUnitChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-        const unit = event.target.value as string;
-        setSelectedUnit(unit);
-        setSelectedFormatter('undefined'); // Formatter zurücksetzen
-    };
-
-    const handleFormatterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-        const formatter = event.target.value as string;
-        setSelectedFormatter(formatter);
-    };
-
-    const formatValue = (value: number) => {
-        // Kein Formatter, einfach die Einheit anhängen
-        switch (selectedUnit) {
-            case 'km':
-                return `${value} km`;
-            case 'mile':
-                return `${value} mi`;
-            case 'celsius':
-                return `${value}°C`;
-            case 'fahrenheit':
-                return `${value}°F`;
-            case 'day':
-                return `${value} T`;
-            default:
-                return `${value}`;
-        }
-    };
-
-    const formatToolTipValue = (selectedFormatter: string, value: number) => {
-        // Formatter anwenden
-        switch (selectedFormatter) {
-            case 'kmToMile':
-                return formatterKmToMile(value);
-            case 'mileToKm':
-                return formatterMileToKm(value);
-            case 'celsiusToFahrenheit':
-                return formatterCelsiusToFahrenheit(value);
-            case 'fahrenheitToCelsius':
-                return formatterFahrenheitToCelsius(value);
-            case 'dayHourMinute':
-                return formatterDayHourMinute(value);
-            case 'dayHour':
-                return formatterDayHour(value);
-            default:
-                return `unit`;
-        }
-    };
+import React, {useRef, useState} from 'react';
+import * as d3 from 'd3';
 
 
-    // Einstellungen für Zahlen
-    const numberSettings = [
-        {label: 'Booked:', value: bookedValue, onChange: setBookedVal, type: 'number'},
-        {label: 'Planned:', value: plannedValue, onChange: setPlannedVal, type: 'number'},
-        {label: 'Height:', value: heightValue, onChange: setHeightVal, type: 'number'},
-        {label: 'Width:', value: widthValue, onChange: setWidthVal, type: 'number'},
-        {label: 'ThresholdMid:', value: thresholdYellowValue, onChange: setThresholdYellowVal, type: 'number'},
-        {label: 'ThresholdMax:', value: thresholdRedValue, onChange: setThresholdRedVal, type: 'number'},
-        {label: 'AmountOfTiles:', value: tilesValue, onChange: setTilesVal, type: 'number'},
-        {label: 'PointerBookedScale:', value: pointerBookedScale, onChange: setPointerBookedScale, type: 'number'},
-        {
-            label: 'PointerBookedStrokeScale:',
-            value: pointerBookedStrokeScale,
-            onChange: setPointerBookedStrokeScale,
-            type: 'number'
-        },
-        {label: 'PointerPlannedScale:', value: pointerPlannedScale, onChange: setPointerPlannedScale, type: 'number'},
-        {
-            label: 'PointerPlannedStrokeScale:',
-            value: pointerPlannedStrokeScale,
-            onChange: setPointerPlannedStrokeScale,
-            type: 'number'
-        },
-        {label: 'CircleScale:', value: circleScale, onChange: setCircleScale, type: 'number'},
-    ];
+interface PointerConfig {
+    scale: number
+    strokeScale: number
+    color: string
+}
 
-    // Einstellungen für Booleans
-    const booleanSettings = [
-        {label: 'EnableOpacitySwitch:', checked: withOpacitySwitchValue, onChange: setWithOpacitySwitchVal},
-        {label: 'EnableTooltip:', checked: enableToolTipValue, onChange: setEnableTooltipVal},
-        {label: 'EnableTicks:', checked: enableUnitTicksValue, onChange: setEnableUnitTicksVal},
-        {label: 'IsTileColorGradient:', checked: tilesIsGradient, onChange: setTilesIsGradient},
-    ];
+interface GaugeProps {
+    width?: number; // Breite der SVG (Standard: 200)
+    height?: number; // Höhe der SVG (Standard: 200)
+    booked: number;
+    planned: number;
+    thresholdYellow?: number;
+    thresholdRed?: number;
+    withOpacitySwitch?: boolean;
+    colorTileThresholdRed?: string
+    colorTileThresholdYellow?: string
+    colorTileThresholdDefault?: string
+    colorTileBg?: string
+    colorBookedBar?: string
+    colorPlannedBar?: string
+    enableToolTip?: boolean
+    enableUnitTicks?: boolean
+    tiles?: number
+    isTileColorGradient?: boolean
+    pointerBookedConfig?: PointerConfig
+    pointerSumConfig?: PointerConfig
+    circleScale?: number
+    unitTickFormatter?: (value: number) => string; // Neue Prop für den Formatter
+    unit?: (value: number) => string
 
-    // Einstellungen für Strings/Farben
-    const colorSettings = [
-        {
-            label: 'TileColorThresholdMid:',
-            value: colorTileThresholdYellowValue,
-            onChange: setColorTileThresholdYellowVal
-        },
-        {label: 'TileColorThresholdMax:', value: colorTileThresholdRedValue, onChange: setColorTileThresholdRedVal},
-        {
-            label: 'TileColorThresholdDefault:',
-            value: colorTileThresholdDefaultValue,
-            onChange: setColorTileThresholdDefaultVal
-        },
-        {label: 'TileColor:', value: colorTileBgValue, onChange: setColorTileBgVal},
-        {label: 'BookedBarColor:', value: colorBookedBarValue, onChange: setColorBookedBarVal},
-        {label: 'PlannedBarColor:', value: colorPlannedBarValue, onChange: setColorPlannedBarVal},
-        {label: 'PointerBookedColor:', value: pointerBookedColor, onChange: setPointerBookedColor},
-        {label: 'PointerPlannedColor:', value: pointerPlannedColor, onChange: setPointerPlannedColor},
-    ];
+}
+
+
+const Pointer = ({x, y, color, markerId, pointerScale, strokeScale}: {
+    x: number;
+    y: number;
+    color: string;
+    markerId: string,
+    pointerScale: number,
+    strokeScale: number
+}) => {
+    const baseMarkerSize = 10; // Basisgröße für die Pfeilspitze
+    const markerWidth = baseMarkerSize * pointerScale; // Skaliere die Breite der Pfeilspitze
+    const markerHeight = baseMarkerSize * pointerScale; // Skaliere die Höhe der Pfeilspitze
 
     return (
-        <div className="gauge-chart">
-            <Stack direction="row" spacing={4} m={5} p={5}>
-                {/* Spalte 1: Zahlen-Einstellungen */}
-                <Stack spacing={2} direction="column" flex={1}>
-                    {numberSettings.map(({label, value, onChange, type}, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                            <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
-                            <FilledInput
-                                color="primary"
-                                value={value}
-                                type={type}
-                                style={{textAlign: 'right', width: '100px', color: 'white'}}
-                                onChange={(e) => (Number(e.target.value) < 0 ? onChange(0) : onChange(Number(e.target.value)))}
-                            />
-                        </Stack>
-                    ))}
-                </Stack>
 
-                {/* Spalte 2: Boolean-Einstellungen */}
-                <Stack spacing={2} direction="column" flex={1}>
-                    {booleanSettings.map(({label, checked, onChange}, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                            <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
-                            <Checkbox checked={checked} onChange={(_, v) => onChange(v)} disableRipple/>
-                        </Stack>
-                    ))}
-                    <Stack spacing={2} direction="column" flex={1}>
-                        {/* SelectBox für Einheiten */}
-                        <FormControl fullWidth>
-                            <InputLabel style={{ color: '#fff' }}>Einheit</InputLabel>
-                            <Select
-                                value={selectedUnit}
-                                onChange={handleUnitChange}
-                                label="Einheit"
-                                style={{ color: '#fff' }}
-                            >
-                                {unitOptions.map((option) => (
-                                    <MenuItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+        <>
+            <line
+                x1={0}
+                y1={0}
+                x2={x}
+                y2={y}
+                stroke={color}
+                strokeWidth={3 * strokeScale}
+                markerEnd={`url(#arrowhead-${markerId})`}
 
-                        {/* SelectBox für Formatter */}
-                        <FormControl fullWidth>
-                            <InputLabel style={{ color: '#fff' }}>Formatter</InputLabel>
-                            <Select
-                                value={selectedFormatter}
-                                onChange={handleFormatterChange}
-                                label="Formatter"
-                                style={{ color: '#fff' }}
-                            >
-                                {formatterOptions[selectedUnit].map((option) => (
-                                    <MenuItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Stack>
-                </Stack>
+            />
+            {/* Marker-Definition für planned */}
+            <defs>
+                <marker
+                    id={`arrowhead-${markerId}`}
+                    markerWidth={markerWidth}
+                    markerHeight={markerHeight}
+                    refX={markerWidth * 0.9} // Anpassung der Position der Pfeilspitze
+                    refY={markerHeight / 2}
+                    orient={'auto'}
+                >
+                    <polygon points={`0 0, ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`} fill={color}/>
+                </marker>
+            </defs>
+        </>
 
-                {/* Spalte 3: Farb-Einstellungen */}
-                <Stack spacing={2} direction="column" flex={1} borderRight={'1px dashed #fff'} mr={5} pr={5}>
-                    {colorSettings.map(({label, value, onChange}, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                            <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
-                            <input value={value} type="color" onChange={(e) => onChange(e.target.value)}/>
-                        </Stack>
-                    ))}
-                </Stack>
-
-
-                {/* Gauge-Chart */}
-                <Gauge
-                    booked={bookedValue}
-                    planned={plannedValue}
-                    height={heightValue}
-                    width={widthValue}
-                    thresholdYellow={thresholdYellowValue}
-                    thresholdRed={thresholdRedValue}
-                    withOpacitySwitch={withOpacitySwitchValue}
-                    colorTileThresholdRed={colorTileThresholdRedValue}
-                    colorTileThresholdYellow={colorTileThresholdYellowValue}
-                    colorTileThresholdDefault={colorTileThresholdDefaultValue}
-                    colorTileBg={colorTileBgValue}
-                    colorBookedBar={colorBookedBarValue}
-                    colorPlannedBar={colorPlannedBarValue}
-                    enableToolTip={enableToolTipValue}
-                    enableUnitTicks={enableUnitTicksValue}
-                    tiles={tilesValue}
-                    isTileColorGradient={tilesIsGradient}
-                    pointerSumConfig={{
-                        color: pointerBookedColor,
-                        scale: pointerBookedScale,
-                        strokeScale: pointerBookedStrokeScale
-                    }}
-                    pointerBookedConfig={{
-                        color: pointerPlannedColor,
-                        scale: pointerPlannedScale,
-                        strokeScale: pointerPlannedStrokeScale
-                    }}
-                    circleScale={circleScale}
-                    unitTickFormatter={(value: number) => formatToolTipValue(selectedFormatter, value)} // Formatter für Tooltips
-                    unit={formatValue}
-                />
-            </Stack>
-
-        </div>
     );
 }
 
-export default App;
+
+const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: string }>; x: number; y: number }) => {
+
+    return (<div
+        style={{
+            position: 'absolute',
+            left: x + 10, // Versatz vom Mauszeiger
+            top: y + 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: '#fff',
+            padding: '.5rem .5rem',
+            minWidth: '7rem',
+            borderRadius: '.5rem',
+            fontSize: '1rem',
+            pointerEvents: 'none', // Verhindert, dass der Tooltip die Mausinteraktion blockiert
+        }}
+    >
+        {/* Rendere jede Zeile als separates <div> */}
+        {text.map((item, index) => (
+            <div key={index} style={{
+                borderBottom: text.length > 1 ? '1px dashed ' + '#fff' : '',
+                display: 'flex',
+                justifyContent: 'space-between'
+            }}>
+                <span style={{textAlign: 'start', paddingRight: 10}}>{item.label}</span>
+                <span style={{textAlign: 'end'}}>{item.value}</span>
+            </div>
+        ))}
+    </div>)
+}
+// Skala für den Winkel (von min zu max)
+const angleScale = d3.scaleLinear()
+    .domain([0, 1])
+    .range([-Math.PI / 2, Math.PI / 2]);
+
+const calculatePointer = (
+    normalizedValue: number,
+    radius: number,
+    length: number
+) => {
+
+    const angle = angleScale(normalizedValue) - Math.PI / 2; // Winkel basierend auf dem normalisierten Wert
+    const pointerX = (Math.cos(angle) * radius) * length; // x-Position
+    const pointerY = (Math.sin(angle) * radius) * length; // y-Position
+    return {x: pointerX, y: pointerY, angle};
+};
+
+const Gauge: React.FC<GaugeProps> = ({
+                                         enableToolTip,
+                                         width = 800,
+                                         height = 600,
+                                         thresholdRed = 80,
+                                         thresholdYellow = 60,
+                                         booked,
+                                         planned,
+                                         withOpacitySwitch = true,
+                                         colorTileThresholdYellow = '#ffff00',
+                                         colorTileThresholdDefault = '#00ff00',
+                                         colorTileThresholdRed = '#ff0c4d',
+                                         colorTileBg = '#ddd',
+                                         colorBookedBar = '#000',
+                                         colorPlannedBar = '#aaa',
+                                         enableUnitTicks = true,
+                                         tiles = 10,
+                                         isTileColorGradient = false,
+                                         pointerBookedConfig = {
+                                             scale: 1,
+                                             strokeScale: 1,
+                                             color: '#025bff'
+                                         },
+                                         pointerSumConfig = {
+                                             scale: 1,
+                                             strokeScale: 1,
+                                             color: '#0ed30e'
+                                         },
+                                         circleScale = (.5),
+                                         unitTickFormatter,
+                                         unit
+                                     }) => {
+    const numTiles = tiles <= 0 ? 1 : tiles
+    const ref = useRef<SVGSVGElement>(null);
+    const [isTileHovered, setIsTileHovered] = useState<boolean>(false);
+    const [isBarBookedHovered, setIsBarBookedHovered] = useState<boolean>(false);
+    const [isBarPlannedHovered, setIsBarPlannedHovered] = useState<boolean>(false);
+    const [tooltip, setTooltip] = useState<{
+        text: Array<{ label: string, value: string }>;
+        x: number;
+        y: number
+    } | null>(null);
+
+
+    let value = booked + planned
+
+    const normalize = (value: number) => {
+        return Math.min(1, value / thresholdRed); // Begrenze den Wert auf maximal 1
+    };
+
+    // Normalisierte Werte
+    const bookedNormalized = normalize(booked);
+    const plannedNormalized = normalize(planned);
+
+    const sumNormalized = normalize(value);
+    const thresholdYellowNormalized = normalize(thresholdYellow)
+    const thresholdRedNormalized = 1
+
+
+    const handleBarBookedMouseEnter = (event: React.MouseEvent) => {
+        const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
+        const formattedBookedValue = unitTickFormatter  && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
+
+        setTooltip({
+            text: [
+                { label: 'Gebucht:', value: formattedBookedValue },
+            ],
+            x: event.clientX - bbox.left,
+            y: event.clientY - bbox.top,
+        });
+
+        console.log(tooltip?.text)
+        setIsBarBookedHovered(true);
+    };
+
+    const handleBarBookedMouseLeave = () => {
+        setTooltip(null);
+        setIsBarBookedHovered(false);
+    };
+
+    const handleBarPlannedMouseLeave = () => {
+        setTooltip(null);
+        setIsBarPlannedHovered(false);
+    };
+
+    const handleBarPlannedMouseEnter = (event: React.MouseEvent) => {
+        const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
+        const formattedPlannedValue = unitTickFormatter && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
+        setTooltip({
+            text: [
+                {label: 'Geplant:', value: formattedPlannedValue },
+            ],
+            x: event.clientX - bbox.left,
+            y: event.clientY - bbox.top,
+        });
+        console.log(tooltip?.text)
+        setIsBarPlannedHovered(true);
+    };
+
+    const handleTileMouseEnter = (event: React.MouseEvent) => {
+        const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
+        const formattedValue = unitTickFormatter  && unitTickFormatter(value) !== 'unit' ? unitTickFormatter(value) : unit ? unit(value) : value.toString()
+        const formattedBookedValue = unitTickFormatter  && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
+        const formattedPlannedValue = unitTickFormatter  && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
+        setTooltip({
+            text: [
+                {label: 'Gesamt:', value: formattedValue},
+                {label: 'Gebucht:', value: formattedBookedValue },
+                {label: 'Geplant:', value:  formattedPlannedValue },
+            ],
+            x: event.clientX - bbox.left,
+            y: event.clientY - bbox.top,
+        });
+        console.log(tooltip?.text)
+        setIsTileHovered(true);
+    };
+
+    const handleTileMouseLeave = () => {
+        setTooltip(null);
+        setIsTileHovered(false);
+    };
+
+
+    const getOpacity = (isFilled: boolean, isBarBooked: boolean, isBarPlanned: boolean) => {
+        if (!withOpacitySwitch) return 1
+        if (isBarBookedHovered && isBarBooked) return 1;
+        if (isBarPlannedHovered && isBarPlanned) return 1;
+        if (isTileHovered && isFilled) {
+            return 1
+        }
+        if (isTileHovered || isBarBookedHovered || isBarPlannedHovered) {
+            return 0.6
+        }
+        return 1
+    }
+
+
+    const getTileColor = (value: number) => {
+        if (!isTileColorGradient) {
+            return value >= thresholdRedNormalized
+                ? colorTileThresholdRed
+                : value >= thresholdYellowNormalized
+                    ? colorTileThresholdYellow
+                    : colorTileThresholdDefault;
+        } else {
+            // Farbverlauf von Grün über Gelb zu Rot
+            const colorScale = d3.scaleLinear<string>()
+                .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
+                .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
+            return colorScale(value);
+        }
+    };
+
+
+    // Radius des Halbkreises
+    const radius = Math.min(width, height) / 2.2;
+
+    const bookedPointer = calculatePointer(bookedNormalized, radius, 0.7 * pointerBookedConfig.scale);
+    const plannedPointer = calculatePointer(sumNormalized, radius, 0.85 * pointerSumConfig.scale);
+
+    // Tiles zeichnen
+    const tileAngles = d3.range(-Math.PI / 2, Math.PI / 2, (Math.PI) / numTiles);
+
+
+    const dayLabels = d3.range(0, thresholdRed + 1, 10)
+    const labelRadius = radius * 1.05
+
+
+    return (
+        <div style={{position: 'relative'}}>
+            <svg ref={ref} width={width} height={height}>
+                <g transform={`translate(${width / 2}, ${height / 2})`}>
+                    <g>
+
+                        <path
+                            d={d3.arc<d3.DefaultArcObject>()
+                                .innerRadius(radius * 0.6)
+                                .outerRadius(radius * 0.7)
+                                .startAngle((-Math.PI / 2) + .01)
+                                .cornerRadius(5)
+                                // @ts-ignore
+                                .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
+                            fill={colorPlannedBar}
+                            stroke={'#000'}
+                            strokeWidth={0.5}
+                            opacity={getOpacity(false, false, true)}
+                            onMouseEnter={handleBarPlannedMouseEnter}
+                            onMouseLeave={handleBarPlannedMouseLeave}
+                        />
+
+
+                        {/*Hauptfarbe (schwarz) - basierend auf valueBooked*/}
+                        <path
+                            d={d3.arc<d3.DefaultArcObject>()
+                                .innerRadius(radius * 0.6)
+                                .outerRadius(radius * 0.7)
+                                .startAngle((-Math.PI / 2) + .01)
+                                .cornerRadius(5)
+                                // @ts-ignore
+                                .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
+                            fill={colorBookedBar}
+                            stroke={'#000'}
+                            strokeWidth={0.5}
+                            onMouseEnter={handleBarBookedMouseEnter}
+                            onMouseLeave={handleBarBookedMouseLeave}
+                            opacity={getOpacity(false, true, false)}
+                        />
+
+
+                    </g>
+
+                    {tileAngles.map((angle, index) => {
+                        const tileStartAngle = angle;
+                        const tileEndAngle = angle + (Math.PI / numTiles);
+                        const tileValueRange = thresholdRed / numTiles; // Wertbereich pro Tile basierend auf thresholdRed
+                        const tileMinValue = index * tileValueRange;
+                        const tileMinValueNormalized = normalize(tileMinValue);
+                        const tileValueRangeNormalized = normalize(tileValueRange);
+                        // Bestimme, wie viel vom Tile gefüllt werden soll
+                        const fillRatio = Math.min(1, Math.max(0, (sumNormalized - tileMinValueNormalized) / tileValueRangeNormalized));
+                        const tileFillEndAngle = tileStartAngle + fillRatio * (tileEndAngle - tileStartAngle);
+
+                        // Tile-Hintergrund (nicht gefüllter Teil)
+                        const tileBackgroundArc = d3.arc<d3.DefaultArcObject>()
+                            .innerRadius(radius * 0.7)
+                            .outerRadius(radius)
+                            .startAngle(tileStartAngle)
+                            .endAngle(tileEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
+
+                        // Tile-Vordergrund (gefüllter Teil)
+                        const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
+                            .innerRadius(isTileHovered && withOpacitySwitch ? radius * 0.7 - 15 : radius * 0.7)
+                            .outerRadius(isTileHovered && withOpacitySwitch ? radius + 10 : radius)
+                            .startAngle(tileStartAngle)
+                            .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
+
+                        const fillColor = getTileColor(sumNormalized)
+
+                        return (
+                            <g key={index}>
+                                {/* Nicht gefüllter Teil des Tiles */}
+                                <path
+                                    d={
+                                        // @ts-ignore
+                                        tileBackgroundArc(null)!
+                                    }
+                                    stroke="#000"
+                                    opacity={getOpacity(false, false, false)}
+                                    fill={colorTileBg}
+                                />
+                                {/* Gefüllter Teil des Tiles */}
+                                {fillRatio > 0 && (
+                                    <path
+                                        d={
+                                            // @ts-ignore
+                                            tileForegroundArc(null)!
+                                        }
+                                        fill={fillColor}
+                                        strokeWidth={1}
+                                        opacity={getOpacity(true, false, false)} // Gefüllte Bereiche: Opacity 1
+                                    />
+                                )}
+                            </g>
+                        );
+                    })}
+                    <g>
+                        {plannedNormalized !== 0 && bookedNormalized !== sumNormalized && (
+                            <Pointer x={bookedPointer.x} y={bookedPointer.y} color={pointerBookedConfig.color}
+                                     markerId={'booked'}
+                                     pointerScale={pointerBookedConfig.scale}
+                                     strokeScale={pointerBookedConfig.strokeScale}
+                                     key={1}/>
+                        )}
+                        <Pointer x={plannedPointer.x} y={plannedPointer.y} color={pointerSumConfig.color}
+                                 markerId={'planned'}
+                                 pointerScale={pointerSumConfig.scale}
+                                 strokeScale={pointerSumConfig.strokeScale}
+                                 key={2}/>
+                        <circle
+                            cx={0}
+                            cy={0}
+                            r={radius * (circleScale / 10)}
+                            fill={'black'}
+                        />
+                    </g>
+                    {/* Hovered Element (wird als letztes gerendert) */}
+                    {isBarPlannedHovered && withOpacitySwitch && (
+                        <path
+                            d={
+
+                                d3.arc<d3.DefaultArcObject>()
+                                    .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
+                                    .outerRadius(radius * 0.75)
+                                    .startAngle(angleScale(bookedNormalized))
+                                    .cornerRadius(5)
+                                    // @ts-ignore
+                                    .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)! // Begrenzung auf Math.PI / 2
+                            }
+                            fill={colorPlannedBar}
+                            stroke="#000"
+                            strokeWidth={0.5}
+                            opacity={1}
+                            onMouseEnter={handleBarPlannedMouseEnter}
+                            onMouseLeave={handleBarPlannedMouseLeave}
+                            style={{pointerEvents: 'none'}} // Verhindert erneutes Hover
+                        />
+                    )}
+                    {isBarBookedHovered && withOpacitySwitch && (
+                        <path
+                            d={d3.arc<d3.DefaultArcObject>()
+                                .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
+                                .outerRadius(radius * 0.75)
+                                .startAngle((-Math.PI / 2) + 0.01)
+                                .cornerRadius(5)
+                                // @ts-ignore
+                                .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
+                            fill={colorBookedBar}
+                            stroke="#000"
+                            strokeWidth={0.5}
+                            opacity={1}
+                            onMouseEnter={handleBarBookedMouseEnter}
+                            onMouseLeave={handleBarBookedMouseLeave}
+                            style={{pointerEvents: 'none'}} // Verhindert erneutes Hover
+                        />
+                    )}
+
+                    {enableUnitTicks && dayLabels.map((day, index) => {
+                        const normalizedDay = day / thresholdRed; // Skaliere auf den Bereich [0, 1]
+                        const angle = angleScale(normalizedDay) - Math.PI / 2;
+
+
+                        const labelX = Math.cos(angle) * labelRadius;
+                        const labelY = Math.sin(angle) * labelRadius;
+
+                        // Tick-Position
+                        const tickStartX = Math.cos(angle) * radius;
+                        const tickStartY = Math.sin(angle) * radius;
+                        const tickEndX = Math.cos(angle) * (labelRadius);
+                        const tickEndY = Math.sin(angle) * (labelRadius);
+
+                        return (
+                            <g key={index}>
+                                {/* Tick-Linie */}
+                                <line
+                                    x1={tickStartX}
+                                    y1={tickStartY}
+                                    x2={tickEndX}
+                                    y2={tickEndY}
+                                    stroke="#000"
+                                    strokeWidth={1}
+                                />
+                                {/* Beschriftung */}
+                                <text
+                                    x={labelX}
+                                    y={labelY}
+                                    textAnchor="middle"
+                                    dy="0.35em"
+                                    fill="#fff"
+                                    fontSize="12"
+                                >
+                                    {unit ? unit(day): day}
+
+                                </text>
+                            </g>
+                        );
+                    })}
+                    <path
+                        d={d3.arc<d3.DefaultArcObject>()
+                            .innerRadius(radius * 0.72)
+                            .outerRadius(radius)
+                            .startAngle(-Math.PI / 2)
+                            // @ts-ignore
+                            .endAngle(Math.PI / 2)(null)!}
+                        fill="transparent"
+                        onMouseEnter={handleTileMouseEnter}
+                        onMouseLeave={handleTileMouseLeave}
+                    />
+
+                </g>
+
+            </svg>
+            {tooltip && enableToolTip && (
+                <Tooltip text={tooltip.text} x={tooltip.x} y={tooltip.y}/>
+            )}
+        </div>
+    );
+};
+
+export default Gauge;
