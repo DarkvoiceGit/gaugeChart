@@ -31,7 +31,7 @@ interface GaugeProps {
     circleScale?: number
     unitTickFormatter?: (value: number) => string; // Neue Prop für den Formatter
     unit?: (value: number) => string
-    gradientType?: 'full' | 'radial'
+    gradientType?: 'full' | 'tile'
 
 }
 
@@ -157,7 +157,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                          circleScale = (.5),
                                          unitTickFormatter,
                                          unit,
-                                         gradientType= 'radial'
+                                         gradientType= 'tile'
                                      }) => {
     const numTiles = tiles <= 0 ? 1 : tiles
     const ref = useRef<SVGSVGElement>(null);
@@ -264,7 +264,7 @@ const Gauge: React.FC<GaugeProps> = ({
     }
 
 
-    const getTileColor = (value: number, idx) => {
+    const getTileColor = (value: number, idx: number) => {
         if (!isTileColorGradient) {
             return value >= thresholdRedNormalized
                 ? colorTileThresholdRed
@@ -299,12 +299,16 @@ const Gauge: React.FC<GaugeProps> = ({
     const dayLabels = d3.range(0, thresholdRed + 1, 10)
     const labelRadius = radius * 1.05
 
+    const colorScale = d3.scaleLinear<string>()
+        .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
+        .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
 
     return (
         <div style={{position: 'relative'}}>
             <svg ref={ref} width={width} height={height}>
+                typescript
+                Copy
                 <defs>
-                    {/* Radiale Farbverläufe für jedes Tile */}
                     {tileAngles.map((_, index) => {
                         const tileValueRange = thresholdRed / numTiles;
                         const tileMinValue = index * tileValueRange;
@@ -312,31 +316,24 @@ const Gauge: React.FC<GaugeProps> = ({
                         const tileValueRangeNormalized = normalize(tileValueRange);
                         const tileValue = tileMinValueNormalized + tileValueRangeNormalized;
 
-                        // Bestimme die Start- und Endfarbe basierend auf dem Wert des Tiles
-                        const startColor = tileValue >= thresholdRedNormalized
-                            ? colorTileThresholdRed
-                            : tileValue >= thresholdYellowNormalized
-                                ? colorTileThresholdYellow
-                                : colorTileThresholdDefault;
-                        const endColor = tileValue >= thresholdRedNormalized
-                            ? colorTileThresholdRed
-                            : tileValue >= thresholdYellowNormalized
-                                ? colorTileThresholdYellow
-                                : colorTileThresholdDefault;
+                        // Bestimme die Farbe basierend auf dem Wert des Tiles
+                        const startColor = colorScale(tileValue);
+                        const endColor = colorScale(tileValue + tileValueRangeNormalized);
 
                         return (
-                            <radialGradient
+                            <linearGradient
                                 key={index}
                                 id={`gradient-${index}`}
+                                transform={'rotate(-90)'}
                                 cx="50%"
                                 cy="50%"
                                 r="50%"
                                 fx="50%"
                                 fy="50%"
                             >
-                                <stop offset="0%" stopColor={startColor}/>
-                                <stop offset="100%" stopColor={endColor}/>
-                            </radialGradient>
+                                <stop offset="0%" stopColor={startColor} />
+                                <stop offset="100%" stopColor={endColor} />
+                            </linearGradient>
                         );
                     })}
                 </defs>

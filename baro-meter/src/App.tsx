@@ -33,6 +33,7 @@ function App() {
     const [circleScale, setCircleScale] = useState<number>(0.5);
     const [selectedUnit, setSelectedUnit] = useState<string>('undefined');
     const [selectedFormatter, setSelectedFormatter] = useState<string>('undefined');
+    const [selectedGradientType, setSelectedGradientType] = useState<"full" | "tile" | undefined>('full');
 
     const formatterDayHourMinute = (value: number) => {
         const days = Math.floor(value);
@@ -66,8 +67,8 @@ function App() {
 
     const unitOptions = [
         { value: 'undefined', label: 'Keine Einheit' },
-        { value: 'km', label: 'Kilometer' },
-        { value: 'mile', label: 'Meilen' },
+{ value: 'km', label: 'Kilometer' },
+{ value: 'mile', label: 'Meilen' },
         { value: 'celsius', label: 'Celsius' },
         { value: 'fahrenheit', label: 'Fahrenheit' },
         { value: 'day', label: 'Tage' },
@@ -100,15 +101,24 @@ function App() {
         ],
     };
 
-    const handleUnitChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const gradientType = [
+    { value: 'full', label: 'Full' },
+    { value: 'tile', label: 'Tile' },
+    ]
+
+    const handleUnitChange = (event: any) => {
         const unit = event.target.value as string;
         setSelectedUnit(unit);
         setSelectedFormatter('undefined'); // Formatter zurücksetzen
     };
 
-    const handleFormatterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const handleFormatterChange = (event: any) => {
         const formatter = event.target.value as string;
         setSelectedFormatter(formatter);
+    };
+    const handleGradientTypeChange = (event: any) => {
+        const gradientTypeSel = event.target.value as "full" | "tile";
+        setSelectedGradientType(gradientTypeSel);
     };
 
     const formatValue = (value: number) => {
@@ -232,6 +242,24 @@ function App() {
                         </Stack>
                     ))}
                     <Stack spacing={2} direction="column" flex={1}>
+                        {/* Selectbox für gradient type */}
+                        <FormControl fullWidth>
+                            <InputLabel style={{ color: '#fff' }}>GradientType:</InputLabel>
+                            <Select
+                                value={selectedGradientType}
+                                onChange={handleGradientTypeChange}
+                                label="GradientType"
+                                style={{ color: '#fff' }}
+                            >
+                                {
+                                    //@ts-ignore
+                                    gradientType.map((option) => (
+                                        <MenuItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
                         {/* SelectBox für Einheiten */}
                         <FormControl fullWidth>
                             <InputLabel style={{ color: '#fff' }}>Einheit</InputLabel>
@@ -258,7 +286,9 @@ function App() {
                                 label="Formatter"
                                 style={{ color: '#fff' }}
                             >
-                                {formatterOptions[selectedUnit].map((option) => (
+                                {
+                                    //@ts-ignore
+                                    formatterOptions[selectedUnit].map((option) => (
                                     <MenuItem key={option.value} value={option.value}>
                                         {option.label}
                                     </MenuItem>
@@ -311,6 +341,7 @@ function App() {
                     circleScale={circleScale}
                     unitTickFormatter={(value: number) => formatToolTipValue(selectedFormatter, value)} // Formatter für Tooltips
                     unit={formatValue}
+                    gradientType={selectedGradientType}
                 />
             </Stack>
 
