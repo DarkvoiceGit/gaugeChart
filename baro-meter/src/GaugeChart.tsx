@@ -1,6 +1,12 @@
 import React, {useRef, useState} from 'react';
 import * as d3 from 'd3';
 
+
+interface PointerConfig{
+    scale: number
+    strokeScale:number
+    color: string
+}
 interface GaugeProps {
     width?: number; // Breite der SVG (Standard: 200)
     height?: number; // Höhe der SVG (Standard: 200)
@@ -8,47 +14,65 @@ interface GaugeProps {
     planned: number;
     thresholdYellow?: number;
     thresholdRed?: number;
-    withOpacitySwitch: boolean;
-    colorTileThresholdRed: string
-    colorTileThresholdYellow: string
-    colorTileThresholdDefault: string
-    colorTileBg: string
-    colorBookedBar: string
-    colorPlannedBar: string
-    enableToolTip: boolean
-    enableUnitTicks: boolean
-    tiles: number
+    withOpacitySwitch?: boolean;
+    colorTileThresholdRed?: string
+    colorTileThresholdYellow?: string
+    colorTileThresholdDefault?: string
+    colorTileBg?: string
+    colorBookedBar?: string
+    colorPlannedBar?: string
+    enableToolTip?: boolean
+    enableUnitTicks?: boolean
+    tiles?: number
+    isTileColorGradient?: boolean
+    pointerBookedConfig?: PointerConfig
+    pointerSumConfig?: PointerConfig
+    circleScale?: number
 }
 
 
-const Pointer = ({x, y, color, markerId, r}: { x: number; y: number; color: string; markerId: string, r: number }) => (
-    <>
-        <line
-            x1={0}
-            y1={0}
-            x2={x}
-            y2={y}
-            stroke={color}
-            strokeWidth={3}
-            markerEnd={`url(#arrowhead-${markerId})`}
+const Pointer = ({x, y, color, markerId, pointerScale, strokeScale}: {
+    x: number;
+    y: number;
+    color: string;
+    markerId: string,
+    pointerScale: number,
+    strokeScale: number
+}) => {
+    const baseMarkerSize = 10; // Basisgröße für die Pfeilspitze
+    const markerWidth = baseMarkerSize * pointerScale; // Skaliere die Breite der Pfeilspitze
+    const markerHeight = baseMarkerSize * pointerScale; // Skaliere die Höhe der Pfeilspitze
 
-        />
-        {/* Marker-Definition für planned */}
-        <defs>
-            <marker
-                id={`arrowhead-${markerId}`}
-                markerWidth={10}
-                markerHeight={7}
-                refX={9}
-                refY={3.5}
-                orient={'auto'}
-            >
-                <polygon points='0 0, 10 3.5, 0 7' fill={color}/>
-            </marker>
-        </defs>
-    </>
+    return (
 
-);
+        <>
+            <line
+                x1={0}
+                y1={0}
+                x2={x}
+                y2={y}
+                stroke={color}
+                strokeWidth={3 * strokeScale}
+                markerEnd={`url(#arrowhead-${markerId})`}
+
+            />
+            {/* Marker-Definition für planned */}
+            <defs>
+                <marker
+                    id={`arrowhead-${markerId}`}
+                    markerWidth={markerWidth}
+                    markerHeight={markerHeight}
+                    refX={markerWidth * 0.9} // Anpassung der Position der Pfeilspitze
+                    refY={markerHeight / 2}
+                    orient={'auto'}
+                >
+                    <polygon points={`0 0, ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`} fill={color} />
+                </marker>
+            </defs>
+        </>
+
+    );
+}
 
 
 const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: number }>; x: number; y: number }) => {
@@ -83,7 +107,7 @@ const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: number }>; 
 // Skala für den Winkel (von min zu max)
 const angleScale = d3.scaleLinear()
     .domain([0, 1])
-    .range([-Math.PI / 2, Math.PI / 2 ]);
+    .range([-Math.PI / 2, Math.PI / 2]);
 
 const calculatePointer = (
     normalizedValue: number,
@@ -94,28 +118,40 @@ const calculatePointer = (
     const angle = angleScale(normalizedValue) - Math.PI / 2; // Winkel basierend auf dem normalisierten Wert
     const pointerX = (Math.cos(angle) * radius) * length; // x-Position
     const pointerY = (Math.sin(angle) * radius) * length; // y-Position
-    return { x: pointerX, y: pointerY, angle };
+    return {x: pointerX, y: pointerY, angle};
 };
 
 const Gauge: React.FC<GaugeProps> = ({
                                          enableToolTip,
-                                         width = 200,
-                                         height = 200,
-                                         thresholdRed = 90,
-                                         thresholdYellow = 70,
+                                         width = 800,
+                                         height = 600,
+                                         thresholdRed = 80,
+                                         thresholdYellow = 60,
                                          booked,
                                          planned,
-                                         withOpacitySwitch,
-                                         colorTileThresholdYellow,
-                                         colorTileThresholdDefault,
-                                         colorTileThresholdRed,
-                                         colorTileBg,
-                                         colorBookedBar,
-                                         colorPlannedBar,
-                                         enableUnitTicks,
-    tiles
+                                         withOpacitySwitch = true,
+                                         colorTileThresholdYellow = '#ffff00',
+                                         colorTileThresholdDefault = '#00ff00',
+                                         colorTileThresholdRed = '#ff0c4d',
+                                         colorTileBg = '#ddd',
+                                         colorBookedBar = '#000',
+                                         colorPlannedBar = '#aaa',
+                                         enableUnitTicks = true,
+                                         tiles = 10,
+                                         isTileColorGradient = false,
+                                        pointerBookedConfig = {
+                                             scale: 1,
+                                            strokeScale: 1,
+                                            color:'#025bff'
+                                        },
+                                         pointerSumConfig = {
+                                             scale: 1,
+                                             strokeScale: 1,
+                                             color:'#0ed30e'
+                                         },
+                                         circleScale= (.5)
                                      }) => {
-    const numTiles = tiles === 0? 1 : tiles
+    const numTiles = tiles <= 0 ? 1 : tiles
     const ref = useRef<SVGSVGElement>(null);
     const [isTileHovered, setIsTileHovered] = useState<boolean>(false);
     const [isBarBookedHovered, setIsBarBookedHovered] = useState<boolean>(false);
@@ -199,8 +235,6 @@ const Gauge: React.FC<GaugeProps> = ({
     };
 
 
-
-
     const getOpacity = (isFilled: boolean, isBarBooked: boolean, isBarPlanned: boolean) => {
         if (!withOpacitySwitch) return 1
         if (isBarBookedHovered && isBarBooked) return 1;
@@ -214,11 +248,29 @@ const Gauge: React.FC<GaugeProps> = ({
         return 1
     }
 
+
+    const getTileColor = (value: number) => {
+        if (!isTileColorGradient) {
+            return value >= thresholdRedNormalized
+                ? colorTileThresholdRed
+                : value >= thresholdYellowNormalized
+                    ? colorTileThresholdYellow
+                    : colorTileThresholdDefault;
+        } else {
+            // Farbverlauf von Grün über Gelb zu Rot
+            const colorScale = d3.scaleLinear<string>()
+                .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
+                .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
+            return colorScale(value);
+        }
+    };
+
+
     // Radius des Halbkreises
     const radius = Math.min(width, height) / 2.2;
 
-    const bookedPointer = calculatePointer(bookedNormalized, radius,  0.7);
-    const plannedPointer = calculatePointer(sumNormalized, radius,  0.85);
+    const bookedPointer = calculatePointer(bookedNormalized, radius, 0.7 * pointerBookedConfig.scale);
+    const plannedPointer = calculatePointer(sumNormalized, radius, 0.85 * pointerSumConfig.scale);
     // Debugging-Ausgaben
     console.log('bookedNormalized:', bookedNormalized);
     console.log('plannedNormalized:', plannedNormalized);
@@ -227,7 +279,7 @@ const Gauge: React.FC<GaugeProps> = ({
     console.log('angleBookedPointer:', bookedPointer.angle);
     console.log('anglePlannedPointer:', plannedPointer.angle);
 
-    const radToDeg = (radians) => radians * (180 / Math.PI);
+    const radToDeg = (radians: number) => radians * (180 / Math.PI);
 
     console.log('angleBookedPointerDeg:', radToDeg(bookedPointer.angle));
     console.log('anglePlannedPointerDeg:', radToDeg(plannedPointer.angle));
@@ -281,7 +333,6 @@ const Gauge: React.FC<GaugeProps> = ({
 
                     </g>
 
-
                     {tileAngles.map((angle, index) => {
                         const tileStartAngle = angle;
                         const tileEndAngle = angle + (Math.PI / numTiles);
@@ -302,16 +353,13 @@ const Gauge: React.FC<GaugeProps> = ({
 
                         // Tile-Vordergrund (gefüllter Teil)
                         const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
-                            .innerRadius(isTileHovered  && withOpacitySwitch  ? radius * 0.7 - 15 : radius * 0.7)
-                            .outerRadius(isTileHovered  && withOpacitySwitch  ? radius + 10 : radius)
+                            .innerRadius(isTileHovered && withOpacitySwitch ? radius * 0.7 - 15 : radius * 0.7)
+                            .outerRadius(isTileHovered && withOpacitySwitch ? radius + 10 : radius)
                             .startAngle(tileStartAngle)
                             .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
 
-                        const fillColor = sumNormalized >= thresholdRedNormalized
-                            ? colorTileThresholdRed
-                            : sumNormalized >= thresholdYellowNormalized
-                                ? colorTileThresholdYellow
-                                : colorTileThresholdDefault;
+                        const fillColor = getTileColor(sumNormalized)
+
                         return (
                             <g key={index}>
                                 {/* Nicht gefüllter Teil des Tiles */}
@@ -340,19 +388,25 @@ const Gauge: React.FC<GaugeProps> = ({
                         );
                     })}
                     <g>
-                        {plannedNormalized !== 0 && (
-                            <Pointer x={bookedPointer.x} y={bookedPointer.y} color={'#025bff'} markerId={'booked'} key={1} />
+                        {plannedNormalized !== 0 && bookedNormalized !== sumNormalized && (
+                            <Pointer x={bookedPointer.x} y={bookedPointer.y} color={pointerBookedConfig.color} markerId={'booked'}
+                                     pointerScale={pointerBookedConfig.scale}
+                                     strokeScale={pointerBookedConfig.strokeScale}
+                                     key={1}/>
                         )}
-                        <Pointer x={plannedPointer.x} y={plannedPointer.y} color={'#0ed30e'} markerId={'planned'} key={2} />
-                    <circle
-                        cx={0}
-                        cy={0}
-                        r={radius / 10}
-                        fill={'black'}
-                    />
+                        <Pointer x={plannedPointer.x} y={plannedPointer.y} color={pointerSumConfig.color} markerId={'planned'}
+                                 pointerScale={pointerSumConfig.scale}
+                                 strokeScale={pointerSumConfig.strokeScale}
+                                 key={2}/>
+                        <circle
+                            cx={0}
+                            cy={0}
+                            r={radius * (circleScale/10)}
+                            fill={'black'}
+                        />
                     </g>
                     {/* Hovered Element (wird als letztes gerendert) */}
-                    {isBarPlannedHovered && withOpacitySwitch  && (
+                    {isBarPlannedHovered && withOpacitySwitch && (
                         <path
                             d={
 
