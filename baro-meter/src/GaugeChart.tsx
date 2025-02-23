@@ -17,10 +17,11 @@ interface GaugeProps {
     colorPlannedBar: string
     enableToolTip: boolean
     enableUnitTicks: boolean
+    tiles: number
 }
 
 
-const Pointer = ({x, y, color, markerId}: { x: number; y: number; color: string; markerId: string }) => (
+const Pointer = ({x, y, color, markerId, r}: { x: number; y: number; color: string; markerId: string, r: number }) => (
     <>
         <line
             x1={0}
@@ -111,9 +112,10 @@ const Gauge: React.FC<GaugeProps> = ({
                                          colorTileBg,
                                          colorBookedBar,
                                          colorPlannedBar,
-                                         enableUnitTicks
+                                         enableUnitTicks,
+    tiles
                                      }) => {
-    const numTiles = 8
+    const numTiles = tiles === 0? 1 : tiles
     const ref = useRef<SVGSVGElement>(null);
     const [isTileHovered, setIsTileHovered] = useState<boolean>(false);
     const [isBarBookedHovered, setIsBarBookedHovered] = useState<boolean>(false);
@@ -300,8 +302,8 @@ const Gauge: React.FC<GaugeProps> = ({
 
                         // Tile-Vordergrund (gefüllter Teil)
                         const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
-                            .innerRadius(isTileHovered  && withOpacitySwitch  ? radius * 0.7 - 5 : radius * 0.7)
-                            .outerRadius(isTileHovered  && withOpacitySwitch  ? radius + 1 : radius)
+                            .innerRadius(isTileHovered  && withOpacitySwitch  ? radius * 0.7 - 15 : radius * 0.7)
+                            .outerRadius(isTileHovered  && withOpacitySwitch  ? radius + 10 : radius)
                             .startAngle(tileStartAngle)
                             .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
 
@@ -345,7 +347,7 @@ const Gauge: React.FC<GaugeProps> = ({
                     <circle
                         cx={0}
                         cy={0}
-                        r={15}
+                        r={radius / 10}
                         fill={'black'}
                     />
                     </g>
