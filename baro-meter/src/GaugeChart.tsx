@@ -2,11 +2,12 @@ import React, {useRef, useState} from 'react';
 import * as d3 from 'd3';
 
 
-interface PointerConfig{
+interface PointerConfig {
     scale: number
-    strokeScale:number
+    strokeScale: number
     color: string
 }
+
 interface GaugeProps {
     width?: number; // Breite der SVG (Standard: 200)
     height?: number; // Höhe der SVG (Standard: 200)
@@ -28,6 +29,9 @@ interface GaugeProps {
     pointerBookedConfig?: PointerConfig
     pointerSumConfig?: PointerConfig
     circleScale?: number
+    unitTickFormatter?: (value: number) => string; // Neue Prop für den Formatter
+    unit?: (value: number) => string
+
 }
 
 
@@ -66,7 +70,7 @@ const Pointer = ({x, y, color, markerId, pointerScale, strokeScale}: {
                     refY={markerHeight / 2}
                     orient={'auto'}
                 >
-                    <polygon points={`0 0, ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`} fill={color} />
+                    <polygon points={`0 0, ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`} fill={color}/>
                 </marker>
             </defs>
         </>
@@ -75,7 +79,7 @@ const Pointer = ({x, y, color, markerId, pointerScale, strokeScale}: {
 }
 
 
-const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: number }>; x: number; y: number }) => {
+const Tooltip = ({text, x, y}: { text: Array<{ label: string, value: string }>; x: number; y: number }) => {
 
     return (<div
         style={{
@@ -139,17 +143,19 @@ const Gauge: React.FC<GaugeProps> = ({
                                          enableUnitTicks = true,
                                          tiles = 10,
                                          isTileColorGradient = false,
-                                        pointerBookedConfig = {
+                                         pointerBookedConfig = {
                                              scale: 1,
-                                            strokeScale: 1,
-                                            color:'#025bff'
-                                        },
+                                             strokeScale: 1,
+                                             color: '#025bff'
+                                         },
                                          pointerSumConfig = {
                                              scale: 1,
                                              strokeScale: 1,
-                                             color:'#0ed30e'
+                                             color: '#0ed30e'
                                          },
-                                         circleScale= (.5)
+                                         circleScale = (.5),
+                                         unitTickFormatter,
+                                         unit
                                      }) => {
     const numTiles = tiles <= 0 ? 1 : tiles
     const ref = useRef<SVGSVGElement>(null);
@@ -157,7 +163,7 @@ const Gauge: React.FC<GaugeProps> = ({
     const [isBarBookedHovered, setIsBarBookedHovered] = useState<boolean>(false);
     const [isBarPlannedHovered, setIsBarPlannedHovered] = useState<boolean>(false);
     const [tooltip, setTooltip] = useState<{
-        text: Array<{ label: string, value: number }>;
+        text: Array<{ label: string, value: string }>;
         x: number;
         y: number
     } | null>(null);
@@ -180,14 +186,17 @@ const Gauge: React.FC<GaugeProps> = ({
 
     const handleBarBookedMouseEnter = (event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
+        const formattedBookedValue = unitTickFormatter  && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
 
         setTooltip({
             text: [
-                {label: 'Gebucht:', value: booked},
+                { label: 'Gebucht:', value: formattedBookedValue },
             ],
             x: event.clientX - bbox.left,
             y: event.clientY - bbox.top,
         });
+
+        console.log(tooltip?.text)
         setIsBarBookedHovered(true);
     };
 
@@ -203,29 +212,33 @@ const Gauge: React.FC<GaugeProps> = ({
 
     const handleBarPlannedMouseEnter = (event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
-
+        const formattedPlannedValue = unitTickFormatter && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
         setTooltip({
             text: [
-                {label: 'Geplant:', value: planned}
+                {label: 'Geplant:', value: formattedPlannedValue },
             ],
             x: event.clientX - bbox.left,
             y: event.clientY - bbox.top,
         });
+        console.log(tooltip?.text)
         setIsBarPlannedHovered(true);
     };
 
     const handleTileMouseEnter = (event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
-
+        const formattedValue = unitTickFormatter  && unitTickFormatter(value) !== 'unit' ? unitTickFormatter(value) : unit ? unit(value) : value.toString()
+        const formattedBookedValue = unitTickFormatter  && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
+        const formattedPlannedValue = unitTickFormatter  && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
         setTooltip({
             text: [
-                {label: 'Gesamt:', value: value},
-                {label: 'Gebucht:', value: booked},
-                {label: 'Geplant:', value: planned}
+                {label: 'Gesamt:', value: formattedValue},
+                {label: 'Gebucht:', value: formattedBookedValue },
+                {label: 'Geplant:', value:  formattedPlannedValue },
             ],
             x: event.clientX - bbox.left,
             y: event.clientY - bbox.top,
         });
+        console.log(tooltip?.text)
         setIsTileHovered(true);
     };
 
@@ -271,24 +284,14 @@ const Gauge: React.FC<GaugeProps> = ({
 
     const bookedPointer = calculatePointer(bookedNormalized, radius, 0.7 * pointerBookedConfig.scale);
     const plannedPointer = calculatePointer(sumNormalized, radius, 0.85 * pointerSumConfig.scale);
-    // Debugging-Ausgaben
-    console.log('bookedNormalized:', bookedNormalized);
-    console.log('plannedNormalized:', plannedNormalized);
-    console.log('bookedPointer:', bookedPointer);
-    console.log('plannedPointer:', plannedPointer);
-    console.log('angleBookedPointer:', bookedPointer.angle);
-    console.log('anglePlannedPointer:', plannedPointer.angle);
 
-    const radToDeg = (radians: number) => radians * (180 / Math.PI);
-
-    console.log('angleBookedPointerDeg:', radToDeg(bookedPointer.angle));
-    console.log('anglePlannedPointerDeg:', radToDeg(plannedPointer.angle));
     // Tiles zeichnen
     const tileAngles = d3.range(-Math.PI / 2, Math.PI / 2, (Math.PI) / numTiles);
 
 
     const dayLabels = d3.range(0, thresholdRed + 1, 10)
     const labelRadius = radius * 1.05
+
 
     return (
         <div style={{position: 'relative'}}>
@@ -389,19 +392,21 @@ const Gauge: React.FC<GaugeProps> = ({
                     })}
                     <g>
                         {plannedNormalized !== 0 && bookedNormalized !== sumNormalized && (
-                            <Pointer x={bookedPointer.x} y={bookedPointer.y} color={pointerBookedConfig.color} markerId={'booked'}
+                            <Pointer x={bookedPointer.x} y={bookedPointer.y} color={pointerBookedConfig.color}
+                                     markerId={'booked'}
                                      pointerScale={pointerBookedConfig.scale}
                                      strokeScale={pointerBookedConfig.strokeScale}
                                      key={1}/>
                         )}
-                        <Pointer x={plannedPointer.x} y={plannedPointer.y} color={pointerSumConfig.color} markerId={'planned'}
+                        <Pointer x={plannedPointer.x} y={plannedPointer.y} color={pointerSumConfig.color}
+                                 markerId={'planned'}
                                  pointerScale={pointerSumConfig.scale}
                                  strokeScale={pointerSumConfig.strokeScale}
                                  key={2}/>
                         <circle
                             cx={0}
                             cy={0}
-                            r={radius * (circleScale/10)}
+                            r={radius * (circleScale / 10)}
                             fill={'black'}
                         />
                     </g>
@@ -450,8 +455,6 @@ const Gauge: React.FC<GaugeProps> = ({
                         const normalizedDay = day / thresholdRed; // Skaliere auf den Bereich [0, 1]
                         const angle = angleScale(normalizedDay) - Math.PI / 2;
 
-                        //for debugging
-                        // const angleDeg = (angle  / Math.PI).toFixed(1); // Winkel in Grad umrechnen
 
                         const labelX = Math.cos(angle) * labelRadius;
                         const labelY = Math.sin(angle) * labelRadius;
@@ -482,7 +485,8 @@ const Gauge: React.FC<GaugeProps> = ({
                                     fill="#fff"
                                     fontSize="12"
                                 >
-                                    {day}T
+                                    {unit ? unit(day): day}
+
                                 </text>
                             </g>
                         );
@@ -498,15 +502,6 @@ const Gauge: React.FC<GaugeProps> = ({
                         onMouseEnter={handleTileMouseEnter}
                         onMouseLeave={handleTileMouseLeave}
                     />
-                    {/* Text (aktueller Wert) */}
-                    {/*<text*/}
-                    {/*    textAnchor="middle"*/}
-                    {/*    dy="0.35em"*/}
-                    {/*    fill='#00ffff'*/}
-                    {/*    fontSize="24"*/}
-                    {/*>*/}
-                    {/*    {value}*/}
-                    {/*</text>*/}
 
                 </g>
 
