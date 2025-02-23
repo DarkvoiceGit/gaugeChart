@@ -31,6 +31,7 @@ interface GaugeProps {
     circleScale?: number
     unitTickFormatter?: (value: number) => string; // Neue Prop für den Formatter
     unit?: (value: number) => string
+    gradientType?: 'full' | 'radial'
 
 }
 
@@ -155,7 +156,8 @@ const Gauge: React.FC<GaugeProps> = ({
                                          },
                                          circleScale = (.5),
                                          unitTickFormatter,
-                                         unit
+                                         unit,
+                                         gradientType= 'radial'
                                      }) => {
     const numTiles = tiles <= 0 ? 1 : tiles
     const ref = useRef<SVGSVGElement>(null);
@@ -256,13 +258,13 @@ const Gauge: React.FC<GaugeProps> = ({
             return 1
         }
         if (isTileHovered || isBarBookedHovered || isBarPlannedHovered) {
-            return 0.6
+            return 0.5
         }
         return 1
     }
 
 
-    const getTileColor = (value: number) => {
+    const getTileColor = (value: number, idx) => {
         if (!isTileColorGradient) {
             return value >= thresholdRedNormalized
                 ? colorTileThresholdRed
@@ -270,11 +272,16 @@ const Gauge: React.FC<GaugeProps> = ({
                     ? colorTileThresholdYellow
                     : colorTileThresholdDefault;
         } else {
-            // Farbverlauf von Grün über Gelb zu Rot
-            const colorScale = d3.scaleLinear<string>()
-                .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
-                .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
-            return colorScale(value);
+            if (gradientType === "full") {
+                // Linearer Farbverlauf (wie im ursprünglichen Code)
+                const colorScale = d3.scaleLinear<string>()
+                    .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
+                    .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
+                return colorScale(value);
+            } else {
+                // Radialer Farbverlauf
+                return `url(#gradient-${idx})`;
+            }
         }
     };
 
@@ -296,6 +303,43 @@ const Gauge: React.FC<GaugeProps> = ({
     return (
         <div style={{position: 'relative'}}>
             <svg ref={ref} width={width} height={height}>
+                <defs>
+                    {/* Radiale Farbverläufe für jedes Tile */}
+                    {tileAngles.map((_, index) => {
+                        const tileValueRange = thresholdRed / numTiles;
+                        const tileMinValue = index * tileValueRange;
+                        const tileMinValueNormalized = normalize(tileMinValue);
+                        const tileValueRangeNormalized = normalize(tileValueRange);
+                        const tileValue = tileMinValueNormalized + tileValueRangeNormalized;
+
+                        // Bestimme die Start- und Endfarbe basierend auf dem Wert des Tiles
+                        const startColor = tileValue >= thresholdRedNormalized
+                            ? colorTileThresholdRed
+                            : tileValue >= thresholdYellowNormalized
+                                ? colorTileThresholdYellow
+                                : colorTileThresholdDefault;
+                        const endColor = tileValue >= thresholdRedNormalized
+                            ? colorTileThresholdRed
+                            : tileValue >= thresholdYellowNormalized
+                                ? colorTileThresholdYellow
+                                : colorTileThresholdDefault;
+
+                        return (
+                            <radialGradient
+                                key={index}
+                                id={`gradient-${index}`}
+                                cx="50%"
+                                cy="50%"
+                                r="50%"
+                                fx="50%"
+                                fy="50%"
+                            >
+                                <stop offset="0%" stopColor={startColor}/>
+                                <stop offset="100%" stopColor={endColor}/>
+                            </radialGradient>
+                        );
+                    })}
+                </defs>
                 <g transform={`translate(${width / 2}, ${height / 2})`}>
                     <g>
 
@@ -361,7 +405,7 @@ const Gauge: React.FC<GaugeProps> = ({
                             .startAngle(tileStartAngle)
                             .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
 
-                        const fillColor = getTileColor(sumNormalized)
+                        const fillColor = getTileColor(sumNormalized, index)
 
                         return (
                             <g key={index}>
@@ -485,7 +529,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     fill="#fff"
                                     fontSize="12"
                                 >
-                                    {unit ? unit(day): day}
+                                    {unit ? unit(day) : day}
 
                                 </text>
                             </g>
