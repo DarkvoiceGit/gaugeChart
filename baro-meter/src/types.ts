@@ -43,6 +43,7 @@ interface GaugeConfig {
     withOpacitySwitch?: boolean;
     enableToolTip?: boolean
     enableUnitTicks?: boolean
+    tickFontsize?: string
     circleScale?: number
     enableInnerArc?: boolean
 }

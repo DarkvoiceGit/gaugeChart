@@ -1,17 +1,6 @@
 import './App.css';
 import Gauge from './GaugeChart';
-import {
-    Alert,
-    Checkbox,
-    FilledInput,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
-    Snackbar,
-    Stack,
-    Tooltip
-} from '@mui/material';
+import {Checkbox, FilledInput, FormControl, InputLabel, MenuItem, Select, Stack, Tooltip} from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {useState} from 'react';
 
@@ -278,22 +267,6 @@ function App() {
 
     return (
         <>
-            <Snackbar title={'ToDo:'} open={true} anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
-                <Alert
-                    severity="info"
-                    sx={{ width: '100%', maxWidth: 'none', borderRadius: 0 }}
-                >
-                    ToDo:
-                    <ul>
-                        <li style={{ textDecoration: 'line-through'}}>Custom labels for Outer (tiles), Primary (black) and Secondary (grey) Arcs in Tooltip</li>
-                        <li style={{ textDecoration: 'none'}}>Calculate tick fontSize by radius</li>
-                        <li style={{ textDecoration: 'line-through'}}>Custom Arc Settings</li>
-                        <li style={{ textDecoration: 'line-through'}}>Custom Tick Steps</li>
-                        <li style={{ textDecoration: 'line-through'}}>Ticks use amount of tiles / max as default</li>
-                    </ul>
-                </Alert>
-            </Snackbar>
-
             <div className="gauge-chart">
                 <Stack direction="row" spacing={4} m={5} p={5}>
                     {/* Spalte 1: Zahlen-Einstellungen */}
@@ -511,8 +484,8 @@ function App() {
                             },
                             pointerSumConfig: {
                                 color: pointerBookedColor,
-                                strokeScale:pointerBookedScale,
-                                scale:pointerBookedStrokeScale
+                                strokeScale:pointerBookedStrokeScale,
+                                scale:pointerBookedScale
                             },
                             colorSecondaryBar:colorPlannedBarValue,
                             toolTipLabel: secondaryTooltipLabel

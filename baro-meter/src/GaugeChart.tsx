@@ -29,7 +29,8 @@ const optionsDefaults = {
     thresholdRed: 80,
     thresholdYellow: 60,
     enableToolTip: true,
-    enableUnitTicks: true
+    enableUnitTicks: true,
+    tickFontSize: '1rem'
 }
 
 const tileArcDefaults = {
@@ -233,7 +234,7 @@ const Gauge: React.FC<GaugeProps> = ({
                         colorTileThresholdDefault,
                         value)
                 },
-                {
+                ...(primary && enableInnerArc ? [{
                     label: primaryToolTipLabel ? primaryToolTipLabel + ':' : 'Primary:',
                     value: formattedPrimaryValue,
                     color: colorSelector(
@@ -243,8 +244,8 @@ const Gauge: React.FC<GaugeProps> = ({
                         colorTileThresholdYellow,
                         colorTileThresholdDefault,
                         primary)
-                },
-                ...(secondary ? [{
+                }] : []),
+                ...(secondary && enableInnerArc ? [{
                     label: secondaryToolTipLabel ? secondaryToolTipLabel + ':' : 'Secondary:',
                     value: formattedSecondaryValue,
                     color: colorSelector(
@@ -320,7 +321,11 @@ const Gauge: React.FC<GaugeProps> = ({
 
     const colorScale = d3.scaleLinear<string>()
         .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
-        .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
+        .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed])
+
+
+    const referenceWidth = 600;
+    const scaleFactor = width / referenceWidth;
 
     return (
         <div style={{position: 'relative'}}>
@@ -416,8 +421,8 @@ const Gauge: React.FC<GaugeProps> = ({
 
                         // Tile-Vordergrund (gefüllter Teil)
                         const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
-                            .innerRadius(isTileHovered && withOpacitySwitch ? radius * 0.7 - 15 : radius * 0.7)
-                            .outerRadius(isTileHovered && withOpacitySwitch ? radius + 10 : radius)
+                            .innerRadius(isTileHovered && withOpacitySwitch ? radius * 0.7 - (15*scaleFactor) : radius * 0.7)
+                            .outerRadius(isTileHovered && withOpacitySwitch ? radius + (10*scaleFactor) : radius)
                             .startAngle(tileStartAngle)
                             .endAngle(tileFillEndAngle).padRadius(tileArcCfg.padRadius).padAngle(tileArcCfg.padAngle).cornerRadius(tileArcCfg.cornerRadius);
 
@@ -477,7 +482,7 @@ const Gauge: React.FC<GaugeProps> = ({
 
                                 d3.arc<d3.DefaultArcObject>()
                                     .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
-                                    .outerRadius(radius * 0.75)
+                                    .outerRadius(radius * .75)
                                     .startAngle(angleScale(primaryNormalized))
                                     .cornerRadius(secondaryArcCfg.cornerRadius)
                                     // @ts-ignore
@@ -496,7 +501,7 @@ const Gauge: React.FC<GaugeProps> = ({
                         <path
                             d={d3.arc<d3.DefaultArcObject>()
                                 .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
-                                .outerRadius(radius * 0.75)
+                                .outerRadius(radius * .75)
                                 .startAngle((-Math.PI / 2) + 0.01)
                                 .cornerRadius(primaryArcCfg.cornerRadius)
                                 // @ts-ignore
@@ -543,7 +548,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     textAnchor="middle"
                                     dy="0.35em"
                                     fill="#fff"
-                                    fontSize="12"
+                                    fontSize={(width / 600) + 'rem'}
                                 >
                                     {unit ? unit(Math.round(day)) : Math.round(day)}
 

@@ -31,7 +31,7 @@ const GaugeTooltip = ({text, x, y}: {
                 role="listitem" // Gibt an, dass dies ein Listenelement ist
             >
                 {/* Label auf der linken Seite */}
-                <span style={{textAlign: 'start', paddingRight: 10}}>{item.label}</span>
+                <span style={{textAlign: 'start', paddingRight: 10}} aria-hidden={true}>{item.label}</span>
 
                 {/* Container für Farbe und Wert auf der rechten Seite */}
                 <span style={{display: 'flex', alignItems: 'center', gap: 5}}>
@@ -48,7 +48,7 @@ const GaugeTooltip = ({text, x, y}: {
                         aria-hidden="true" // Versteckt den Kreis für Screenreader
                     />
                     {/* Wert mit fester Breite */}
-                    <span style={{textAlign: 'end', width: 25}} aria-label={`Wert: ${item.value}`}>
+                    <span style={{textAlign: 'end', width: 25}} aria-label={`${item.label}: ${item.value}`}>
                         {item.value}
                     </span>
               </span>
