@@ -460,13 +460,13 @@ const Gauge: React.FC<GaugeProps> = ({
                             <GaugePointer x={primaryPointer.x} y={primaryPointer.y} color={pointerPrimaryConfig.color}
                                           markerId={'primary'}
                                           pointerScale={pointerPrimaryConfig.scale}
-                                          strokeScale={pointerPrimaryConfig.strokeScale}
+                                          strokeScale={scaleFactor ===1 || pointerPrimaryConfig.strokeScale !==1 ? pointerPrimaryConfig.strokeScale  : pointerPrimaryConfig.strokeScale * scaleFactor}
                                           key={1}/>
                         )}
                         <GaugePointer x={secondaryPointer.x} y={secondaryPointer.y} color={pointerSumConfig.color}
                                       markerId={'secondary'}
                                       pointerScale={pointerSumConfig.scale}
-                                      strokeScale={pointerSumConfig.strokeScale}
+                                      strokeScale={scaleFactor ===1 || pointerSumConfig.strokeScale !==1 ? pointerSumConfig.strokeScale : pointerSumConfig.strokeScale * scaleFactor}
                                       key={2}/>
                         <circle
                             cx={0}
