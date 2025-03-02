@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import * as d3 from 'd3';
 import GaugeTooltip from "./GaugeTooltip.tsx";
 import GaugePointer from "./GaugePointer.tsx";
@@ -79,6 +79,16 @@ const primaryArcDefaults = {
     toolTipLabel: 'Primary'
 }
 
+const colorSelector = (thresholdMax: number, thresholdMid: number, colorMax: string, colorMid: string, colorDefault: string, value: number) => {
+    if (value < thresholdMid) {
+        return colorDefault;
+    } else if (value >= thresholdMid && value < thresholdMax) {
+        return colorMid;
+    } else {
+        return colorMax
+    }
+}
+
 const Gauge: React.FC<GaugeProps> = ({
                                          options,
                                          tileArc,
@@ -138,8 +148,6 @@ const Gauge: React.FC<GaugeProps> = ({
         x: number;
         y: number
     } | null>(null);
-    const [colorTile, setTileColor] = useState<string>('')
-
 
 
     let value = primary + (secondary ? secondary : 0)
@@ -157,34 +165,34 @@ const Gauge: React.FC<GaugeProps> = ({
     const thresholdRedNormalized = 1
 
 
+    const handleBarPrimaryMouseEnter = useCallback((event: React.MouseEvent) => {
+        const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0};
+        const formattedPrimaryValue = unitTickFormatter && unitTickFormatter(primary) !== 'unit' ? unitTickFormatter(primary) : unit ? unit(primary) : primary.toString();
 
-    const handleBarPrimaryMouseEnter = (event: React.MouseEvent) => {
-        const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
-        const formattedPrimaryValue = unitTickFormatter && unitTickFormatter(primary) !== 'unit' ? unitTickFormatter(primary) : unit ? unit(primary) : primary.toString()
-
-        setTooltip({
-            text: [
-                {label: primaryToolTipLabel ? primaryToolTipLabel + ':' : 'Primary:', value: formattedPrimaryValue, color: colorPrimaryBar},
-            ],
-            x: event.clientX - bbox.left,
-            y: event.clientY - bbox.top,
+        setTooltip(prevTooltip => {
+            const newTooltip = {
+                text: [
+                    {
+                        label: primaryToolTipLabel ? primaryToolTipLabel + ':' : 'Primary:',
+                        value: formattedPrimaryValue,
+                        color: colorPrimaryBar
+                    },
+                ],
+                x: event.clientX - bbox.left,
+                y: event.clientY - bbox.top,
+            };
+            return JSON.stringify(prevTooltip) === JSON.stringify(newTooltip) ? prevTooltip : newTooltip;
         });
 
-        console.log(tooltip?.text)
         setIsBarPrimaryHovered(true);
-    };
+    }, [primary, unitTickFormatter, unit, colorPrimaryBar, primaryToolTipLabel]);
 
     const handleBarPrimaryMouseLeave = () => {
         setTooltip(null);
         setIsBarPrimaryHovered(false);
     };
 
-    const handleBarSecondaryMouseLeave = () => {
-        setTooltip(null);
-        setIsBarSecondaryHovered(false);
-    };
-
-    const handleBarSecondaryMouseEnter = (event: React.MouseEvent) => {
+    const handleBarSecondaryMouseEnter = useCallback((event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
         const formattedSecondaryValue = secondary ? unitTickFormatter && unitTickFormatter(secondary) !== 'unit' ? unitTickFormatter(secondary) : unit ? unit(secondary) : secondary.toString() : ''
         setTooltip({
@@ -200,21 +208,52 @@ const Gauge: React.FC<GaugeProps> = ({
         });
         console.log(tooltip?.text)
         setIsBarSecondaryHovered(true);
+    }, [secondary, unitTickFormatter, unit, colorSecondaryBar, secondaryToolTipLabel]);
+
+    const handleBarSecondaryMouseLeave = () => {
+        setTooltip(null);
+        setIsBarSecondaryHovered(false);
     };
 
-    const handleTileMouseEnter = (event: React.MouseEvent) => {
+    const handleTileMouseEnter = useCallback((event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
         const formattedValue = unitTickFormatter && unitTickFormatter(value) !== 'unit' ? unitTickFormatter(value) : unit ? unit(value) : value.toString()
         const formattedPrimaryValue = unitTickFormatter && unitTickFormatter(primary) !== 'unit' ? unitTickFormatter(primary) : unit ? unit(primary) : primary.toString()
         const formattedSecondaryValue = secondary ? unitTickFormatter && unitTickFormatter(secondary) !== 'unit' ? unitTickFormatter(secondary) : unit ? unit(secondary) : secondary.toString() : ''
         setTooltip({
             text: [
-                {label: TileTooltipLabel ? TileTooltipLabel + ':' : 'Sum:', value: formattedValue, color: colorTile },
-                {label: primaryToolTipLabel ? primaryToolTipLabel + ':' : 'Primary:', value: formattedPrimaryValue, color: colorPrimaryBar},
+                {
+                    label: TileTooltipLabel ? TileTooltipLabel + ':' : 'Sum:',
+                    value: formattedValue,
+                    color: colorSelector(
+                        thresholdRed,
+                        thresholdYellow,
+                        colorTileThresholdRed,
+                        colorTileThresholdYellow,
+                        colorTileThresholdDefault,
+                        value)
+                },
+                {
+                    label: primaryToolTipLabel ? primaryToolTipLabel + ':' : 'Primary:',
+                    value: formattedPrimaryValue,
+                    color: colorSelector(
+                        thresholdRed,
+                        thresholdYellow,
+                        colorTileThresholdRed,
+                        colorTileThresholdYellow,
+                        colorTileThresholdDefault,
+                        primary)
+                },
                 ...(secondary ? [{
                     label: secondaryToolTipLabel ? secondaryToolTipLabel + ':' : 'Secondary:',
                     value: formattedSecondaryValue,
-                    color: colorSecondaryBar
+                    color: colorSelector(
+                        thresholdRed,
+                        thresholdYellow,
+                        colorTileThresholdRed,
+                        colorTileThresholdYellow,
+                        colorTileThresholdDefault,
+                        secondary)
                 }] : []),
             ],
             x: event.clientX - bbox.left,
@@ -222,7 +261,7 @@ const Gauge: React.FC<GaugeProps> = ({
         });
         console.log(tooltip?.text)
         setIsTileHovered(true);
-    };
+    }, [secondary, unitTickFormatter, unit, colorSecondaryBar, secondaryToolTipLabel, primary, colorPrimaryBar, primaryToolTipLabel])
 
     const handleTileMouseLeave = () => {
         setTooltip(null);
@@ -282,11 +321,6 @@ const Gauge: React.FC<GaugeProps> = ({
     const colorScale = d3.scaleLinear<string>()
         .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
         .range([colorTileThresholdDefault, colorTileThresholdYellow, colorTileThresholdRed]);
-
-    useEffect(() => {
-        const fillColor = getTileColor(sumNormalized, tileAngles.length - 1);
-        setTileColor(fillColor);
-    }, [sumNormalized, tileAngles.length]);
 
     return (
         <div style={{position: 'relative'}}>
