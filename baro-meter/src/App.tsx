@@ -59,6 +59,10 @@ function App() {
     const [secondaryArcPadRadius, _setSecondaryArcPadRadius] = useState<number>(0);
     const [secondaryArcCornerRadius, setSecondaryArcCornerRadius] = useState<number>(5);
 
+    const[tileTooltipLabel, setTileToolTipLabel]=useState<undefined| string>()
+    const[primaryTooltipLabel, setPrimaryToolTipLabel]=useState<undefined| string>()
+    const[secondaryTooltipLabel, setSecondaryToolTipLabel]=useState<undefined| string>()
+
     const formatterDayHourMinute = (value: number) => {
         const days = Math.floor(value);
         const hours = Math.floor((value - days) * 8);
@@ -260,31 +264,11 @@ function App() {
             value: outerArcCornerRadius,
             onChange: setOuterArcCornerRadius,
         },
-        // {
-        //     label: 'PrimaryArcPadAngle:',
-        //     value: primaryArcPadAngle,
-        //     onChange: setPrimaryArcPadAngle,
-        // },
-        // {
-        //     label: 'PrimaryArcPadRadius:',
-        //     value: primaryArcPadRadius,
-        //     onChange: setPrimaryArcPadRadius,
-        // },
         {
             label: 'PrimaryArcCornerRadius:',
             value: primaryArcCornerRadius,
             onChange: setPrimaryArcCornerRadius,
         },
-        // {
-        //     label: 'SecondaryArcPadAngle:',
-        //     value: secondaryArcPadAngle,
-        //     onChange: setSecondaryArcPadAngle,
-        // },
-        // {
-        //     label: 'SecondaryArcPadRadius:',
-        //     value: secondaryArcPadRadius,
-        //     onChange: setSecondaryArcPadRadius,
-        // },
         {
             label: 'SecondaryArcCornerRadius:',
             value: secondaryArcCornerRadius,
@@ -301,7 +285,7 @@ function App() {
                 >
                     ToDo:
                     <ul>
-                        <li style={{ textDecoration: 'none'}}>Custom labels for Outer (tiles), Primary (black) and Secondary (grey) Arcs in Tooltip</li>
+                        <li style={{ textDecoration: 'line-through'}}>Custom labels for Outer (tiles), Primary (black) and Secondary (grey) Arcs in Tooltip</li>
                         <li style={{ textDecoration: 'none'}}>Calculate tick fontSize by radius</li>
                         <li style={{ textDecoration: 'line-through'}}>Custom Arc Settings</li>
                         <li style={{ textDecoration: 'line-through'}}>Custom Tick Steps</li>
@@ -390,6 +374,39 @@ function App() {
                                         ))}
                                 </Select>
                             </FormControl>
+                            <Stack direction={'row'} justifyContent="space-between" alignItems="center">
+                                <InputLabel style={{color: '#fff'}}>Tile-tooltip</InputLabel>
+                                <FilledInput
+                                    aria-label={'Tile-tooltip'}
+                                    color="primary"
+                                    value={tileTooltipLabel}
+                                    type={'string'}
+                                    style={{textAlign: 'right', width: '100px', color: 'white'}}
+                                    onChange={(e) => setTileToolTipLabel(e.target.value)}
+                                />
+                            </Stack>
+                            <Stack direction={'row'} justifyContent="space-between" alignItems="center">
+
+                            <InputLabel style={{color: '#fff'}}>Primary-tooltip</InputLabel>
+                                <FilledInput
+                                    color="primary"
+                                    value={primaryTooltipLabel}
+                                    type={'string'}
+                                    style={{textAlign: 'right', width: '100px', color: 'white'}}
+                                    onChange={(e) => setPrimaryToolTipLabel(e.target.value)}
+                                />
+                        </Stack>
+                            <Stack direction={'row'} justifyContent="space-between" alignItems="center">
+
+                            <InputLabel style={{color: '#fff'}}>Secondary-tooltip</InputLabel>
+                                <FilledInput
+                                    color="primary"
+                                    value={secondaryTooltipLabel}
+                                    type={'string'}
+                                    style={{textAlign: 'right', width: '100px', color: 'white'}}
+                                    onChange={(e) => setSecondaryToolTipLabel(e.target.value)}
+                                />
+                    </Stack>
                         </Stack>
                     </Stack>
 
@@ -441,54 +458,66 @@ function App() {
 
                     {/* Gauge-Chart */}
                     <Gauge
-                        booked={bookedValue}
-                        planned={plannedValue}
                         height={heightValue}
                         width={widthValue}
-                        thresholdYellow={thresholdYellowValue}
-                        thresholdRed={thresholdRedValue}
-                        withOpacitySwitch={withOpacitySwitchValue}
-                        colorTileThresholdRed={colorTileThresholdRedValue}
-                        colorTileThresholdYellow={colorTileThresholdYellowValue}
-                        colorTileThresholdDefault={colorTileThresholdDefaultValue}
-                        colorTileBg={colorTileBgValue}
-                        colorBookedBar={colorBookedBarValue}
-                        colorPlannedBar={colorPlannedBarValue}
-                        enableToolTip={enableToolTipValue}
-                        enableUnitTicks={enableUnitTicksValue}
-                        tiles={tilesValue}
-                        isTileColorGradient={tilesIsGradient}
-                        pointerSumConfig={{
-                            color: pointerBookedColor,
-                            scale: pointerBookedScale,
-                            strokeScale: pointerBookedStrokeScale
-                        }}
-                        pointerBookedConfig={{
-                            color: pointerPlannedColor,
-                            scale: pointerPlannedScale,
-                            strokeScale: pointerPlannedStrokeScale
-                        }}
-                        circleScale={circleScale}
-                        unitTickFormatter={(value: number) => formatToolTipValue(selectedFormatter, value)} // Formatter für Tooltips
+                        primary={bookedValue}
+                        secondary={plannedValue}
                         unit={formatValue}
-                        gradientType={selectedGradientType}
-                        tickEveryNThStep={tickEveryNthStep}
-                        outerArcConfig={{
-                            cornerRadius: outerArcCornerRadius,
-                            padRadius: outerArcPadRadius,
-                            padAngle: outerArcPadAngle
+                        options={{
+                            thresholdYellow: thresholdYellowValue,
+
+                            thresholdRed:thresholdRedValue,
+                            withOpacitySwitch:withOpacitySwitchValue,
+                            enableToolTip:enableToolTipValue,
+                            enableUnitTicks:enableUnitTicksValue,
+                            circleScale,
+                            enableInnerArc: true,
+                        }}
+                        tileArc={{
+                            arcConfig: {
+                                cornerRadius: outerArcCornerRadius,
+                                padRadius: outerArcPadRadius,
+                                padAngle: outerArcPadAngle
+                            },
+                            gradientType:selectedGradientType,
+                            tiles:tilesValue,
+                            tickEveryNThStep:tickEveryNthStep,
+                            isTileColorGradient:tilesIsGradient,
+                            colorTileBg: colorTileBgValue,
+                            colorTileThresholdDefault:colorTileThresholdDefaultValue,
+                            colorTileThresholdYellow: colorTileThresholdYellowValue,
+                            colorTileThresholdRed: colorTileThresholdRedValue,
+                            toolTipLabel: tileTooltipLabel
                         }}
                         primaryArcConfig={{
-                            cornerRadius: primaryArcCornerRadius,
-                            padRadius: primaryArcPadRadius,
-                            padAngle: primaryArcPadAngle
+                            arcConfig:{
+                                cornerRadius: primaryArcCornerRadius,
+                                padRadius: primaryArcPadRadius,
+                                padAngle: primaryArcPadAngle
+                            },
+                            pointerPrimaryConfig:{
+                                color: pointerPlannedColor,
+                                scale: pointerPlannedScale,
+                                strokeScale: pointerPlannedStrokeScale
+                            },
+                            colorPrimaryBar:colorBookedBarValue,
+                            toolTipLabel: primaryTooltipLabel
                         }}
                         secondaryArcConfig={{
-                            cornerRadius: secondaryArcCornerRadius,
-                            padRadius: secondaryArcPadRadius,
-                            padAngle: secondaryArcPadAngle
+                            arcConfig:{
+                                cornerRadius: secondaryArcCornerRadius,
+                                padRadius: secondaryArcPadRadius,
+                                padAngle: secondaryArcPadAngle
+                            },
+                            pointerSumConfig: {
+                                color: pointerBookedColor,
+                                strokeScale:pointerBookedScale,
+                                scale:pointerBookedStrokeScale
+                            },
+                            colorSecondaryBar:colorPlannedBarValue,
+                            toolTipLabel: secondaryTooltipLabel
                         }}
-                        enableInnerArc={true}
+                        unitTickFormatter={(value: number) => formatToolTipValue(selectedFormatter, value)} // Formatter für Tooltips
                     />
                 </Stack>
 
