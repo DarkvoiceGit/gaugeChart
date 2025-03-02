@@ -1,14 +1,26 @@
 import './App.css';
 import Gauge from './GaugeChart';
-import {Checkbox, FilledInput, FormControl, InputLabel, MenuItem, Select, Stack} from '@mui/material';
+import {
+    Alert,
+    Checkbox,
+    FilledInput,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+    Snackbar,
+    Stack,
+    Tooltip
+} from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {useState} from 'react';
 
 // import Gauge from "gauge-package";
 
 function App() {
     // Zustände für die Einstellungen
-    const [bookedValue, setBookedVal] = useState<number>(10);
-    const [plannedValue, setPlannedVal] = useState<number>(5);
+    const [bookedValue, setBookedVal] = useState<number>(40);
+    const [plannedValue, setPlannedVal] = useState<number>(35);
     const [heightValue, setHeightVal] = useState<number>(800);
     const [widthValue, setWidthVal] = useState<number>(600);
     const [thresholdYellowValue, setThresholdYellowVal] = useState<number>(60);
@@ -23,7 +35,7 @@ function App() {
     const [enableToolTipValue, setEnableTooltipVal] = useState<boolean>(true);
     const [enableUnitTicksValue, setEnableUnitTicksVal] = useState<boolean>(true);
     const [tilesValue, setTilesVal] = useState<number>(10);
-    const [tilesIsGradient, setTilesIsGradient] = useState<boolean>(false);
+    const [tilesIsGradient, setTilesIsGradient] = useState<boolean>(true);
     const [pointerBookedScale, setPointerBookedScale] = useState<number>(1);
     const [pointerBookedStrokeScale, setPointerBookedStrokeScale] = useState<number>(1);
     const [pointerBookedColor, setPointerBookedColor] = useState<string>('#0ed30e');
@@ -33,7 +45,19 @@ function App() {
     const [circleScale, setCircleScale] = useState<number>(0.5);
     const [selectedUnit, setSelectedUnit] = useState<string>('undefined');
     const [selectedFormatter, setSelectedFormatter] = useState<string>('undefined');
-    const [selectedGradientType, setSelectedGradientType] = useState<"full" | "tile" | undefined>('full');
+    const [selectedGradientType, setSelectedGradientType] = useState<"full" | "tile" | undefined>('tile');
+    const [tickEveryNthStep, setTickEveryNthStep] = useState<number>(10);
+    const [outerArcPadAngle, setOuterArcPadAngle] = useState<number>(2);
+    const [outerArcPadRadius, setOuterArcPadRadius] = useState<number>(2);
+    const [outerArcCornerRadius, setOuterArcCornerRadius] = useState<number>(5);
+
+    const [primaryArcPadAngle, _setPrimaryArcPadAngle] = useState<number>(0);
+    const [primaryArcPadRadius, _setPrimaryArcPadRadius] = useState<number>(0);
+    const [primaryArcCornerRadius, setPrimaryArcCornerRadius] = useState<number>(5);
+
+    const [secondaryArcPadAngle, _setSecondaryArcPadAngle] = useState<number>(0);
+    const [secondaryArcPadRadius, _setSecondaryArcPadRadius] = useState<number>(0);
+    const [secondaryArcCornerRadius, setSecondaryArcCornerRadius] = useState<number>(5);
 
     const formatterDayHourMinute = (value: number) => {
         const days = Math.floor(value);
@@ -49,11 +73,11 @@ function App() {
         return `${days} T, ${hours} S`;
     };
     const formatterCelsiusToFahrenheit = (value: number) => {
-        const fahrenheit = (value * 9/5) + 32;
+        const fahrenheit = (value * 9 / 5) + 32;
         return `${fahrenheit.toFixed(1)}°F`;
     };
     const formatterFahrenheitToCelsius = (value: number) => {
-        const celsius = (value - 32) * 5/9;
+        const celsius = (value - 32) * 5 / 9;
         return `${celsius.toFixed(1)}°C`;
     };
     const formatterKmToMile = (value: number) => {
@@ -66,44 +90,44 @@ function App() {
     };
 
     const unitOptions = [
-        { value: 'undefined', label: 'Keine Einheit' },
-{ value: 'km', label: 'Kilometer' },
-{ value: 'mile', label: 'Meilen' },
-        { value: 'celsius', label: 'Celsius' },
-        { value: 'fahrenheit', label: 'Fahrenheit' },
-        { value: 'day', label: 'Tage' },
+        {value: 'undefined', label: 'Keine Einheit'},
+        {value: 'km', label: 'Kilometer'},
+        {value: 'mile', label: 'Meilen'},
+        {value: 'celsius', label: 'Celsius'},
+        {value: 'fahrenheit', label: 'Fahrenheit'},
+        {value: 'day', label: 'Tage'},
     ];
 
     const formatterOptions = {
         km: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'kmToMile', label: 'Km zu Meilen' },
+            {value: 'undefined', label: 'Kein Formatter'},
+            {value: 'kmToMile', label: 'Km zu Meilen'},
         ],
         mile: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'mileToKm', label: 'Meilen zu Km' },
+            {value: 'undefined', label: 'Kein Formatter'},
+            {value: 'mileToKm', label: 'Meilen zu Km'},
         ],
         celsius: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'celsiusToFahrenheit', label: 'Celsius zu Fahrenheit' },
+            {value: 'undefined', label: 'Kein Formatter'},
+            {value: 'celsiusToFahrenheit', label: 'Celsius zu Fahrenheit'},
         ],
         fahrenheit: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'fahrenheitToCelsius', label: 'Fahrenheit zu Celsius' },
+            {value: 'undefined', label: 'Kein Formatter'},
+            {value: 'fahrenheitToCelsius', label: 'Fahrenheit zu Celsius'},
         ],
         day: [
-            { value: 'undefined', label: 'Kein Formatter' },
-            { value: 'dayHourMinute', label: 'Tage, Stunden, Minuten' },
-            { value: 'dayHour', label: 'Tage, Stunden' },
+            {value: 'undefined', label: 'Kein Formatter'},
+            {value: 'dayHourMinute', label: 'Tage, Stunden, Minuten'},
+            {value: 'dayHour', label: 'Tage, Stunden'},
         ],
         undefined: [
-            { value: 'undefined', label: 'Kein Formatter' },
+            {value: 'undefined', label: 'Kein Formatter'},
         ],
     };
 
     const gradientType = [
-    { value: 'full', label: 'Full' },
-    { value: 'tile', label: 'Tile' },
+        {value: 'full', label: 'Full'},
+        {value: 'tile', label: 'Tile'},
     ]
 
     const handleUnitChange = (event: any) => {
@@ -162,23 +186,23 @@ function App() {
 
     // Einstellungen für Zahlen
     const numberSettings = [
-        {label: 'Booked:', value: bookedValue, onChange: setBookedVal, type: 'number'},
-        {label: 'Planned:', value: plannedValue, onChange: setPlannedVal, type: 'number'},
+        {label: 'Primary:', value: bookedValue, onChange: setBookedVal, type: 'number'},
+        {label: 'Secondary:', value: plannedValue, onChange: setPlannedVal, type: 'number'},
         {label: 'Height:', value: heightValue, onChange: setHeightVal, type: 'number'},
         {label: 'Width:', value: widthValue, onChange: setWidthVal, type: 'number'},
         {label: 'ThresholdMid:', value: thresholdYellowValue, onChange: setThresholdYellowVal, type: 'number'},
         {label: 'ThresholdMax:', value: thresholdRedValue, onChange: setThresholdRedVal, type: 'number'},
         {label: 'AmountOfTiles:', value: tilesValue, onChange: setTilesVal, type: 'number'},
-        {label: 'PointerBookedScale:', value: pointerBookedScale, onChange: setPointerBookedScale, type: 'number'},
+        {label: 'PointerPrimaryScale:', value: pointerBookedScale, onChange: setPointerBookedScale, type: 'number'},
         {
-            label: 'PointerBookedStrokeScale:',
+            label: 'PointerPrimaryStrokeScale:',
             value: pointerBookedStrokeScale,
             onChange: setPointerBookedStrokeScale,
             type: 'number'
         },
-        {label: 'PointerPlannedScale:', value: pointerPlannedScale, onChange: setPointerPlannedScale, type: 'number'},
+        {label: 'PointerSecondaryScale:', value: pointerPlannedScale, onChange: setPointerPlannedScale, type: 'number'},
         {
-            label: 'PointerPlannedStrokeScale:',
+            label: 'PointerSecondaryStrokeScale:',
             value: pointerPlannedStrokeScale,
             onChange: setPointerPlannedStrokeScale,
             type: 'number'
@@ -208,144 +232,268 @@ function App() {
             onChange: setColorTileThresholdDefaultVal
         },
         {label: 'TileColor:', value: colorTileBgValue, onChange: setColorTileBgVal},
-        {label: 'BookedBarColor:', value: colorBookedBarValue, onChange: setColorBookedBarVal},
-        {label: 'PlannedBarColor:', value: colorPlannedBarValue, onChange: setColorPlannedBarVal},
-        {label: 'PointerBookedColor:', value: pointerBookedColor, onChange: setPointerBookedColor},
-        {label: 'PointerPlannedColor:', value: pointerPlannedColor, onChange: setPointerPlannedColor},
+        {label: 'PrimaryBarColor:', value: colorBookedBarValue, onChange: setColorBookedBarVal},
+        {label: 'SecondaryBarColor:', value: colorPlannedBarValue, onChange: setColorPlannedBarVal},
+        {label: 'PointerPrimaryColor:', value: pointerBookedColor, onChange: setPointerBookedColor},
+        {label: 'PointerSecondaryColor:', value: pointerPlannedColor, onChange: setPointerPlannedColor},
+    ];
+
+
+    const otherSettings = [
+        {
+            label: 'TickEveryNthStep:',
+            value: tickEveryNthStep,
+            onChange: setTickEveryNthStep,
+        },
+        {
+            label: 'OuterArcPadAngle:',
+            value: outerArcPadAngle,
+            onChange: setOuterArcPadAngle,
+        },
+        {
+            label: 'OuterArcPadRadius:',
+            value: outerArcPadRadius,
+            onChange: setOuterArcPadRadius,
+        },
+        {
+            label: 'OuterArcCornerRadius:',
+            value: outerArcCornerRadius,
+            onChange: setOuterArcCornerRadius,
+        },
+        // {
+        //     label: 'PrimaryArcPadAngle:',
+        //     value: primaryArcPadAngle,
+        //     onChange: setPrimaryArcPadAngle,
+        // },
+        // {
+        //     label: 'PrimaryArcPadRadius:',
+        //     value: primaryArcPadRadius,
+        //     onChange: setPrimaryArcPadRadius,
+        // },
+        {
+            label: 'PrimaryArcCornerRadius:',
+            value: primaryArcCornerRadius,
+            onChange: setPrimaryArcCornerRadius,
+        },
+        // {
+        //     label: 'SecondaryArcPadAngle:',
+        //     value: secondaryArcPadAngle,
+        //     onChange: setSecondaryArcPadAngle,
+        // },
+        // {
+        //     label: 'SecondaryArcPadRadius:',
+        //     value: secondaryArcPadRadius,
+        //     onChange: setSecondaryArcPadRadius,
+        // },
+        {
+            label: 'SecondaryArcCornerRadius:',
+            value: secondaryArcCornerRadius,
+            onChange: setSecondaryArcCornerRadius,
+        }
     ];
 
     return (
-        <div className="gauge-chart">
-            <Stack direction="row" spacing={4} m={5} p={5}>
-                {/* Spalte 1: Zahlen-Einstellungen */}
-                <Stack spacing={2} direction="column" flex={1}>
-                    {numberSettings.map(({label, value, onChange, type}, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                            <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
-                            <FilledInput
-                                color="primary"
-                                value={value}
-                                type={type}
-                                style={{textAlign: 'right', width: '100px', color: 'white'}}
-                                onChange={(e) => (Number(e.target.value) < 0 ? onChange(0) : onChange(Number(e.target.value)))}
-                            />
-                        </Stack>
-                    ))}
-                </Stack>
+        <>
+            <Snackbar title={'ToDo:'} open={true} anchorOrigin={{vertical: 'top', horizontal: 'center'}}>
+                <Alert
+                    severity="info"
+                    sx={{ width: '100%', maxWidth: 'none', borderRadius: 0 }}
+                >
+                    ToDo:
+                    <ul>
+                        <li style={{ textDecoration: 'none'}}>Custom labels for Outer (tiles), Primary (black) and Secondary (grey) Arcs in Tooltip</li>
+                        <li style={{ textDecoration: 'none'}}>Calculate tick fontSize by radius</li>
+                        <li style={{ textDecoration: 'line-through'}}>Custom Arc Settings</li>
+                        <li style={{ textDecoration: 'line-through'}}>Custom Tick Steps</li>
+                        <li style={{ textDecoration: 'line-through'}}>Ticks use amount of tiles / max as default</li>
+                    </ul>
+                </Alert>
+            </Snackbar>
 
-                {/* Spalte 2: Boolean-Einstellungen */}
-                <Stack spacing={2} direction="column" flex={1}>
-                    {booleanSettings.map(({label, checked, onChange}, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                            <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
-                            <Checkbox checked={checked} onChange={(_, v) => onChange(v)} disableRipple/>
-                        </Stack>
-                    ))}
+            <div className="gauge-chart">
+                <Stack direction="row" spacing={4} m={5} p={5}>
+                    {/* Spalte 1: Zahlen-Einstellungen */}
                     <Stack spacing={2} direction="column" flex={1}>
-                        {/* Selectbox für gradient type */}
-                        <FormControl fullWidth>
-                            <InputLabel style={{ color: '#fff' }}>GradientType:</InputLabel>
-                            <Select
-                                value={selectedGradientType}
-                                onChange={handleGradientTypeChange}
-                                label="GradientType"
-                                style={{ color: '#fff' }}
-                            >
-                                {
-                                    //@ts-ignore
-                                    gradientType.map((option) => (
+                        {numberSettings.map(({label, value, onChange, type}, index) => (
+                            <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
+                                <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
+                                <FilledInput
+                                    color="primary"
+                                    value={value}
+                                    type={type}
+                                    style={{textAlign: 'right', width: '100px', color: 'white'}}
+                                    onChange={(e) => (Number(e.target.value) < 0 ? onChange(0) : onChange(Number(e.target.value)))}
+                                />
+                            </Stack>
+                        ))}
+                    </Stack>
+
+                    {/* Spalte 2: Boolean-Einstellungen */}
+                    <Stack spacing={2} direction="column" flex={1}>
+                        {booleanSettings.map(({label, checked, onChange}, index) => (
+                            <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
+                                <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
+                                <Checkbox checked={checked} onChange={(_, v) => onChange(v)} disableRipple/>
+                            </Stack>
+                        ))}
+                        <Stack spacing={2} direction="column" flex={1}>
+                            {/* Selectbox für gradient type */}
+                            <FormControl fullWidth>
+                                <InputLabel style={{color: '#fff'}}>GradientType:</InputLabel>
+                                <Select
+                                    value={selectedGradientType}
+                                    onChange={handleGradientTypeChange}
+                                    label="GradientType"
+                                    style={{color: '#fff'}}
+                                >
+                                    {
+                                        //@ts-ignore
+                                        gradientType.map((option) => (
+                                            <MenuItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
+                            {/* SelectBox für Einheiten */}
+                            <FormControl fullWidth>
+                                <InputLabel style={{color: '#fff'}}>Einheit</InputLabel>
+                                <Select
+                                    value={selectedUnit}
+                                    onChange={handleUnitChange}
+                                    label="Einheit"
+                                    style={{color: '#fff'}}
+                                >
+                                    {unitOptions.map((option) => (
                                         <MenuItem key={option.value} value={option.value}>
                                             {option.label}
                                         </MenuItem>
                                     ))}
-                            </Select>
-                        </FormControl>
-                        {/* SelectBox für Einheiten */}
-                        <FormControl fullWidth>
-                            <InputLabel style={{ color: '#fff' }}>Einheit</InputLabel>
-                            <Select
-                                value={selectedUnit}
-                                onChange={handleUnitChange}
-                                label="Einheit"
-                                style={{ color: '#fff' }}
-                            >
-                                {unitOptions.map((option) => (
-                                    <MenuItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                                </Select>
+                            </FormControl>
 
-                        {/* SelectBox für Formatter */}
-                        <FormControl fullWidth>
-                            <InputLabel style={{ color: '#fff' }}>Formatter</InputLabel>
-                            <Select
-                                value={selectedFormatter}
-                                onChange={handleFormatterChange}
-                                label="Formatter"
-                                style={{ color: '#fff' }}
-                            >
-                                {
-                                    //@ts-ignore
-                                    formatterOptions[selectedUnit].map((option) => (
-                                    <MenuItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Stack>
-                </Stack>
-
-                {/* Spalte 3: Farb-Einstellungen */}
-                <Stack spacing={2} direction="column" flex={1} borderRight={'1px dashed #fff'} mr={5} pr={5}>
-                    {colorSettings.map(({label, value, onChange}, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                            <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
-                            <input value={value} type="color" onChange={(e) => onChange(e.target.value)}/>
+                            {/* SelectBox für Formatter */}
+                            <FormControl fullWidth>
+                                <InputLabel style={{color: '#fff'}}>Formatter</InputLabel>
+                                <Select
+                                    value={selectedFormatter}
+                                    onChange={handleFormatterChange}
+                                    label="Formatter"
+                                    style={{color: '#fff'}}
+                                >
+                                    {
+                                        //@ts-ignore
+                                        formatterOptions[selectedUnit].map((option) => (
+                                            <MenuItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
                         </Stack>
-                    ))}
+                    </Stack>
+
+                    {/* Spalte 3: Farb-Einstellungen */}
+                    <Stack spacing={2} direction="column" flex={1} borderRight={'1px dashed #fff'} mr={5} pr={5}>
+                        {colorSettings.map(({label, value, onChange}, index) => (
+                            <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
+                                <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
+                                <input value={value} type="color" onChange={(e) => onChange(e.target.value)}/>
+                            </Stack>
+                        ))}
+                        {otherSettings.map(({label, value, onChange}, index) => {
+                            let render = <></>
+                            if (label === 'TickEveryNthStep:') {
+                                render =
+                                    <Stack key={index} direction="row" justifyContent="space-between"
+                                           alignItems="center">
+                                        <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
+                                        <FilledInput
+                                            color="primary"
+                                            value={value}
+                                            type={'number'}
+                                            style={{textAlign: 'right', width: '100px', color: 'white'}}
+                                            onChange={(e) => (Number(e.target.value) < 0 ? onChange(0) : onChange(Number(e.target.value)))}
+                                        />
+                                        <Tooltip title={'If 0 it calculates the ticks along the tile amount'}>
+                                            <InfoOutlinedIcon color="primary"/>
+                                        </Tooltip>
+
+                                    </Stack>
+                            } else {
+                                render =
+                                    <Stack key={index} direction="row" justifyContent="space-between"
+                                           alignItems="center">
+                                        <InputLabel style={{color: '#fff'}}>{label}</InputLabel>
+                                        <FilledInput
+                                            color="primary"
+                                            value={value}
+                                            type={'number'}
+                                            style={{textAlign: 'right', width: '100px', color: 'white'}}
+                                            onChange={(e) => (Number(e.target.value) < 0 ? onChange(0) : onChange(Number(e.target.value)))}
+                                        />
+                                    </Stack>
+                            }
+                            return render
+                        })}
+                    </Stack>
+
+
+                    {/* Gauge-Chart */}
+                    <Gauge
+                        booked={bookedValue}
+                        planned={plannedValue}
+                        height={heightValue}
+                        width={widthValue}
+                        thresholdYellow={thresholdYellowValue}
+                        thresholdRed={thresholdRedValue}
+                        withOpacitySwitch={withOpacitySwitchValue}
+                        colorTileThresholdRed={colorTileThresholdRedValue}
+                        colorTileThresholdYellow={colorTileThresholdYellowValue}
+                        colorTileThresholdDefault={colorTileThresholdDefaultValue}
+                        colorTileBg={colorTileBgValue}
+                        colorBookedBar={colorBookedBarValue}
+                        colorPlannedBar={colorPlannedBarValue}
+                        enableToolTip={enableToolTipValue}
+                        enableUnitTicks={enableUnitTicksValue}
+                        tiles={tilesValue}
+                        isTileColorGradient={tilesIsGradient}
+                        pointerSumConfig={{
+                            color: pointerBookedColor,
+                            scale: pointerBookedScale,
+                            strokeScale: pointerBookedStrokeScale
+                        }}
+                        pointerBookedConfig={{
+                            color: pointerPlannedColor,
+                            scale: pointerPlannedScale,
+                            strokeScale: pointerPlannedStrokeScale
+                        }}
+                        circleScale={circleScale}
+                        unitTickFormatter={(value: number) => formatToolTipValue(selectedFormatter, value)} // Formatter für Tooltips
+                        unit={formatValue}
+                        gradientType={selectedGradientType}
+                        tickEveryNThStep={tickEveryNthStep}
+                        outerArcConfig={{
+                            cornerRadius: outerArcCornerRadius,
+                            padRadius: outerArcPadRadius,
+                            padAngle: outerArcPadAngle
+                        }}
+                        primaryArcConfig={{
+                            cornerRadius: primaryArcCornerRadius,
+                            padRadius: primaryArcPadRadius,
+                            padAngle: primaryArcPadAngle
+                        }}
+                        secondaryArcConfig={{
+                            cornerRadius: secondaryArcCornerRadius,
+                            padRadius: secondaryArcPadRadius,
+                            padAngle: secondaryArcPadAngle
+                        }}
+                        enableInnerArc={true}
+                    />
                 </Stack>
 
-
-                {/* Gauge-Chart */}
-                <Gauge
-                    booked={bookedValue}
-                    planned={plannedValue}
-                    height={heightValue}
-                    width={widthValue}
-                    thresholdYellow={thresholdYellowValue}
-                    thresholdRed={thresholdRedValue}
-                    withOpacitySwitch={withOpacitySwitchValue}
-                    colorTileThresholdRed={colorTileThresholdRedValue}
-                    colorTileThresholdYellow={colorTileThresholdYellowValue}
-                    colorTileThresholdDefault={colorTileThresholdDefaultValue}
-                    colorTileBg={colorTileBgValue}
-                    colorBookedBar={colorBookedBarValue}
-                    colorPlannedBar={colorPlannedBarValue}
-                    enableToolTip={enableToolTipValue}
-                    enableUnitTicks={enableUnitTicksValue}
-                    tiles={tilesValue}
-                    isTileColorGradient={tilesIsGradient}
-                    pointerSumConfig={{
-                        color: pointerBookedColor,
-                        scale: pointerBookedScale,
-                        strokeScale: pointerBookedStrokeScale
-                    }}
-                    pointerBookedConfig={{
-                        color: pointerPlannedColor,
-                        scale: pointerPlannedScale,
-                        strokeScale: pointerPlannedStrokeScale
-                    }}
-                    circleScale={circleScale}
-                    unitTickFormatter={(value: number) => formatToolTipValue(selectedFormatter, value)} // Formatter für Tooltips
-                    unit={formatValue}
-                    gradientType={selectedGradientType}
-                />
-            </Stack>
-
-        </div>
+            </div>
+        </>
     );
 }
 

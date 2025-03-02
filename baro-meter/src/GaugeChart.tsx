@@ -8,6 +8,12 @@ interface PointerConfig {
     color: string
 }
 
+interface ArcConfig {
+    padAngle: number
+    padRadius: number
+    cornerRadius: number
+}
+
 interface GaugeProps {
     width?: number; // Breite der SVG (Standard: 200)
     height?: number; // Höhe der SVG (Standard: 200)
@@ -32,6 +38,11 @@ interface GaugeProps {
     unitTickFormatter?: (value: number) => string; // Neue Prop für den Formatter
     unit?: (value: number) => string
     gradientType?: 'full' | 'tile'
+    tickEveryNThStep?: number
+    outerArcConfig?: ArcConfig
+    primaryArcConfig?: ArcConfig
+    secondaryArcConfig?: ArcConfig
+    enableInnerArc?: boolean
 
 }
 
@@ -157,7 +168,24 @@ const Gauge: React.FC<GaugeProps> = ({
                                          circleScale = (.5),
                                          unitTickFormatter,
                                          unit,
-                                         gradientType= 'tile'
+                                         gradientType = 'tile',
+                                         tickEveryNThStep = 0,
+                                         outerArcConfig = {
+                                             cornerRadius: 5,
+                                             padAngle: 2,
+                                             padRadius: 2
+                                         },
+                                         primaryArcConfig = {
+                                             cornerRadius: 5,
+                                             padAngle: 0,
+                                             padRadius: 0
+                                         },
+                                         secondaryArcConfig = {
+                                             cornerRadius: 5,
+                                             padAngle: 0,
+                                             padRadius: 0
+                                         },
+                                         enableInnerArc = false
                                      }) => {
     const numTiles = tiles <= 0 ? 1 : tiles
     const ref = useRef<SVGSVGElement>(null);
@@ -188,11 +216,11 @@ const Gauge: React.FC<GaugeProps> = ({
 
     const handleBarBookedMouseEnter = (event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
-        const formattedBookedValue = unitTickFormatter  && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
+        const formattedBookedValue = unitTickFormatter && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
 
         setTooltip({
             text: [
-                { label: 'Gebucht:', value: formattedBookedValue },
+                {label: 'Primary:', value: formattedBookedValue},
             ],
             x: event.clientX - bbox.left,
             y: event.clientY - bbox.top,
@@ -217,7 +245,7 @@ const Gauge: React.FC<GaugeProps> = ({
         const formattedPlannedValue = unitTickFormatter && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
         setTooltip({
             text: [
-                {label: 'Geplant:', value: formattedPlannedValue },
+                {label: 'Secondary:', value: formattedPlannedValue},
             ],
             x: event.clientX - bbox.left,
             y: event.clientY - bbox.top,
@@ -228,14 +256,14 @@ const Gauge: React.FC<GaugeProps> = ({
 
     const handleTileMouseEnter = (event: React.MouseEvent) => {
         const bbox = ref.current?.getBoundingClientRect() ?? {left: 0, right: 0, bottom: 0, top: 0}; // Position des SVG innerhalb des Viewports
-        const formattedValue = unitTickFormatter  && unitTickFormatter(value) !== 'unit' ? unitTickFormatter(value) : unit ? unit(value) : value.toString()
-        const formattedBookedValue = unitTickFormatter  && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
-        const formattedPlannedValue = unitTickFormatter  && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
+        const formattedValue = unitTickFormatter && unitTickFormatter(value) !== 'unit' ? unitTickFormatter(value) : unit ? unit(value) : value.toString()
+        const formattedBookedValue = unitTickFormatter && unitTickFormatter(booked) !== 'unit' ? unitTickFormatter(booked) : unit ? unit(booked) : booked.toString()
+        const formattedPlannedValue = unitTickFormatter && unitTickFormatter(planned) !== 'unit' ? unitTickFormatter(planned) : unit ? unit(planned) : planned.toString()
         setTooltip({
             text: [
-                {label: 'Gesamt:', value: formattedValue},
-                {label: 'Gebucht:', value: formattedBookedValue },
-                {label: 'Geplant:', value:  formattedPlannedValue },
+                {label: 'Sum:', value: formattedValue},
+                {label: 'Primary:', value: formattedBookedValue},
+                {label: 'Secondary:', value: formattedPlannedValue},
             ],
             x: event.clientX - bbox.left,
             y: event.clientY - bbox.top,
@@ -296,7 +324,7 @@ const Gauge: React.FC<GaugeProps> = ({
     const tileAngles = d3.range(-Math.PI / 2, Math.PI / 2, (Math.PI) / numTiles);
 
 
-    const dayLabels = d3.range(0, thresholdRed + 1, 10)
+    const dayLabels = d3.range(0, thresholdRed + 1, tickEveryNThStep === 0 ? thresholdRed / numTiles : tickEveryNThStep); //tickEveryNThStep === 0 ? tiles  : tickEveryNThStep
     const labelRadius = radius * 1.05
 
     const colorScale = d3.scaleLinear<string>()
@@ -331,51 +359,51 @@ const Gauge: React.FC<GaugeProps> = ({
                                 fx="50%"
                                 fy="50%"
                             >
-                                <stop offset="0%" stopColor={startColor} />
-                                <stop offset="100%" stopColor={endColor} />
+                                <stop offset="0%" stopColor={startColor}/>
+                                <stop offset="100%" stopColor={endColor}/>
                             </linearGradient>
                         );
                     })}
                 </defs>
                 <g transform={`translate(${width / 2}, ${height / 2})`}>
-                    <g>
-
-                        <path
-                            d={d3.arc<d3.DefaultArcObject>()
-                                .innerRadius(radius * 0.6)
-                                .outerRadius(radius * 0.7)
-                                .startAngle((-Math.PI / 2) + .01)
-                                .cornerRadius(5)
-                                // @ts-ignore
-                                .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
-                            fill={colorPlannedBar}
-                            stroke={'#000'}
-                            strokeWidth={0.5}
-                            opacity={getOpacity(false, false, true)}
-                            onMouseEnter={handleBarPlannedMouseEnter}
-                            onMouseLeave={handleBarPlannedMouseLeave}
-                        />
-
-
-                        {/*Hauptfarbe (schwarz) - basierend auf valueBooked*/}
-                        <path
-                            d={d3.arc<d3.DefaultArcObject>()
-                                .innerRadius(radius * 0.6)
-                                .outerRadius(radius * 0.7)
-                                .startAngle((-Math.PI / 2) + .01)
-                                .cornerRadius(5)
-                                // @ts-ignore
-                                .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
-                            fill={colorBookedBar}
-                            stroke={'#000'}
-                            strokeWidth={0.5}
-                            onMouseEnter={handleBarBookedMouseEnter}
-                            onMouseLeave={handleBarBookedMouseLeave}
-                            opacity={getOpacity(false, true, false)}
-                        />
+                    {enableInnerArc && (<g>
+                            <path
+                                d={d3.arc<d3.DefaultArcObject>()
+                                    .innerRadius(radius * 0.6)
+                                    .outerRadius(radius * 0.7)
+                                    .startAngle(isBarPlannedHovered || isTileHovered && withOpacitySwitch ? angleScale(bookedNormalized) : (-Math.PI / 2) + .01)
+                                    .cornerRadius(secondaryArcConfig.cornerRadius)
+                                    // @ts-ignore
+                                    .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
+                                fill={colorPlannedBar}
+                                stroke={'#000'}
+                                strokeWidth={0.5}
+                                opacity={getOpacity(false, false, true)}
+                                onMouseEnter={handleBarPlannedMouseEnter}
+                                onMouseLeave={handleBarPlannedMouseLeave}
+                            />
 
 
-                    </g>
+                            {/*Hauptfarbe (schwarz) - basierend auf valueBooked*/}
+                            <path
+                                d={d3.arc<d3.DefaultArcObject>()
+                                    .innerRadius(radius * 0.6)
+                                    .outerRadius(radius * 0.7)
+                                    .startAngle((-Math.PI / 2) + .01)
+                                    .cornerRadius(primaryArcConfig.cornerRadius)
+                                    // @ts-ignore
+                                    .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
+                                fill={colorBookedBar}
+                                stroke={'#000'}
+                                strokeWidth={0.5}
+                                onMouseEnter={handleBarBookedMouseEnter}
+                                onMouseLeave={handleBarBookedMouseLeave}
+                                opacity={getOpacity(false, true, false)}
+                            />
+
+                        </g>
+                    )}
+
 
                     {tileAngles.map((angle, index) => {
                         const tileStartAngle = angle;
@@ -393,14 +421,14 @@ const Gauge: React.FC<GaugeProps> = ({
                             .innerRadius(radius * 0.7)
                             .outerRadius(radius)
                             .startAngle(tileStartAngle)
-                            .endAngle(tileEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
+                            .endAngle(tileEndAngle).padRadius(outerArcConfig.padRadius).padAngle(outerArcConfig.padAngle).cornerRadius(outerArcConfig.cornerRadius);
 
                         // Tile-Vordergrund (gefüllter Teil)
                         const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
                             .innerRadius(isTileHovered && withOpacitySwitch ? radius * 0.7 - 15 : radius * 0.7)
                             .outerRadius(isTileHovered && withOpacitySwitch ? radius + 10 : radius)
                             .startAngle(tileStartAngle)
-                            .endAngle(tileFillEndAngle).padRadius(2).padAngle(2).cornerRadius(5);
+                            .endAngle(tileFillEndAngle).padRadius(outerArcConfig.padRadius).padAngle(outerArcConfig.padAngle).cornerRadius(outerArcConfig.cornerRadius);
 
                         const fillColor = getTileColor(sumNormalized, index)
 
@@ -432,7 +460,7 @@ const Gauge: React.FC<GaugeProps> = ({
                         );
                     })}
                     <g>
-                        {plannedNormalized !== 0 && bookedNormalized !== sumNormalized && (
+                        {plannedNormalized !== 0 && bookedNormalized !== sumNormalized && enableInnerArc && (
                             <Pointer x={bookedPointer.x} y={bookedPointer.y} color={pointerBookedConfig.color}
                                      markerId={'booked'}
                                      pointerScale={pointerBookedConfig.scale}
@@ -452,7 +480,7 @@ const Gauge: React.FC<GaugeProps> = ({
                         />
                     </g>
                     {/* Hovered Element (wird als letztes gerendert) */}
-                    {isBarPlannedHovered && withOpacitySwitch && (
+                    {isBarPlannedHovered && withOpacitySwitch && enableInnerArc && (
                         <path
                             d={
 
@@ -460,7 +488,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
                                     .outerRadius(radius * 0.75)
                                     .startAngle(angleScale(bookedNormalized))
-                                    .cornerRadius(5)
+                                    .cornerRadius(secondaryArcConfig.cornerRadius)
                                     // @ts-ignore
                                     .endAngle(Math.min(angleScale(bookedNormalized + plannedNormalized), Math.PI / 2))(null)! // Begrenzung auf Math.PI / 2
                             }
@@ -473,13 +501,13 @@ const Gauge: React.FC<GaugeProps> = ({
                             style={{pointerEvents: 'none'}} // Verhindert erneutes Hover
                         />
                     )}
-                    {isBarBookedHovered && withOpacitySwitch && (
+                    {isBarBookedHovered && withOpacitySwitch && enableInnerArc && (
                         <path
                             d={d3.arc<d3.DefaultArcObject>()
                                 .innerRadius(radius * 0.55) // Vergrößerung beim Hovern
                                 .outerRadius(radius * 0.75)
                                 .startAngle((-Math.PI / 2) + 0.01)
-                                .cornerRadius(5)
+                                .cornerRadius(primaryArcConfig.cornerRadius)
                                 // @ts-ignore
                                 .endAngle(Math.min(angleScale(bookedNormalized), Math.PI / 2))(null)!} // Begrenzung auf Math.PI / 2
                             fill={colorBookedBar}
@@ -526,7 +554,7 @@ const Gauge: React.FC<GaugeProps> = ({
                                     fill="#fff"
                                     fontSize="12"
                                 >
-                                    {unit ? unit(day) : day}
+                                    {unit ? unit(Math.round(day)) : Math.round(day)}
 
                                 </text>
                             </g>
