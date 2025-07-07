@@ -46,6 +46,13 @@ interface GaugeConfig {
     tickFontsize?: string
     circleScale?: number
     enableInnerArc?: boolean
+    fontColor?: string
+    tooltipBgColor?: {
+        r: number,
+        g: number,
+        b: number
+        a: number
+    }
 }
 
 export interface GaugeProps {

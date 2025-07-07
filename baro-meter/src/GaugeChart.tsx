@@ -77,7 +77,15 @@ const primaryArcDefaults = {
         color: '#025bff'
     },
     colorPrimaryBar: '#000',
-    toolTipLabel: 'Primary'
+    toolTipLabel: 'Primary',
+    tickFontSize: '1rem',
+    fontColor: '#fff',
+    tooltipBgColor: {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0.8
+    }
 }
 
 const colorSelector = (thresholdMax: number, thresholdMid: number, colorMax: string, colorMid: string, colorDefault: string, value: number) => {
