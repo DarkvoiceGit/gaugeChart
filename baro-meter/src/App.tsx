@@ -3,6 +3,7 @@ import Gauge from './GaugeChart';
 import {Checkbox, FilledInput, FormControl, InputLabel, MenuItem, Select, Stack, Tooltip} from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {useState} from 'react';
+import { TileFillStyle } from './utils/constants';
 
 // import Gauge from "gauge-package";
 
@@ -39,6 +40,10 @@ function App() {
     const [outerArcPadAngle, setOuterArcPadAngle] = useState<number>(2);
     const [outerArcPadRadius, setOuterArcPadRadius] = useState<number>(2);
     const [outerArcCornerRadius, setOuterArcCornerRadius] = useState<number>(5);
+
+    const [tileFillStyle, setTileFillStyle] = useState<TileFillStyle>(TileFillStyle.FILLED);
+    const [tileBorderColor, setTileBorderColor] = useState<string>('#000000');
+    const [tileBorderThickness, setTileBorderThickness] = useState<number>(1);
 
     const [primaryArcPadAngle, _setPrimaryArcPadAngle] = useState<number>(0);
     const [primaryArcPadRadius, _setPrimaryArcPadRadius] = useState<number>(0);
@@ -122,6 +127,13 @@ function App() {
         {value: 'full', label: 'Full'},
         {value: 'tile', label: 'Tile'},
     ]
+    
+    const fillStyleOptions = [
+        {value: TileFillStyle.FILLED, label: 'Filled'},
+        {value: TileFillStyle.DOTTED, label: 'Dotted'},
+        {value: TileFillStyle.DASHED, label: 'Dashed'},
+        {value: TileFillStyle.OUTLINED, label: 'Outlined'},
+    ]
 
     const handleUnitChange = (event: any) => {
         const unit = event.target.value as string;
@@ -136,6 +148,11 @@ function App() {
     const handleGradientTypeChange = (event: any) => {
         const gradientTypeSel = event.target.value as "full" | "tile";
         setSelectedGradientType(gradientTypeSel);
+    };
+    
+    const handleFillStyleChange = (event: any) => {
+        const fillStyle = event.target.value as TileFillStyle;
+        setTileFillStyle(fillStyle);
     };
 
     const formatValue = (value: number) => {
@@ -225,6 +242,7 @@ function App() {
             onChange: setColorTileThresholdDefaultVal
         },
         {label: 'TileColor:', value: colorTileBgValue, onChange: setColorTileBgVal},
+        {label: 'TileBorderColor:', value: tileBorderColor, onChange: setTileBorderColor},
         {label: 'PrimaryBarColor:', value: colorBookedBarValue, onChange: setColorBookedBarVal},
         {label: 'SecondaryBarColor:', value: colorPlannedBarValue, onChange: setColorPlannedBarVal},
         {label: 'PointerPrimaryColor:', value: pointerBookedColor, onChange: setPointerBookedColor},
@@ -237,6 +255,11 @@ function App() {
             label: 'TickEveryNthStep:',
             value: tickEveryNthStep,
             onChange: setTickEveryNthStep,
+        },
+        {
+            label: 'TileBorderThickness:',
+            value: tileBorderThickness,
+            onChange: setTileBorderThickness,
         },
         {
             label: 'OuterArcPadAngle:',
@@ -306,6 +329,23 @@ function App() {
                                     {
                                         //@ts-ignore
                                         gradientType.map((option) => (
+                                            <MenuItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </MenuItem>
+                                        ))}
+                                </Select>
+                            </FormControl>
+                            {/* Selectbox für tile fill style */}
+                            <FormControl fullWidth>
+                                <InputLabel style={{color: '#fff'}}>TileFillStyle:</InputLabel>
+                                <Select
+                                    value={tileFillStyle}
+                                    onChange={handleFillStyleChange}
+                                    label="TileFillStyle"
+                                    style={{color: '#fff'}}
+                                >
+                                    {
+                                        fillStyleOptions.map((option) => (
                                             <MenuItem key={option.value} value={option.value}>
                                                 {option.label}
                                             </MenuItem>
@@ -460,6 +500,9 @@ function App() {
                             colorTileThresholdDefault:colorTileThresholdDefaultValue,
                             colorTileThresholdYellow: colorTileThresholdYellowValue,
                             colorTileThresholdRed: colorTileThresholdRedValue,
+                            fillStyle: tileFillStyle,
+                            borderColor: tileBorderColor,
+                            borderThickness: tileBorderThickness,
                             toolTipLabel: tileTooltipLabel
                         }}
                         primaryArcConfig={{
