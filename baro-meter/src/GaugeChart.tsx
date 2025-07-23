@@ -123,6 +123,17 @@ const Gauge: React.FC<GaugeProps> = ({
   const secondaryPointer = calculatePointer(sumNormalized, radius, 0.85 * pointerSumConfig.scale);
 
   // Event handlers for hover effects
+  const updateTooltipPosition = useCallback((event: React.MouseEvent) => {
+    if (tooltip) {
+      const bbox = ref.current?.getBoundingClientRect() ?? { left: 0, top: 0 };
+      setTooltip({
+        ...tooltip,
+        x: event.clientX - bbox.left,
+        y: event.clientY - bbox.top,
+      });
+    }
+  }, [tooltip]);
+
   const handleBarPrimaryMouseEnter = useCallback((event: React.MouseEvent) => {
     const bbox = ref.current?.getBoundingClientRect() ?? { left: 0, top: 0 };
     const formattedPrimaryValue = formatValue(primary, unitTickFormatter, unit);
@@ -141,6 +152,10 @@ const Gauge: React.FC<GaugeProps> = ({
 
     setIsBarPrimaryHovered(true);
   }, [primary, unitTickFormatter, unit, colorPrimaryBar, primaryToolTipLabel]);
+
+  const handleBarPrimaryMouseMove = useCallback((event: React.MouseEvent) => {
+    updateTooltipPosition(event);
+  }, [updateTooltipPosition]);
 
   const handleBarPrimaryMouseLeave = () => {
     setTooltip(null);
@@ -165,6 +180,10 @@ const Gauge: React.FC<GaugeProps> = ({
     
     setIsBarSecondaryHovered(true);
   }, [secondary, unitTickFormatter, unit, colorSecondaryBar, secondaryToolTipLabel]);
+
+  const handleBarSecondaryMouseMove = useCallback((event: React.MouseEvent) => {
+    updateTooltipPosition(event);
+  }, [updateTooltipPosition]);
 
   const handleBarSecondaryMouseLeave = () => {
     setTooltip(null);
@@ -238,6 +257,10 @@ const Gauge: React.FC<GaugeProps> = ({
     enableInnerArc
   ]);
 
+  const handleTileMouseMove = useCallback((event: React.MouseEvent) => {
+    updateTooltipPosition(event);
+  }, [updateTooltipPosition]);
+
   const handleTileMouseLeave = () => {
     setTooltip(null);
     setIsTileHovered(false);
@@ -309,8 +332,10 @@ const Gauge: React.FC<GaugeProps> = ({
               enableOpacityEffect={withOpacitySwitch}
               onPrimaryMouseEnter={handleBarPrimaryMouseEnter}
               onPrimaryMouseLeave={handleBarPrimaryMouseLeave}
+              onPrimaryMouseMove={handleBarPrimaryMouseMove}
               onSecondaryMouseEnter={handleBarSecondaryMouseEnter}
               onSecondaryMouseLeave={handleBarSecondaryMouseLeave}
+              onSecondaryMouseMove={handleBarSecondaryMouseMove}
             />
           )}
 
@@ -328,6 +353,7 @@ const Gauge: React.FC<GaugeProps> = ({
             scaleFactor={scaleFactor}
             onMouseEnter={handleTileMouseEnter}
             onMouseLeave={handleTileMouseLeave}
+            onMouseMove={handleTileMouseMove}
           />
 
           {/* Pointers */}
@@ -388,6 +414,7 @@ const Gauge: React.FC<GaugeProps> = ({
               opacity={1}
               onMouseEnter={handleBarSecondaryMouseEnter}
               onMouseLeave={handleBarSecondaryMouseLeave}
+              onMouseMove={handleBarSecondaryMouseMove}
               style={{pointerEvents: 'none'}} // Prevents re-triggering hover
             />
           )}
@@ -408,6 +435,7 @@ const Gauge: React.FC<GaugeProps> = ({
               opacity={1}
               onMouseEnter={handleBarPrimaryMouseEnter}
               onMouseLeave={handleBarPrimaryMouseLeave}
+              onMouseMove={handleBarPrimaryMouseMove}
               style={{pointerEvents: 'none'}} // Prevents re-triggering hover
             />
           )}

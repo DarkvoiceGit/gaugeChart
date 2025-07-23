@@ -36,8 +36,10 @@ interface GaugeArcsProps {
   enableOpacityEffect: boolean;
   onPrimaryMouseEnter: (event: React.MouseEvent) => void;
   onPrimaryMouseLeave: () => void;
+  onPrimaryMouseMove?: (event: React.MouseEvent) => void;
   onSecondaryMouseEnter: (event: React.MouseEvent) => void;
   onSecondaryMouseLeave: () => void;
+  onSecondaryMouseMove?: (event: React.MouseEvent) => void;
 }
 
 /**
@@ -51,8 +53,10 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
   enableOpacityEffect,
   onPrimaryMouseEnter,
   onPrimaryMouseLeave,
+  onPrimaryMouseMove,
   onSecondaryMouseEnter,
-  onSecondaryMouseLeave
+  onSecondaryMouseLeave,
+  onSecondaryMouseMove
 }) => {
   const { primary: primaryNormalized, secondary: secondaryNormalized } = normalizedValues;
   const innerRadius = radius * RADIUS_SCALES.INNER_ARC;
@@ -83,6 +87,7 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
         opacity={getOpacity(false, false, true, hoverStates, enableOpacityEffect)}
         onMouseEnter={onSecondaryMouseEnter}
         onMouseLeave={onSecondaryMouseLeave}
+        onMouseMove={onSecondaryMouseMove}
       />
 
       {/* Primary Arc */}
@@ -101,6 +106,7 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
         strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_THIN}
         onMouseEnter={onPrimaryMouseEnter}
         onMouseLeave={onPrimaryMouseLeave}
+        onMouseMove={onPrimaryMouseMove}
         opacity={getOpacity(false, true, false, hoverStates, enableOpacityEffect)}
       />
 
@@ -122,6 +128,7 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
           opacity={1}
           onMouseEnter={onSecondaryMouseEnter}
           onMouseLeave={onSecondaryMouseLeave}
+          onMouseMove={onSecondaryMouseMove}
           style={{pointerEvents: 'none'}} // Prevents re-triggering hover
         />
       )}
@@ -144,6 +151,7 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
           opacity={1}
           onMouseEnter={onPrimaryMouseEnter}
           onMouseLeave={onPrimaryMouseLeave}
+          onMouseMove={onPrimaryMouseMove}
           style={{pointerEvents: 'none'}} // Prevents re-triggering hover
         />
       )}

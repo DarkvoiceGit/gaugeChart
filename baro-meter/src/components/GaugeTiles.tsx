@@ -37,6 +37,7 @@ interface GaugeTilesProps {
   scaleFactor: number;
   onMouseEnter: (event: React.MouseEvent) => void;
   onMouseLeave: () => void;
+  onMouseMove?: (event: React.MouseEvent) => void;
 }
 
 /**
@@ -54,7 +55,8 @@ const GaugeTiles: React.FC<GaugeTilesProps> = ({
   enableOpacityEffect,
   scaleFactor,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  onMouseMove
 }) => {
   // Helper function to normalize values
   const normalize = (value: number) => {
@@ -144,6 +146,7 @@ const GaugeTiles: React.FC<GaugeTilesProps> = ({
         fill="transparent"
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
       />
     </>
   );
