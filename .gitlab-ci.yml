@@ -1,0 +1,31 @@
+image: node:latest
+
+stages:
+  - build
+  - deploy
+
+cache:
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build:deploy
+  artifacts:
+    paths:
+      - dist/
+
+pages:
+  stage: deploy
+  script:
+    # GitLab Pages requires the artifacts to be in a 'public' directory
+    - rm -rf public
+    - cp -r dist public
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - master  # support both main and master branch names
