@@ -1,45 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { getOpacity, formatValue, colorSelector, getTileColor } from '../../utils/gaugeUtils';
+import { getOpacity, formatValue, colorSelector, getTileColor, ElementType } from '../../utils/gaugeUtils';
 import { FormatterType } from '../../utils/constants';
 
 describe('getOpacity', () => {
   it('returns 1 when opacity effect is disabled', () => {
     const hoverStates = { tile: false, primaryBar: false, secondaryBar: false };
-    expect(getOpacity(true, false, false, hoverStates, false)).toBe(1);
-    expect(getOpacity(false, true, false, hoverStates, false)).toBe(1);
-    expect(getOpacity(false, false, true, hoverStates, false)).toBe(1);
+    expect(getOpacity(ElementType.FILLED_TILE, hoverStates, false)).toBe(1);
+    expect(getOpacity(ElementType.PRIMARY_BAR, hoverStates, false)).toBe(1);
+    expect(getOpacity(ElementType.SECONDARY_BAR, hoverStates, false)).toBe(1);
   });
 
   it('returns 1 for hovered elements', () => {
     // Primary bar hovered
-    expect(getOpacity(false, true, false, { tile: false, primaryBar: true, secondaryBar: false }, true)).toBe(1);
+    expect(getOpacity(ElementType.PRIMARY_BAR, { tile: false, primaryBar: true, secondaryBar: false }, true)).toBe(1);
     
     // Secondary bar hovered
-    expect(getOpacity(false, false, true, { tile: false, primaryBar: false, secondaryBar: true }, true)).toBe(1);
+    expect(getOpacity(ElementType.SECONDARY_BAR, { tile: false, primaryBar: false, secondaryBar: true }, true)).toBe(1);
     
     // Tile hovered
-    expect(getOpacity(true, false, false, { tile: true, primaryBar: false, secondaryBar: false }, true)).toBe(1);
+    expect(getOpacity(ElementType.FILLED_TILE, { tile: true, primaryBar: false, secondaryBar: false }, true)).toBe(1);
   });
 
   it('returns 0.5 for non-hovered elements when any element is hovered', () => {
     // Primary bar hovered, checking secondary bar and tile
-    expect(getOpacity(true, false, false, { tile: false, primaryBar: true, secondaryBar: false }, true)).toBe(0.5);
-    expect(getOpacity(false, false, true, { tile: false, primaryBar: true, secondaryBar: false }, true)).toBe(0.5);
+    expect(getOpacity(ElementType.FILLED_TILE, { tile: false, primaryBar: true, secondaryBar: false }, true)).toBe(0.5);
+    expect(getOpacity(ElementType.SECONDARY_BAR, { tile: false, primaryBar: true, secondaryBar: false }, true)).toBe(0.5);
     
     // Secondary bar hovered, checking primary bar and tile
-    expect(getOpacity(true, false, false, { tile: false, primaryBar: false, secondaryBar: true }, true)).toBe(0.5);
-    expect(getOpacity(false, true, false, { tile: false, primaryBar: false, secondaryBar: true }, true)).toBe(0.5);
+    expect(getOpacity(ElementType.FILLED_TILE, { tile: false, primaryBar: false, secondaryBar: true }, true)).toBe(0.5);
+    expect(getOpacity(ElementType.PRIMARY_BAR, { tile: false, primaryBar: false, secondaryBar: true }, true)).toBe(0.5);
     
     // Tile hovered, checking primary and secondary bars
-    expect(getOpacity(false, true, false, { tile: true, primaryBar: false, secondaryBar: false }, true)).toBe(0.5);
-    expect(getOpacity(false, false, true, { tile: true, primaryBar: false, secondaryBar: false }, true)).toBe(0.5);
+    expect(getOpacity(ElementType.PRIMARY_BAR, { tile: true, primaryBar: false, secondaryBar: false }, true)).toBe(0.5);
+    expect(getOpacity(ElementType.SECONDARY_BAR, { tile: true, primaryBar: false, secondaryBar: false }, true)).toBe(0.5);
   });
 
   it('returns 1 when nothing is hovered', () => {
     const hoverStates = { tile: false, primaryBar: false, secondaryBar: false };
-    expect(getOpacity(true, false, false, hoverStates, true)).toBe(1);
-    expect(getOpacity(false, true, false, hoverStates, true)).toBe(1);
-    expect(getOpacity(false, false, true, hoverStates, true)).toBe(1);
+    expect(getOpacity(ElementType.FILLED_TILE, hoverStates, true)).toBe(1);
+    expect(getOpacity(ElementType.PRIMARY_BAR, hoverStates, true)).toBe(1);
+    expect(getOpacity(ElementType.SECONDARY_BAR, hoverStates, true)).toBe(1);
   });
 });
 

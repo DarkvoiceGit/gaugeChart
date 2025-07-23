@@ -1,6 +1,6 @@
 import React from 'react';
 import * as d3 from 'd3';
-import { getTileColor, getOpacity } from '../utils/gaugeUtils';
+import { getTileColor, getOpacity, ElementType } from '../utils/gaugeUtils';
 import { ANGLE_RANGE, RADIUS_SCALES, ARC_CONSTANTS, TileFillStyle } from '../utils/constants';
 
 interface GaugeTilesProps {
@@ -119,7 +119,7 @@ const GaugeTiles: React.FC<GaugeTilesProps> = ({
                 config.fillStyle === TileFillStyle.DASHED ? ARC_CONSTANTS.DASHED_STROKE_PATTERN : 
                 "none"
               }
-              opacity={getOpacity(false, false, false, hoverStates, enableOpacityEffect)}
+              opacity={getOpacity(ElementType.NONE, hoverStates, enableOpacityEffect)}
               fill={config.fillStyle !== TileFillStyle.FILLED ? "transparent" : config.colorTileBg}
             />
             
@@ -129,7 +129,7 @@ const GaugeTiles: React.FC<GaugeTilesProps> = ({
                 d={tileForegroundArc({} as any)}
                 fill={fillColor}
                 strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_NORMAL}
-                opacity={getOpacity(true, false, false, hoverStates, enableOpacityEffect)}
+                opacity={getOpacity(ElementType.FILLED_TILE, hoverStates, enableOpacityEffect)}
               />
             )}
           </g>

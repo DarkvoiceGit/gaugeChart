@@ -1,18 +1,24 @@
 import { FormatterType } from './constants';
 
 /**
+ * Element type constants for getOpacity function
+ */
+export enum ElementType {
+  NONE = 0,
+  FILLED_TILE = 1,
+  PRIMARY_BAR = 2,
+  SECONDARY_BAR = 3
+}
+
+/**
  * Calculates the opacity for elements based on hover states
- * @param isFilled Whether the element is filled
- * @param isBarPrimary Whether the element is a primary bar
- * @param isBarSecondary Whether the element is a secondary bar
+ * @param elementType Type of the element (FILLED_TILE, PRIMARY_BAR, SECONDARY_BAR, or NONE)
  * @param hoverStates Object containing hover states for different elements
  * @param enableOpacityEffect Whether the opacity effect is enabled
  * @returns The calculated opacity value
  */
 export const getOpacity = (
-  isFilled: boolean,
-  isBarPrimary: boolean,
-  isBarSecondary: boolean,
+  elementType: ElementType,
   hoverStates: {
     tile: boolean;
     primaryBar: boolean;
@@ -25,9 +31,9 @@ export const getOpacity = (
   const { tile: isTileHovered, primaryBar: isBarPrimaryHovered, secondaryBar: isBarSecondaryHovered } = hoverStates;
   
   // Return 100% opacity for hovered elements
-  if (isBarPrimaryHovered && isBarPrimary) return 1;
-  if (isBarSecondaryHovered && isBarSecondary) return 1;
-  if (isTileHovered && isFilled) return 1;
+  if (isBarPrimaryHovered && elementType === ElementType.PRIMARY_BAR) return 1;
+  if (isBarSecondaryHovered && elementType === ElementType.SECONDARY_BAR) return 1;
+  if (isTileHovered && elementType === ElementType.FILLED_TILE) return 1;
   
   // Return 80% opacity for non-hovered elements when any element is hovered
   if (isTileHovered || isBarPrimaryHovered || isBarSecondaryHovered) {

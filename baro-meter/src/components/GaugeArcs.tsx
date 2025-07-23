@@ -1,6 +1,6 @@
 import React from 'react';
 import * as d3 from 'd3';
-import { getOpacity } from '../utils/gaugeUtils';
+import { getOpacity, ElementType } from '../utils/gaugeUtils';
 import { ANGLE_RANGE, RADIUS_SCALES, ARC_CONSTANTS } from '../utils/constants';
 
 interface GaugeArcsProps {
@@ -84,7 +84,7 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
         fill={config.secondaryArc.color}
         stroke={'#000'}
         strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_THIN}
-        opacity={getOpacity(false, false, true, hoverStates, enableOpacityEffect)}
+        opacity={getOpacity(ElementType.SECONDARY_BAR, hoverStates, enableOpacityEffect)}
         onMouseEnter={onSecondaryMouseEnter}
         onMouseLeave={onSecondaryMouseLeave}
         onMouseMove={onSecondaryMouseMove}
@@ -107,7 +107,7 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
         onMouseEnter={onPrimaryMouseEnter}
         onMouseLeave={onPrimaryMouseLeave}
         onMouseMove={onPrimaryMouseMove}
-        opacity={getOpacity(false, true, false, hoverStates, enableOpacityEffect)}
+        opacity={getOpacity(ElementType.PRIMARY_BAR, hoverStates, enableOpacityEffect)}
       />
 
       {/* Hover effect for secondary arc */}
