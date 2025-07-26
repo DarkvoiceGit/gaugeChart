@@ -3,9 +3,14 @@
 A highly customizable gauge chart component for React applications, built with D3.js.
 
 
-## Demo
+## Demo & Packager
 
-You can see a live demo of the GaugeChart component at [https://DarkvoiceGit.github.io/gaugeChart](https://DarkvoiceGit.github.io/gaugeChart)
+
+| Desc                                                             | Url                                                                                                          |
+|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| You can see a live demo of the GaugeChart component at           | [https://DarkvoiceGit.github.io/gaugeChart](https://DarkvoiceGit.github.io/gaugeChart)                       |
+| <img src="NPM.svg" alt="NPM" style="width:60px; height:60px;" /> | [https://www.npmjs.com/package/@darkvoice/gauge-chart](https://www.npmjs.com/package/@darkvoice/gauge-chart) |
+
 
 ## Features
 
@@ -21,7 +26,7 @@ You can see a live demo of the GaugeChart component at [https://DarkvoiceGit.git
 You can install the GaugeChart component from npm:
 
 ```bash
-npm install @darkvoicegit/gauge-chart
+npm i @darkvoice/gauge-chart
 ```
 
 ### Requirements
