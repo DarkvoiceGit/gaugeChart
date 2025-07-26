@@ -347,28 +347,6 @@ function MyComponent() {
 />
 ```
 
-## Development
-
-### Running Locally
-
-To run the demo application locally:
-
-```bash
-git clone https://github.com/DarkvoiceGit/gaugeChart.git
-cd gaugeChart
-npm install
-npm run dev
-```
-
-This will start the development server, and you can access the demo at http://localhost:5173 (or the port shown in your terminal).
-
-### Running Tests
-
-```bash
-npm test           # Run tests once
-npm run test:watch # Run tests in watch mode
-```
-
 ## Technologies
 
 This project is built with:

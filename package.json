@@ -1,24 +1,18 @@
 {
   "name": "gauge-chart",
-  "private": true,
+  "private": false,
+  "author": {
+    "url": "https://github.com/darkvoicegit",
+    "name": "darkvoicegit"
+  },
   "version": "1.0.0",
   "type": "module",
   "homepage": "https://DarkvoiceGit.github.io/gaugeChart",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:deploy": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.2.0",
-    "@mui/material": "^7.2.0",
     "@types/d3": "^7.4.3",
     "d3": "^7.9.0",
     "react": "^18.3.1",
@@ -35,12 +29,10 @@
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
-    "gh-pages": "^6.3.0",
     "globals": "^15.14.0",
     "jsdom": "^26.1.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.38.0",
-    "vite": "^6.3.5",
     "vitest": "^3.2.4"
   }
 }
