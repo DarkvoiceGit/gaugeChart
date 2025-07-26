@@ -18,34 +18,31 @@ You can see a live demo of the GaugeChart component at [https://DarkvoiceGit.git
 
 ## Installation
 
-This is a React component that can be used in your React projects. To use it in your project:
-
-### Option 1: Clone the Repository
+You can install the GaugeChart component from npm:
 
 ```bash
-git clone https://github.com/DarkvoiceGit/gaugeChart.git
-cd gaugeChart
-npm install
+npm install @darkvoicegit/gauge-chart
 ```
 
-### Option 2: Copy the Component
+### Requirements
 
-You can also copy the GaugeChart component files directly into your React project and install the required dependencies:
+The component has the following peer dependencies:
+- React 16.8+ (Hooks support)
+- React DOM 16.8+
 
-```bash
-npm install d3@^7.9.0
-```
+And the following dependencies:
+- D3.js 7.9+
 
-The component requires React 18+ and is built with TypeScript.
+These dependencies will be automatically installed or used from your project.
 
 ## Basic Usage
 
 ```jsx
-import Gauge from 'gauge-chart';
+import { GaugeChart } from '@darkvoicegit/gauge-chart';
 
 function MyComponent() {
   return (
-    <Gauge
+    <GaugeChart
       primary={40}
       secondary={30}
       options={{
@@ -152,7 +149,7 @@ enum TileFillStyle {
 ### With Custom Formatters
 
 ```jsx
-import Gauge from 'gauge-chart';
+import { GaugeChart } from '@darkvoicegit/gauge-chart';
 
 function MyComponent() {
   // Format days with hours and minutes
@@ -168,7 +165,7 @@ function MyComponent() {
   const formatDay = (value) => `${value} d`;
 
   return (
-    <Gauge
+    <GaugeChart
       width={800}
       height={600}
       primary={5.75}
@@ -195,12 +192,11 @@ function MyComponent() {
 ### With Custom Styling
 
 ```jsx
-import Gauge from 'gauge-chart';
-import { TileFillStyle } from 'gauge-chart';
+import { GaugeChart, TileFillStyle } from '@darkvoicegit/gauge-chart';
 
 function MyComponent() {
   return (
-    <Gauge
+    <GaugeChart
       width={800}
       height={600}
       primary={40}
@@ -271,7 +267,7 @@ function MyComponent() {
 ### Changing Thresholds and Colors
 
 ```jsx
-<Gauge
+<GaugeChart
   primary={40}
   secondary={35}
   options={{
@@ -289,7 +285,7 @@ function MyComponent() {
 ### Customizing Tooltips
 
 ```jsx
-<Gauge
+<GaugeChart
   primary={40}
   secondary={35}
   options={{
@@ -310,7 +306,7 @@ function MyComponent() {
 ### Customizing Tile Appearance
 
 ```jsx
-<Gauge
+<GaugeChart
   primary={40}
   secondary={35}
   tileArc={{
@@ -327,7 +323,7 @@ function MyComponent() {
 ### Customizing Pointers
 
 ```jsx
-<Gauge
+<GaugeChart
   primary={40}
   secondary={35}
   primaryArcConfig={{
