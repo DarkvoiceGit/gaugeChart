@@ -4,8 +4,10 @@ import {GaugeProps, TooltipState} from './types';
 import {
     ANGLE_RANGE,
     ARC_CONSTANTS,
+    GAUGE_SIZE_PRESETS,
     OPTIONS_DEFAULTS,
-    PRIMARY_ARC_DEFAULTS, RADIUS_SCALES,
+    PRIMARY_ARC_DEFAULTS,
+    RADIUS_SCALES,
     REFERENCE_WIDTH,
     SECONDARY_ARC_DEFAULTS,
     TILE_ARC_DEFAULTS
@@ -20,8 +22,7 @@ import GaugeGradients from './components/GaugeGradients';
 import GaugeTiles from './components/GaugeTiles';
 
 const Gauge: React.FC<GaugeProps> = ({
-                                         width = 800,
-                                         height = 600,
+                                         size = 'default',
                                          primary,
                                          secondary,
                                          options,
@@ -92,8 +93,27 @@ const Gauge: React.FC<GaugeProps> = ({
     const thresholdYellowNormalized = normalize(thresholdYellow, thresholdRed);
     const thresholdRedNormalized = 1;
 
-    const radius = Math.min(width, height) / 2.5;
-    const scaleFactor = width / (REFERENCE_WIDTH);
+    // Derive logical dimensions purely from the size preset.
+    const presetKey = size === 'default' ? 'm' : size ?? 'm';
+    const preset =
+        GAUGE_SIZE_PRESETS[presetKey as keyof typeof GAUGE_SIZE_PRESETS] ??
+        GAUGE_SIZE_PRESETS.m;
+    const logicalWidth = preset.width;
+    const logicalHeight = preset.height;
+
+    const radius = Math.min(logicalWidth, logicalHeight) / 2.5;
+    const scaleFactor = logicalWidth / REFERENCE_WIDTH;
+
+    // ViewBox height: only the semicircle region (center up to top + tick labels), no empty space below
+    const centerX = logicalWidth / 2;
+    const centerY = logicalHeight / 2;
+    const viewBoxHeight = centerY + Math.max(20, logicalHeight * 0.04);
+
+    // ViewBox width: only the horizontal span of the gauge (arc + tick labels), minimal side margin
+    const tickLabelRadius = radius * RADIUS_SCALES.TICK_LABEL;
+    const sideMargin = Math.max(8, radius * 0.03);
+    const viewBoxMinX = centerX - tickLabelRadius - sideMargin;
+    const viewBoxWidth = 2 * tickLabelRadius + 2 * sideMargin;
 
     const colorScale = d3.scaleLinear<string>()
         .domain([0, thresholdYellowNormalized, thresholdRedNormalized])
@@ -285,9 +305,16 @@ const Gauge: React.FC<GaugeProps> = ({
         }
     };
 
+    // SVG uses content-based dimensions so "size" controls scale with minimal side padding.
     return (
         <div style={{position: 'relative'}}>
-            <svg ref={ref} width={width} height={height}>
+            <svg
+                ref={ref}
+                width={viewBoxWidth}
+                height={viewBoxHeight}
+                viewBox={`${viewBoxMinX} 0 ${viewBoxWidth} ${viewBoxHeight}`}
+                preserveAspectRatio="xMidYMid meet"
+            >
                 <defs>
                     <GaugeGradients
                         tileAngles={tileAngles}
@@ -297,7 +324,7 @@ const Gauge: React.FC<GaugeProps> = ({
                     />
                 </defs>
 
-                <g transform={`translate(${width / 2}, ${height / 2})`}>
+                <g transform={`translate(${logicalWidth / 2}, ${logicalHeight / 2})`}>
                     {enableInnerArc && (
                         <GaugeArcs
                             radius={radius}

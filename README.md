@@ -72,8 +72,7 @@ The GaugeChart component accepts the following props:
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `width` | number | 800 | Width of the SVG |
-| `height` | number | 600 | Height of the SVG |
+| `size` | `'default' \| 'xxs' \| 'xs' \| 's' \| 'sm' \| 'm' \| 'l' \| 'xl' \| 'xxl' \| 'xxxl'` | `'default'` | Size preset: SVG width/height are set in pixels from the preset so the gauge and tick labels scale together (e.g. `xxs` = small, `xxxl` = large). Wrap in a container with `max-width: 100%` if you need it to shrink on small screens. |
 | `primary` | number | - | Primary value to display (required) |
 | `secondary` | number | - | Secondary value to display (optional) |
 | `unitTickFormatter` | function | - | Formatter function for unit tick labels |
@@ -171,8 +170,7 @@ function MyComponent() {
 
   return (
     <GaugeChart
-      width={800}
-      height={600}
+      size="default"
       primary={5.75}
       secondary={2.25}
       unit={formatDay}
@@ -202,8 +200,7 @@ import { GaugeChart, TileFillStyle } from '@darkvoicegit/gauge-chart';
 function MyComponent() {
   return (
     <GaugeChart
-      width={800}
-      height={600}
+      size="m"
       primary={40}
       secondary={35}
       options={{
@@ -314,6 +311,7 @@ function MyComponent() {
 <GaugeChart
   primary={40}
   secondary={35}
+  size="xxs" // smaller preset, keeps whitespace tight
   tileArc={{
     tiles: 15,  // Number of tiles
     fillStyle: TileFillStyle.DOTTED,  // Dotted fill style

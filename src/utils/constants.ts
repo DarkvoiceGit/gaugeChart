@@ -114,3 +114,21 @@ export const ARC_CONSTANTS = {
     DOTTED_STROKE_PATTERN: "1,3",
     DASHED_STROKE_PATTERN: "5,5"
 };
+
+/**
+ * Logical size presets for the gauge. These represent the internal coordinate
+ * system used for the SVG viewBox and are chosen to preserve a 4:3 aspect ratio
+ * that matches the existing 800x600 default while providing smaller and larger
+ * variants with minimal outer whitespace.
+ */
+export const GAUGE_SIZE_PRESETS = {
+    xxs: {width: 160, height: 120},
+    xs: {width: 480, height: 360},
+    s: {width: 640, height: 480},
+    sm: {width: 720, height: 540},
+    m: {width: 800, height: 600},
+    l: {width: 960, height: 720},
+    xl: {width: 1120, height: 840},
+    xxl: {width: 1280, height: 960},
+    xxxl: {width: 1440, height: 1080},
+} as const;

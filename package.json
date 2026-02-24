@@ -1,11 +1,19 @@
 {
   "name": "@darkvoice/gauge-chart",
   "private": false,
+  "description": "Responsive, D3-powered gauge chart component for React with tile segments, primary/secondary values, and rich configuration.",
   "author": {
     "url": "https://github.com/darkvoicegit",
     "name": "darkvoicegit"
   },
-  "version": "1.0.1",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DarkvoiceGit/gaugeChart.git"
+  },
+  "version": "2.0.0",
   "type": "module",
   "homepage": "https://DarkvoiceGit.github.io/gaugeChart",
   "main": "dist/index.js",
@@ -35,20 +43,37 @@
     "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.17.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
+    "@eslint/js": "^9.39.3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^3.2.4",
-    "eslint": "^9.32.0",
+    "eslint": "^9.39.3",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.3.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "globals": "^16.5.0",
     "jsdom": "^26.1.0",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.38.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.1",
     "vitest": "^3.2.4"
-  }
+  },
+  "keywords": [
+    "react",
+    "react-component",
+    "chart",
+    "charts",
+    "gauge",
+    "gauge-chart",
+    "gaugechart",
+    "radial-gauge",
+    "speedometer",
+    "meter",
+    "visualization",
+    "d3",
+    "data-visualization",
+    "dashboard",
+    "kpi"
+  ]
 }

@@ -1,6 +1,24 @@
 import { GradientType, TileFillStyle } from './utils/constants';
 
 /**
+ * Supported size presets for the gauge.
+ *
+ * - `default` is an alias for the medium (`m`) preset and preserves the current visual default.
+ * - Other tokens provide progressively smaller/larger logical sizes while maintaining aspect ratio.
+ */
+export type GaugeSize =
+    | 'default'
+    | 'xxs'
+    | 'xs'
+    | 's'
+    | 'sm'
+    | 'm'
+    | 'l'
+    | 'xl'
+    | 'xxl'
+    | 'xxxl';
+
+/**
  * Configuration for pointer appearance
  */
 export interface PointerConfig {
@@ -146,10 +164,11 @@ export interface TooltipState {
  * Props for the Gauge component
  */
 export interface GaugeProps {
-    /** Width of the SVG (default: 800) */
-    width?: number;
-    /** Height of the SVG (default: 600) */
-    height?: number;
+    /**
+     * Size preset: SVG width/height are set in pixels from the preset so the gauge
+     * and tick labels scale together (e.g. xxs = small, xxxl = large). Default is m (800×320 effective).
+     */
+    size?: GaugeSize;
     /** Primary value to display */
     primary: number;
     /** Secondary value to display (optional) */

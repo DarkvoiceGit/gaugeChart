@@ -24,7 +24,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                                                              thresholdRed,
                                                              unit,
                                                              scaleFactor,
-                                                             fontSize = '1rem',
+                                                             fontSize,
                                                              fontColor = '#fff',
                                                              tickLabelColor,
                                                              tickColor = '#000',
@@ -32,6 +32,10 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                                                          }) => {
     // For backward compatibility, use tickLabelColor if provided, otherwise fall back to fontColor
     const labelColor = tickLabelColor || fontColor;
+    // Font size: explicit override, or scale with gauge size (in viewBox units so it stays proportional)
+    const baseFontViewBoxUnits = 24;
+    const effectiveFontSize = fontSize != null ? fontSize : baseFontViewBoxUnits * scaleFactor;
+    const tickStrokeWidth = Math.max(0.25, scaleFactor);
     // Calculate the radius for the tick labels
     const tickLabelRadius = radius * radiusScale;
 
@@ -68,7 +72,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                             x2={tickEndX}
                             y2={tickEndY}
                             stroke={tickColor}
-                            strokeWidth={1}
+                            strokeWidth={tickStrokeWidth}
                         />
 
                         {/* Label text */}
@@ -78,7 +82,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                             textAnchor="middle"
                             dy="0.35em"
                             fill={labelColor}
-                            fontSize={fontSize ? fontSize : `${scaleFactor}rem`}
+                            fontSize={effectiveFontSize}
                         >
                             {unit ? unit(Math.round(value)) : Math.round(value)}
                         </text>

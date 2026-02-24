@@ -11,7 +11,8 @@ export type {
   PointerConfig,
   ArcConfig,
   TooltipState,
-  TooltipItem
+  TooltipItem,
+  GaugeSize,
 } from './types';
 
 // Export utility functions that might be useful for consumers
@@ -29,5 +30,6 @@ export {
   SECONDARY_ARC_DEFAULTS,
   TILE_ARC_DEFAULTS,
   GradientType,
-  TileFillStyle
+  TileFillStyle,
+  GAUGE_SIZE_PRESETS,
 } from './utils/constants';
