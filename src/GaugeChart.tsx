@@ -30,8 +30,21 @@ const Gauge: React.FC<GaugeProps> = ({
                                          primaryArcConfig,
                                          secondaryArcConfig,
                                          unitTickFormatter,
-                                         unit
+                                         unit,
+    debugMode
                                      }) => {
+    if(debugMode) {
+        console.log('[Gauge] Debug mode: ',{
+            primary,
+            secondary,
+            options,
+            tileArc,
+            primaryArcConfig,
+            secondaryArcConfig,
+            unitTickFormatter,
+            unit,
+        });
+    }
     const {
         withOpacitySwitch,
         enableInnerArc,

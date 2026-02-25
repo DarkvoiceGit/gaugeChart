@@ -185,4 +185,5 @@ export interface GaugeProps {
     unitTickFormatter?: (value: number) => string;
     /** Formatter function for unit display */
     unit?: (value: number) => string;
+    debugMode?: boolean;
 }
