@@ -1,6 +1,6 @@
 import React from 'react';
-import * as d3 from 'd3';
-import {ANGLE_RANGE, RADIUS_SCALES} from '../utils/constants';
+import {useGaugeTheme} from "../theme/useGaugeTheme";
+import {labelAngleFromNormalized} from "../core/gaugeGeometry";
 
 interface GaugeTickLabelsProps {
     radius: number;
@@ -25,24 +25,21 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                                                              unit,
                                                              scaleFactor,
                                                              fontSize,
-                                                             fontColor = '#fff',
+                                                             fontColor,
                                                              tickLabelColor,
-                                                             tickColor = '#000',
-                                                             radiusScale = RADIUS_SCALES.TICK_LABEL
+                                                             tickColor,
+                                                             radiusScale
                                                          }) => {
-    // For backward compatibility, use tickLabelColor if provided, otherwise fall back to fontColor
-    const labelColor = tickLabelColor || fontColor;
-    // Font size: explicit override, or scale with gauge size (in viewBox units so it stays proportional)
-    const baseFontViewBoxUnits = 24;
-    const effectiveFontSize = fontSize != null ? fontSize : baseFontViewBoxUnits * scaleFactor;
-    const tickStrokeWidth = Math.max(0.25, scaleFactor);
-    // Calculate the radius for the tick labels
-    const tickLabelRadius = radius * radiusScale;
 
-    // Create a scale for mapping values to angles
-    const angleScale = d3.scaleLinear()
-        .domain([0, 1])
-        .range([ANGLE_RANGE.START, ANGLE_RANGE.END]);
+    const theme = useGaugeTheme()
+    // For backward compatibility, use tickLabelColor if provided, otherwise fall back to fontColor
+    const labelColor = tickLabelColor || fontColor || theme.colors.tickLabel;
+    const effectiveTickColor = tickColor ?? theme.colors.tick
+    const effectiveRadiusScale = radiusScale ?? theme.radius.tickLabel;
+    const effectiveFontSize = fontSize ?? theme.ticks.baseFontViewBoxUnits * scaleFactor;
+    const tickStrokeWidth = Math.max(theme.ticks.minsStrokeWidth, scaleFactor);
+    // Calculate the radius for the tick labels
+    const tickLabelRadius = radius * effectiveRadiusScale;
 
     return (
         <>
@@ -51,7 +48,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                 const normalizedValue = value / thresholdRed;
 
                 // Calculate the angle for this tick
-                const angle = angleScale(normalizedValue) - Math.PI / 2;
+                const angle = labelAngleFromNormalized(normalizedValue, theme.geometry);
 
                 // Calculate the position for the label
                 const labelX = Math.cos(angle) * tickLabelRadius;
@@ -71,7 +68,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                             y1={tickStartY}
                             x2={tickEndX}
                             y2={tickEndY}
-                            stroke={tickColor}
+                            stroke={effectiveTickColor}
                             strokeWidth={tickStrokeWidth}
                         />
 
@@ -80,7 +77,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                             x={labelX}
                             y={labelY}
                             textAnchor="middle"
-                            dy="0.35em"
+                            dy={theme.ticks.textDy}
                             fill={labelColor}
                             fontSize={effectiveFontSize}
                         >

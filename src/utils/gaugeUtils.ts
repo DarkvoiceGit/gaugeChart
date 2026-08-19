@@ -1,50 +1,6 @@
 import {FormatterType} from './constants';
 
 /**
- * Element type constants for getOpacity function
- */
-export enum ElementType {
-    NONE = 0,
-    FILLED_TILE = 1,
-    PRIMARY_BAR = 2,
-    SECONDARY_BAR = 3
-}
-
-/**
- * Calculates the opacity for elements based on hover states
- * @param elementType Type of the element (FILLED_TILE, PRIMARY_BAR, SECONDARY_BAR, or NONE)
- * @param hoverStates Object containing hover states for different elements
- * @param enableOpacityEffect Whether the opacity effect is enabled
- * @returns The calculated opacity value
- */
-export const getOpacity = (
-    elementType: ElementType,
-    hoverStates: {
-        tile: boolean;
-        primaryBar: boolean;
-        secondaryBar: boolean;
-    },
-    enableOpacityEffect: boolean
-): number => {
-    if (!enableOpacityEffect) return 1;
-
-    const {tile: isTileHovered, primaryBar: isBarPrimaryHovered, secondaryBar: isBarSecondaryHovered} = hoverStates;
-
-    // Return 100% opacity for hovered elements
-    if (isBarPrimaryHovered && elementType === ElementType.PRIMARY_BAR) return 1;
-    if (isBarSecondaryHovered && elementType === ElementType.SECONDARY_BAR) return 1;
-    if (isTileHovered && elementType === ElementType.FILLED_TILE) return 1;
-
-    // Return 80% opacity for non-hovered elements when any element is hovered
-    if (isTileHovered || isBarPrimaryHovered || isBarSecondaryHovered) {
-        return 0.5;
-    }
-
-    // Return 100% opacity when nothing is hovered
-    return 1;
-};
-
-/**
  * Formats a value using the provided formatters
  * @param value The value to format
  * @param unitTickFormatter Optional formatter for unit ticks
@@ -93,11 +49,11 @@ export const colorSelector = (
 ): string => {
     if (value < thresholdMid) {
         return colorDefault;
-    } else if (value >= thresholdMid && value < thresholdMax) {
-        return colorMid;
-    } else {
-        return colorMax;
     }
+    if (value >= thresholdMid && value < thresholdMax) {
+        return colorMid;
+    }
+    return colorMax;
 };
 
 /**
@@ -120,7 +76,8 @@ export const getTileColor = (
         colorTileThresholdYellow: string;
         colorTileThresholdRed: string;
     },
-    colorScale: any
+    colorScale: ((value: number) => string) | null,
+    layerId = 'default'
 ): string => {
     const {
         isTileColorGradient,
@@ -140,10 +97,10 @@ export const getTileColor = (
     }
 
     // If using full gradient, use color scale
-    if (gradientType === "full") {
+    if (gradientType === "full" && colorScale) {
         return colorScale(value);
     }
 
     // If using tile gradient, use gradient ID
-    return `url(#gradient-${index})`;
+    return `url(#gradient-${layerId}-${index})`;
 };

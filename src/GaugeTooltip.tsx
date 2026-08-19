@@ -1,28 +1,40 @@
+import {TooltipItem} from "./types";
+import {GaugeThemeTooltip, RgbaColor} from "./types/theme.types";
+import {DEFAULT_THEME} from "./theme/defaultTheme";
+
+interface GaugeTooltipProps {
+    text: TooltipItem[];
+    x: number;
+    y: number;
+    fontColor?: string;
+    bgColor?: RgbaColor;
+    theme?: GaugeThemeTooltip
+}
+
 const GaugeTooltip = ({
                           text,
                           x,
                           y,
-                          fontColor = '#fff',
-                          bgColor = {r: 0, g: 0, b: 0, a: 0.8},
-                      }: {
-    text: Array<{ label: string; value: string; color: string }>;
-    x: number;
-    y: number;
-    fontColor?: string;
-    bgColor?: { r: number; g: number; b: number; a: number };
-}) => {
+                          fontColor,
+                          bgColor,
+                          theme = DEFAULT_THEME.tooltip
+                      }: GaugeTooltipProps) => {
+
+    const effectiveFontColor = fontColor ?? theme.fontColor;
+    const effectiveBgColor = bgColor ?? theme.background
+
     return (
         <div
             style={{
                 position: 'absolute',
-                left: x + 10,
-                top: y + 10,
-                backgroundColor: `rgba(${bgColor.r}, ${bgColor.g}, ${bgColor.b}, ${bgColor.a})`,
-                color: fontColor,
-                padding: '.5rem 0.8rem',
-                minWidth: '8rem',
-                borderRadius: '.5rem',
-                fontSize: '1rem',
+                left: x + theme.cursorOffset,
+                top: y + theme.cursorOffset,
+                backgroundColor: `rgba(${effectiveBgColor.r}, ${effectiveBgColor.g}, ${effectiveBgColor.b}, ${effectiveBgColor.a})`,
+                color: effectiveFontColor,
+                padding: theme.padding,
+                minWidth: theme.minWidth,
+                borderRadius: theme.borderRadius,
+                fontSize: theme.fontSize,
                 pointerEvents: 'none',
                 whiteSpace: 'nowrap',
             }}
@@ -31,17 +43,17 @@ const GaugeTooltip = ({
                 <tbody>
                 {text.map((item, index) => (
                     <tr key={index}>
-                        <td style={{paddingRight: 10, textAlign: 'left'}}>
+                        <td style={{paddingRight: theme.cellPaddingRight, textAlign: 'left'}}>
                             {item.label}
                         </td>
-                        <td style={{width: 16, paddingRight: 10}}>
+                        <td style={{width: theme.swatchColumnWidth, paddingRight: theme.cellPaddingRight}}>
                             <div
                                 style={{
-                                    width: 12,
-                                    height: 12,
+                                    width: theme.swatchSize,
+                                    height: theme.swatchSize,
                                     backgroundColor: item.color,
                                     borderRadius: '50%',
-                                    border: '0.1em solid white',
+                                    border: theme.swatchBorder,
                                     margin: 'auto',
                                 }}
                                 aria-hidden="true"

@@ -32,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           # Hier die URL, für die dein Token gültig ist (npm oder GitHub)
           registry-url: 'https://npm.pkg.github.com'
           scope: '@darkvoice'
@@ -42,6 +42,9 @@ jobs:
         env:
           # Nutzt dein vorhandenes Secret für die Installation
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
 
       - name: Build project
         run: npm run build

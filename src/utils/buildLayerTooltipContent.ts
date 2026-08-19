@@ -1,0 +1,77 @@
+import type {MouseEvent as ReactMouseEvent} from 'react';
+import type {ResolvedLayer} from '../core/resolveLayers';
+import type {GaugeFormatters, TooltipItem, TooltipState} from '../types';
+import {formatValue} from './gaugeUtils';
+
+function formatTooltipLabel(label: string | undefined, fallback: string): string {
+    return label ? `${label}:` : fallback;
+}
+
+function getRelativePointerPosition(
+    event: ReactMouseEvent,
+    svgElement: SVGSVGElement | null,
+): { x: number; y: number } {
+    const bbox = svgElement?.getBoundingClientRect() ?? {left: 0, top: 0};
+    return {
+        x: event.clientX - bbox.left,
+        y: event.clientY - bbox.top,
+    };
+}
+
+
+export function buildLayerTooltipContent(options: {
+    layers: ResolvedLayer[];
+    hoveredLayerId: string;
+    tooltipMode: 'layer' | 'all';
+    formatters?: GaugeFormatters;
+    interaction?: {
+        tooltips?: boolean;
+    }
+}): TooltipItem[] {
+    const hoveredLayer = options.layers.find(l => l.id === options.hoveredLayerId);
+    if (!hoveredLayer || options.interaction?.tooltips === false) return [];
+
+    const mode = hoveredLayer.tooltip?.mode ?? (options.tooltipMode === 'all' ? 'all' : 'self');
+
+    let visibleLayers: ResolvedLayer[] = [];
+
+    switch (mode) {
+        case 'none':
+            visibleLayers = [];
+            break;
+        case 'self':
+            visibleLayers = [hoveredLayer];
+            break;
+        case 'all':
+            visibleLayers = options.layers.filter(
+                (layer) => layer.tooltip?.enabled !== false && layer.tooltip?.mode !== 'none'
+            );
+            break;
+    }
+
+    return visibleLayers.map((layer) => ({
+        label: formatTooltipLabel(layer.tooltip?.label, `${layer.id}:`),
+        value: formatValue(layer.rawValue, undefined, options.formatters?.value),
+        color: layer.color,
+    }));
+}
+
+export function createTooltipState(
+    event: ReactMouseEvent,
+    svgElement: SVGSVGElement | null,
+    text: TooltipItem[],
+): TooltipState {
+    const position = getRelativePointerPosition(event, svgElement);
+    return {
+        text,
+        x: position.x,
+        y: position.y,
+    };
+}
+
+export function updateTooltipPositionState(
+    event: ReactMouseEvent,
+    svgElement: SVGSVGElement | null,
+): { x: number; y: number } {
+    return getRelativePointerPosition(event, svgElement);
+}

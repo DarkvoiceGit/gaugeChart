@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - demo
+  pull_request:
+    branches:
+      - main
+      - demo
+
+jobs:
+  security-and-quality:
+    name: Secuirty & Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.4.0
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Audit deps
+        run: npm audit --audit-level=high
+
+      - name: Test
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
