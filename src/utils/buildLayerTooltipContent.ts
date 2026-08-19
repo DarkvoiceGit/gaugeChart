@@ -18,18 +18,39 @@ function getRelativePointerPosition(
     };
 }
 
+
 export function buildLayerTooltipContent(options: {
     layers: ResolvedLayer[];
     hoveredLayerId: string;
     tooltipMode: 'layer' | 'all';
     formatters?: GaugeFormatters;
+    interaction?: {
+        tooltips?: boolean;
+    }
 }): TooltipItem[] {
-    const visibleLayers = options.tooltipMode === 'all'
-        ? options.layers.filter((layer) => layer.hoverable)
-        : options.layers.filter((layer) => layer.id === options.hoveredLayerId);
+    const hoveredLayer = options.layers.find(l => l.id === options.hoveredLayerId);
+    if (!hoveredLayer || options.interaction?.tooltips === false) return [];
+
+    const mode = hoveredLayer.tooltip?.mode ?? (options.tooltipMode === 'all' ? 'all' : 'self');
+
+    let visibleLayers: ResolvedLayer[] = [];
+
+    switch (mode) {
+        case 'none':
+            visibleLayers = [];
+            break;
+        case 'self':
+            visibleLayers = [hoveredLayer];
+            break;
+        case 'all':
+            visibleLayers = options.layers.filter(
+                (layer) => layer.tooltip?.enabled !== false && layer.tooltip?.mode !== 'none'
+            );
+            break;
+    }
 
     return visibleLayers.map((layer) => ({
-        label: formatTooltipLabel(layer.tooltipLabel, `${layer.id}:`),
+        label: formatTooltipLabel(layer.tooltip?.label, `${layer.id}:`),
         value: formatValue(layer.rawValue, undefined, options.formatters?.value),
         color: layer.color,
     }));

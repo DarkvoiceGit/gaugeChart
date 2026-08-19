@@ -38,7 +38,9 @@ export interface LayerPointerConfig extends Partial<PointerConfig> {
 }
 
 export interface LayerTooltipConfig {
+    enabled?: boolean;
     label?: string;
+    mode?: "self" | "all" | "none";
 }
 
 export interface LayerGradientConfig {

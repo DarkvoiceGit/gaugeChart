@@ -72,6 +72,16 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
         interaction: mergedTheme.interaction,
     });
 
+    const orderedLayers = useMemo(() => {
+        if (!hoveredLayerId) return resolved.layers;
+        const hoveredLayer = resolved.layers.find(l => l.id === hoveredLayerId);
+        if (!hoveredLayer) return resolved.layers;
+        return [
+            ...resolved.layers.filter(l => l.id !== hoveredLayerId),
+            hoveredLayer
+        ];
+    }, [resolved.layers, hoveredLayerId]);
+
     const gradientLayer = useMemo(() => resolved.layers.find(
         (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
     ), [resolved.layers]);
@@ -96,7 +106,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                     </defs>
 
                     <g transform={`translate(${layout.logicalWidth / 2}, ${layout.logicalHeight / 2})`}>
-                        {resolved.layers.map((layer) => (
+                        {orderedLayers.map((layer) => (
                             <GaugeLayer
                                 key={layer.id}
                                 layer={layer}

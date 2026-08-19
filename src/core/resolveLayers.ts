@@ -36,7 +36,11 @@ export interface ResolvedLayer {
     render: GaugeLayer['render'];
     zIndex: number;
     hoverable: boolean;
-    tooltipLabel?: string;
+    tooltip?: {
+        enabled?: boolean;
+        label?: string;
+        mode?: "self" | "all" | "none";
+    };
     rawValue: number;
     normalizedValue: number;
     color: string;
@@ -67,11 +71,39 @@ export interface ResolvedGaugeLayers {
 interface LayerAngleContext {
     id: string;
     normalizedValue: number;
+    effectiveNormalizedValue: number;
     endAngle: number;
 }
 
 function resolveLayerColor(layer: GaugeLayer): string {
     return layer.color;
+}
+
+function topologicalSortLayers(layers: GaugeLayer[]): GaugeLayer[] {
+    const sorted: GaugeLayer[] = [];
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
+
+    function visit(layer: GaugeLayer) {
+        if (visited.has(layer.id)) return;
+        if (visiting.has(layer.id)) throw new Error(`Cyclic dependency detected for layer ${layer.id}`);
+
+        visiting.add(layer.id);
+        if (layer.baseLayerId) {
+            const baseLayer = layers.find(l => l.id === layer.baseLayerId);
+            if (baseLayer) {
+                visit(baseLayer);
+            }
+        }
+        visiting.delete(layer.id);
+        visited.add(layer.id);
+        sorted.push(layer);
+    }
+
+    for (const layer of layers) {
+        visit(layer);
+    }
+    return sorted;
 }
 
 function resolveArcConfig(layer: GaugeLayer, theme: GaugeTheme): ArcConfig {
@@ -95,33 +127,16 @@ function resolveArcConfig(layer: GaugeLayer, theme: GaugeTheme): ArcConfig {
 }
 
 function resolveLayerAngles(
-    layer: GaugeLayer,
     normalizedValue: number,
-    scaleMax: number,
+    effectiveStartValue: number,
     geometry: GaugeTheme['geometry'],
-    baseLayer?: LayerAngleContext,
-): { startAngle: number; endAngle: number } {
-    const valueMode = layer.valueMode ?? 'absolute';
-    const startBase = geometry.startAngle + geometry.angleOffset;
-
-    if (valueMode === 'offset') {
-        const offsetNormalized = normalize(layer.offsetValue ?? 0, scaleMax);
-        return {
-            startAngle: valueToAngle(offsetNormalized, geometry),
-            endAngle: valueToAngle(Math.min(1, offsetNormalized + normalizedValue), geometry),
-        };
-    }
-
-    if (valueMode === 'cumulative' && baseLayer) {
-        return {
-            startAngle: baseLayer.endAngle,
-            endAngle: valueToAngle(Math.min(1, baseLayer.normalizedValue + normalizedValue)),
-        };
-    }
-
+): { startAngle: number; endAngle: number; effectiveEndValue: number } {
+    const effectiveEndValue = Math.min(1, effectiveStartValue + normalizedValue);
+    
     return {
-        startAngle: startBase,
-        endAngle: valueToAngle(normalizedValue, geometry),
+        startAngle: valueToAngle(effectiveStartValue, geometry),
+        endAngle: valueToAngle(effectiveEndValue, geometry),
+        effectiveEndValue: effectiveEndValue
     };
 }
 
@@ -219,7 +234,8 @@ function resolveLayerSegments(
     segmentCount: number,
     normalizedValue: number,
     scaleMax: number,
-    baseRadius: number,
+    innerRadius: number,
+    outerRadius: number,
     scaleFactor: number,
     colorScale: d3.ScaleLinear<string, string>,
     theme: GaugeTheme
@@ -230,7 +246,8 @@ function resolveLayerSegments(
             numberOfTiles: segmentCount,
             sumNormalized: normalizedValue,
             thresholdRed: scaleMax,
-            radius: baseRadius,
+            innerRadius,
+            outerRadius,
             scaleFactor,
             isTileHovered: false,
             enableOpacityEffect: false,
@@ -264,9 +281,12 @@ export function resolveLayers(
             scale.zones?.[scale.zones.length - 1]?.color ?? theme.colors.tileRed,
         ])
 
-    const sortedLayers = [...layers].sort(
-        (left, right) => (left.zIndex ?? 0) - (right.zIndex ?? 0),
-    );
+    const sortedByDependency = topologicalSortLayers(layers);
+
+    const segmentedLayers = layers.filter(l => l.render === 'segmented');
+    if (segmentedLayers.length > 1) {
+        throw new Error("Only one segmented layer is allowed");
+    }
 
     const angleContexts = new Map<string, LayerAngleContext>();
     const resolvedLayers: ResolvedLayer[] = [];
@@ -274,10 +294,10 @@ export function resolveLayers(
     const gradientLayerIds: string[] = [];
     const pointers: ResolvedPointer[] = [];
 
-    for (const layer of sortedLayers) {
-        const normalizedValue = normalize(layer.value, max);
-        const baseLayer = layer.baseLayerId ? angleContexts.get(layer.baseLayerId) : undefined;
-        const angles = resolveLayerAngles(layer, normalizedValue, max, theme.geometry, baseLayer);
+    for (const layer of sortedByDependency) {
+        const rawNormalizedValue = normalize(layer.value, max);
+        const baseLayerContext = layer.baseLayerId ? angleContexts.get(layer.baseLayerId) : undefined;
+        
         const innerRadius = baseRadius * layer.innerRadius;
         const outerRadius = baseRadius * layer.outerRadius;
         const arcConfig = resolveArcConfig(layer, theme);
@@ -285,10 +305,20 @@ export function resolveLayers(
             ? resolveTileCount(layer.segments, theme.tiles.minCount)
             : 0;
 
+        let effectiveStartValueNormalized = 0;
+        if (layer.valueMode === 'cumulative' && baseLayerContext) {
+            effectiveStartValueNormalized = baseLayerContext.effectiveNormalizedValue;
+        } else if (layer.valueMode === 'offset') {
+            effectiveStartValueNormalized = normalize(layer.offsetValue ?? 0, max);
+        }
+
+        const {startAngle, endAngle, effectiveEndValue} = resolveLayerAngles(rawNormalizedValue, effectiveStartValueNormalized, theme.geometry);
+
         angleContexts.set(layer.id, {
             id: layer.id,
-            normalizedValue,
-            endAngle: angles.endAngle,
+            normalizedValue: rawNormalizedValue,
+            effectiveNormalizedValue: effectiveEndValue,
+            endAngle: endAngle,
         });
 
         const tileAngles = layer.render === 'segmented'
@@ -303,7 +333,7 @@ export function resolveLayers(
         }
 
         const solidPaths = layer.render === 'solid'
-            ? buildSolidPaths(innerRadius, outerRadius, angles.startAngle, angles.endAngle, arcConfig, theme)
+            ? buildSolidPaths(innerRadius, outerRadius, startAngle, endAngle, arcConfig, theme)
             : {solidPath: null, hoverSolidPath: null};
 
         const segmentedStyle = resolveSegmentedStyle(layer, scale, theme, thresholdYellowNormalized);
@@ -313,15 +343,16 @@ export function resolveLayers(
             arcConfig,
             tileAngles,
             segmentCount,
-            normalizedValue,
+            rawNormalizedValue,
             max,
-            baseRadius,
+            innerRadius,
+            outerRadius,
             scaleFactor,
             colorScale,
             theme
         ) : []
 
-        const pointer = resolvePointer(layer, normalizedValue, baseRadius, theme);
+        const pointer = resolvePointer(layer, effectiveEndValue, baseRadius, theme);
         if (pointer) {
             pointers.push(pointer);
         }
@@ -331,12 +362,16 @@ export function resolveLayers(
             render: layer.render,
             zIndex: layer.zIndex ?? 0,
             hoverable: layer.hoverable ?? false,
-            tooltipLabel: layer.tooltip?.label,
+            tooltip: layer.tooltip ? {
+                enabled: layer.tooltip.enabled,
+                label: layer.tooltip.label,
+                mode: layer.tooltip.mode,
+            } : undefined,
             rawValue: layer.value,
-            normalizedValue,
+            normalizedValue: rawNormalizedValue,
             color: resolveLayerColor(layer),
-            startAngle: angles.startAngle,
-            endAngle: angles.endAngle,
+            startAngle,
+            endAngle,
             innerRadius,
             outerRadius,
             arcConfig,
@@ -349,6 +384,8 @@ export function resolveLayers(
             pointer,
         });
     }
+
+    resolvedLayers.sort((a, b) => a.zIndex - b.zIndex);
 
     const referenceLayer = resolvedLayers.find((layer) => layer.render === 'segmented');
     const defaultStep = referenceLayer?.segmentCount

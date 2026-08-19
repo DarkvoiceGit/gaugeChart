@@ -93,7 +93,8 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                 numberOfTiles: layer.segmentCount,
                 sumNormalized: layer.normalizedValue,
                 thresholdRed: scaleMax,
-                radius,
+                innerRadius: layer.innerRadius,
+                outerRadius: layer.outerRadius,
                 scaleFactor,
                 isTileHovered: true,
                 enableOpacityEffect: true,
@@ -105,7 +106,7 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                 theme,
             })
         },
-        [colorScale, hoverDimming, isHovered, layer, radius, scaleFactor, scaleMax, theme],
+        [colorScale, hoverDimming, isHovered, layer, scaleFactor, scaleMax, theme],
     );
 
     const hoverOverlayPath = buildArcPath({

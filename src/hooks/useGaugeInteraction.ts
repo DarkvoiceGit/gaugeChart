@@ -78,6 +78,7 @@ export function useGaugeInteraction(options: UseGaugeInteractionOptions): GaugeI
                 hoveredLayerId: layerId,
                 tooltipMode,
                 formatters,
+                interaction: { tooltips: tooltipsEnabled }
             });
             showTooltip(event, items);
         },

@@ -21,7 +21,8 @@ export interface ComputeTileSegmentsOptions {
     numberOfTiles: number;
     sumNormalized: number;
     thresholdRed: number;
-    radius: number;
+    innerRadius: number;
+    outerRadius: number;
     scaleFactor: number;
     isTileHovered: boolean;
     enableOpacityEffect: boolean;
@@ -48,7 +49,7 @@ export interface ComputeTileSegmentsOptions {
 }
 
 export function computeTileSegments(options: ComputeTileSegmentsOptions): TileSegmentRenderData[] {
-    const {tileAngles, numberOfTiles, sumNormalized, thresholdRed, radius, theme} = options;
+    const {tileAngles, numberOfTiles, sumNormalized, thresholdRed, innerRadius, outerRadius, theme} = options;
     const segments: TileSegmentRenderData[] = [];
 
     for (let index = 0; index < tileAngles.length; index += 1) {
@@ -66,15 +67,15 @@ export function computeTileSegments(options: ComputeTileSegmentsOptions): TileSe
         );
         const tileFillEndAngle = tileStartAngle + fillRatio * (tileEndAngle - tileStartAngle);
 
-        const backgroundInnerRadius = radius * theme.radius.outerArc;
-        const backgroundOuterRadius = radius;
+        const backgroundInnerRadius = innerRadius;
+        const backgroundOuterRadius = outerRadius;
 
         const foregroundInnerRadius = options.isTileHovered && options.enableOpacityEffect
             ? backgroundInnerRadius - (theme.interaction.hoverHighlight.tileInnerOffset * options.scaleFactor)
             : backgroundInnerRadius;
         const foregroundOuterRadius = options.isTileHovered && options.enableOpacityEffect
-            ? radius + (theme.interaction.hoverHighlight.tileOuterOffset * options.scaleFactor)
-            : radius;
+            ? backgroundOuterRadius + (theme.interaction.hoverHighlight.tileOuterOffset * options.scaleFactor)
+            : backgroundOuterRadius;
 
         const arcParams = {
             padRadius: options.config.arcConfig.padRadius,

@@ -3,7 +3,12 @@ import {buildLayerTooltipContent} from '../../utils/buildLayerTooltipContent';
 import type {ResolvedLayer} from '../../core/resolveLayers';
 import {TileFillStyle} from '../../utils/constants';
 
-function createResolvedLayer(overrides: Partial<ResolvedLayer> & Pick<ResolvedLayer, 'id'>): ResolvedLayer {
+interface ResolvedLayerOverrides extends Partial<ResolvedLayer> {
+    tooltipLabel?: string;
+}
+
+function createResolvedLayer(overrides: ResolvedLayerOverrides & Pick<ResolvedLayer, 'id'>): ResolvedLayer {
+    const {tooltipLabel, ...rest} = overrides;
     return {
         render: 'solid',
         zIndex: 0,
@@ -34,7 +39,8 @@ function createResolvedLayer(overrides: Partial<ResolvedLayer> & Pick<ResolvedLa
             borderColor: '#000',
             borderThickness: 1,
         },
-        ...overrides,
+        tooltip: tooltipLabel ? { label: tooltipLabel } : undefined,
+        ...rest,
     };
 }
 
