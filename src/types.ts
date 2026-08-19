@@ -16,7 +16,7 @@ export type GaugeSize =
     | 'xxxl';
 
 export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
-export type LayerRenderMode = 'solid'  | 'segmented'
+export type LayerRenderMode = 'solid' | 'segmented'
 
 
 export interface PointerConfig {
@@ -37,7 +37,7 @@ export interface LayerPointerConfig extends Partial<PointerConfig> {
     enabled?: boolean;
 }
 
-export interface  LayerTooltipConfig {
+export interface LayerTooltipConfig {
     label?: string;
 }
 
@@ -117,6 +117,11 @@ export interface TooltipState {
     y: number;
 }
 
+export interface GaugeAnimationConfig {
+    enabled?: boolean;
+    durationMs?: number;
+}
+
 export interface GaugeChartProps {
     size?: GaugeSize;
     scale: GaugeScale;
@@ -126,6 +131,7 @@ export interface GaugeChartProps {
     interaction?: GaugeInteractionConfig
     hub?: GaugeHubConfig;
     formatters?: GaugeFormatters;
+    animation?: GaugeAnimationConfig;
     theme?: DeepPartial<GaugeTheme>;
     debugMode?: boolean;
 }

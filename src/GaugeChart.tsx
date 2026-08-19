@@ -46,6 +46,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
         layers: props.layers,
         geometry: mergedTheme.geometry,
         interaction: props.interaction,
+        animation: props.animation,
         ticks: props.ticks,
         theme: mergedTheme,
     });
@@ -71,9 +72,9 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
         interaction: mergedTheme.interaction,
     });
 
-    const gradientLayer = resolved.layers.find(
+    const gradientLayer = useMemo(() => resolved.layers.find(
         (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
-    );
+    ), [resolved.layers]);
 
     return (
         <GaugeThemeProvider theme={mergedTheme}>
@@ -107,6 +108,8 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                                 hoverDimming={settings.hoverDimming}
                                 getLayerOpacity={getLayerOpacity}
                                 handlers={getLayerHandlers(layer.id)}
+                                animate={settings.animationEnabled}
+                                animationDurationMs={settings.animationDurationMs}
                             />
                         ))}
 
@@ -115,6 +118,8 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                                 pointers={resolved.pointers}
                                 scaleFactor={layout.scaleFactor}
                                 referenceScaleFactor={mergedTheme.scale.referenceScaleFactor}
+                                animate={settings.animationEnabled}
+                                animationDurationMs={settings.animationDurationMs}
                             />
                             <GaugeHub radius={layout.radius} hubScale={settings.hubScale} hubColor={settings.hubColor}
                                       scaleDivisor={mergedTheme.hub.scaleDivisor}/>

@@ -7,13 +7,13 @@ export function getLayerOpacity(
     enableOpacityEffect: boolean,
     interaction: GaugeThemeInteraction = DEFAULT_THEME.interaction
 ): number {
-    if(!enableOpacityEffect){
+    if (!enableOpacityEffect) {
         return interaction.activeOpacity
     }
-    if(hoveredLayerId === layerId){
+    if (hoveredLayerId === layerId) {
         return interaction.activeOpacity
     }
-    if(hoveredLayerId !== null) {
+    if (hoveredLayerId !== null) {
         return interaction.dimedOpacity
     }
 

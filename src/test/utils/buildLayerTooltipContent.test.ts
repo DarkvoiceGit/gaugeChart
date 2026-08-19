@@ -76,8 +76,8 @@ describe('buildLayerTooltipContent', () => {
             tooltipMode: 'layer',
             formatters: {
                 value: (value) => `${value}%`,
-    },
-    });
+            },
+        });
 
         expect(items[0].value).toBe('40%');
     });

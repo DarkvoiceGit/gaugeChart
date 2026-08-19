@@ -1,10 +1,11 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useRef} from 'react';
 import type * as d3 from 'd3';
 import type {ResolvedLayer} from '../core/resolveLayers';
 import type {LayerHandlers} from '../hooks/useGaugeInteraction';
 import {computeTileSegments} from '../utils/computeTileSegment';
 import {buildArcPath} from '../utils/gaugeCalculations';
 import {useGaugeTheme} from '../theme/useGaugeTheme';
+import {useAnimatedSvgAttribute} from "../hooks/useAnimatedSvgAttribute.ts";
 
 interface GaugeLayerProps {
     layer: ResolvedLayer;
@@ -14,6 +15,8 @@ interface GaugeLayerProps {
     colorScale: d3.ScaleLinear<string, string>;
     hoveredLayerId: string | null;
     hoverDimming: boolean;
+    animate: boolean,
+    animationDurationMs: number;
     getLayerOpacity: (layerId: string) => number;
     handlers: LayerHandlers;
 }
@@ -22,22 +25,29 @@ const SolidGaugeLayer: React.FC<GaugeLayerProps> = ({
                                                         layer,
                                                         hoveredLayerId,
                                                         hoverDimming,
+                                                        animate,
+                                                        animationDurationMs,
                                                         getLayerOpacity,
                                                         handlers,
                                                     }) => {
     const theme = useGaugeTheme();
+    const pathRef = useRef<SVGPathElement>(null)
     const isHovered = hoveredLayerId === layer.id;
     const sharedStroke = {
         stroke: theme.stroke.color,
         strokeWidth: theme.stroke.thin,
     };
 
+    useAnimatedSvgAttribute(pathRef, 'd', layer.solidPath, animate, animationDurationMs)
+
     return (
         <>
             <path
+                ref={pathRef}
                 d={layer.solidPath ?? undefined}
                 fill={layer.color}
                 opacity={getLayerOpacity(layer.id)}
+                style={animate ? {transition: `opacity ${animationDurationMs}ms ease`} : undefined}
                 {...sharedStroke}
                 onMouseEnter={layer.hoverable ? handlers.onMouseEnter : undefined}
                 onMouseLeave={layer.hoverable ? handlers.onMouseLeave : undefined}
@@ -64,6 +74,7 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                                                             colorScale,
                                                             hoveredLayerId,
                                                             hoverDimming,
+                                                            animate, animationDurationMs,
                                                             getLayerOpacity,
                                                             handlers,
                                                         }) => {
@@ -71,23 +82,29 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
     const isHovered = hoveredLayerId === layer.id;
 
     const segments = useMemo(
-        () => computeTileSegments({
-            layerId: layer.id,
-            tileAngles: layer.tileAngles,
-            numberOfTiles: layer.segmentCount,
-            sumNormalized: layer.normalizedValue,
-            thresholdRed: scaleMax,
-            radius,
-            scaleFactor,
-            isTileHovered: isHovered,
-            enableOpacityEffect: hoverDimming,
-            colorScale,
-            config: {
-                ...layer.segmentedStyle,
-                arcConfig: layer.arcConfig,
-            },
-            theme,
-        }),
+        () => {
+            if (!isHovered || !hoverDimming) {
+                return layer.segments
+            }
+
+            return computeTileSegments({
+                layerId: layer.id,
+                tileAngles: layer.tileAngles,
+                numberOfTiles: layer.segmentCount,
+                sumNormalized: layer.normalizedValue,
+                thresholdRed: scaleMax,
+                radius,
+                scaleFactor,
+                isTileHovered: true,
+                enableOpacityEffect: true,
+                colorScale,
+                config: {
+                    ...layer.segmentedStyle,
+                    arcConfig: layer.arcConfig,
+                },
+                theme,
+            })
+        },
         [colorScale, hoverDimming, isHovered, layer, radius, scaleFactor, scaleMax, theme],
     );
 
@@ -109,6 +126,7 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                         strokeDasharray={segment.strokeDasharray}
                         fill={segment.backgroundFill}
                         opacity={getLayerOpacity(`${layer.id}-bg`)}
+                        style={animate ? {transition: `opacity ${animationDurationMs}ms ease`} : undefined}
                     />
                     {segment.foregroundPath && (
                         <path
@@ -116,6 +134,7 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                             fill={segment.fillColor}
                             strokeWidth={theme.stroke.normal}
                             opacity={getLayerOpacity(layer.id)}
+                            style={animate ? {transition: `opacity ${animationDurationMs}ms ease`} : undefined}
                         />
                     )}
                 </g>

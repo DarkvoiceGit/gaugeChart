@@ -59,14 +59,14 @@ export function assertValidGeometry(geometry: {
     startAngle: number;
     endAngle: number;
 }): void {
-    if(!Number.isFinite(geometry.startAngle) || !Number.isFinite(geometry.endAngle)) {
+    if (!Number.isFinite(geometry.startAngle) || !Number.isFinite(geometry.endAngle)) {
         throw new RangeError('geometry startAngle and endAngle must be finite numbers');
     }
 
-    if(geometry.endAngle <= geometry.startAngle){
+    if (geometry.endAngle <= geometry.startAngle) {
         throw new RangeError('geometry endAngle must be greater than startAngle');
     }
-    if(geometry.endAngle - geometry.startAngle > 2 * Math.PI){
+    if (geometry.endAngle - geometry.startAngle > 2 * Math.PI) {
         throw new RangeError('geometry sweep cannot exceed a full circle')
     }
 }

@@ -11,13 +11,13 @@ interface GaugeGradientsProps {
 }
 
 const GaugeGradients: React.FC<GaugeGradientsProps> = ({
-    layerId,
+                                                           layerId,
                                                            tileAngles,
                                                            numberOfTiles,
                                                            thresholdRed,
                                                            colorScale
                                                        }) => {
-  const theme = useGaugeTheme()
+    const theme = useGaugeTheme()
 
     return (
         <>
@@ -39,7 +39,7 @@ const GaugeGradients: React.FC<GaugeGradientsProps> = ({
                     <linearGradient
                         key={`${layerId}-${index}`}
                         id={`gradient-${layerId}-${index}`}
-                       gradientTransform={`rotate(${theme.gradient.rotationDegrees})`}
+                        gradientTransform={`rotate(${theme.gradient.rotationDegrees})`}
                     >
                         <stop offset={theme.gradient.stopStart} stopColor={startColor}/>
                         <stop offset={theme.gradient.stopEnd} stopColor={endColor}/>

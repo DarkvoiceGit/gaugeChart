@@ -48,7 +48,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                 const normalizedValue = value / thresholdRed;
 
                 // Calculate the angle for this tick
-                const angle = labelAngleFromNormalized(normalizedValue,theme.geometry);
+                const angle = labelAngleFromNormalized(normalizedValue, theme.geometry);
 
                 // Calculate the position for the label
                 const labelX = Math.cos(angle) * tickLabelRadius;

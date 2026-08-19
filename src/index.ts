@@ -9,6 +9,7 @@ export type {
     GaugeZone,
     GaugeGeometryConfig,
     GaugeInteractionConfig,
+    GaugeAnimationConfig,
     GaugeTicksConfig,
     GaugeHubConfig,
     GaugeFormatters,
@@ -26,6 +27,7 @@ export type {
 export type {
     GaugeTheme,
     GaugeThemeGeometry,
+    GaugeThemeAnimation,
     DeepPartial,
     RgbaColor
 } from './types/theme.types';
@@ -34,6 +36,8 @@ export type {
 export {formatValue, colorSelector} from './utils/gaugeUtils';
 export {calculatePointer, normalize, buildArcPath, valueToAngle} from './utils/gaugeCalculations';
 export {computeGaugeLayout, computeGaugeLayoutFromSize, resolveSizePreset} from './utils/computeGaugeLayout';
+export {computeTileSegments} from './utils/computeTileSegment'
+export {useAnimatedSvgAttribute} from './hooks/useAnimatedSvgAttribute'
 export {DEFAULT_THEME} from './theme/defaultTheme'
 export {mergeTheme} from './theme/mergeTheme'
 

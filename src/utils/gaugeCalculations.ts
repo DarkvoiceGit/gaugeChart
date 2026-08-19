@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import {DEFAULT_THEME} from "../theme/defaultTheme";
 import {createAngleScale, valueToAngle as mapValueToAngle} from "../core/gaugeGeometry";
 
-const EMPTY_ARRC: d3.DefaultArcObject = {
+const EMPTY_ARC: d3.DefaultArcObject = {
     innerRadius: 0,
     outerRadius: 0,
     startAngle: 0,
@@ -34,19 +34,19 @@ export function valueToAngle(normalizedValue: number, geometry = DEFAULT_THEME.g
  * @param thresholdRed The maximum threshold value
  * @returns The normalized value between 0 and 1
  */
-export function normalize (value: number, thresholdRed: number): number  {
+export function normalize(value: number, thresholdRed: number): number {
     if (thresholdRed <= 0) {
         return 0;
     }
     return Math.min(DEFAULT_THEME.scale.normalizedMax, value / thresholdRed);
 };
 
-export function calculatePointer  (
+export function calculatePointer(
     normalizedValue: number,
     radius: number,
     length: number,
     geometry = DEFAULT_THEME.geometry,
-): { x: number; y: number; angle: number }  {
+): { x: number; y: number; angle: number } {
     // Calculate angle based on the normalized value
     const angle = createAngleScale(geometry)(normalizedValue) - geometry.pointerAngleOffset;
 
@@ -57,7 +57,7 @@ export function calculatePointer  (
     return {x: pointerX, y: pointerY, angle};
 };
 
-export function buildArcPath (spec: ArcPathSpec): string | null  {
+export function buildArcPath(spec: ArcPathSpec): string | null {
 
     const generator = d3.arc<d3.DefaultArcObject>()
         .innerRadius(spec.innerRadius)
@@ -75,7 +75,7 @@ export function buildArcPath (spec: ArcPathSpec): string | null  {
         generator.padRadius(spec.padRadius);
     }
 
-    return generator(EMPTY_ARRC)
+    return generator(EMPTY_ARC)
 }
 
 /**
@@ -87,7 +87,7 @@ export function buildArcPath (spec: ArcPathSpec): string | null  {
  * @param arcConfig Configuration for the arc (cornerRadius, padAngle, padRadius)
  * @returns A D3 arc function
  */
-export function createArc  (
+export function createArc(
     innerRadius: number,
     outerRadius: number,
     startAngle: number,

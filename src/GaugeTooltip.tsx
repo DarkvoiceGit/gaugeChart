@@ -16,8 +16,8 @@ const GaugeTooltip = ({
                           x,
                           y,
                           fontColor,
-                          bgColor ,
-    theme = DEFAULT_THEME.tooltip
+                          bgColor,
+                          theme = DEFAULT_THEME.tooltip
                       }: GaugeTooltipProps) => {
 
     const effectiveFontColor = fontColor ?? theme.fontColor;

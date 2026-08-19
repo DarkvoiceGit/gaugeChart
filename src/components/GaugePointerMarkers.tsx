@@ -19,14 +19,14 @@ const GaugePointerMarkers: React.FC<GaugePointerMarkersProps> = ({markers}) => {
                 const markerWidth = theme.pointer.markerBaseSize * scale
                 const markerHeight = theme.pointer.markerBaseSize * scale
 
-                return(
+                return (
                     <marker key={id} id={`arrowhead-${id}`} markerWidth={markerWidth} markerHeight={markerHeight}
-                    refX={markerWidth * theme.pointer.markerRefXRatio}
-                    refY={markerHeight / 2}
-                    orient={'auto'}>
+                            refX={markerWidth * theme.pointer.markerRefXRatio}
+                            refY={markerHeight / 2}
+                            orient={'auto'}>
                         <polygon
-                        points={`0 0 ${markerWidth} ${markerHeight /2}, 0 ${markerHeight}`}
-                        fill={color}/>
+                            points={`0 0 ${markerWidth} ${markerHeight / 2}, 0 ${markerHeight}`}
+                            fill={color}/>
                     </marker>
                 )
             })}

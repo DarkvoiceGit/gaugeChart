@@ -53,7 +53,7 @@ export const colorSelector = (
     if (value >= thresholdMid && value < thresholdMax) {
         return colorMid;
     }
-        return colorMax;
+    return colorMax;
 };
 
 /**
@@ -76,7 +76,7 @@ export const getTileColor = (
         colorTileThresholdYellow: string;
         colorTileThresholdRed: string;
     },
-    colorScale: ((value: number)=> string) | null,
+    colorScale: ((value: number) => string) | null,
     layerId = 'default'
 ): string => {
     const {

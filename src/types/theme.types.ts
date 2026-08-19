@@ -32,7 +32,7 @@ export interface GaugeThemeColors {
     pointerSecondary: string;
 }
 
-export interface GaugeThemePointer{
+export interface GaugeThemePointer {
     primaryLengthRatio: number;
     secondaryLengthRatio: number;
     baseStrokeWidth: number;
@@ -103,7 +103,7 @@ export interface GaugeThemeTooltip {
     swatchBorder: string;
 }
 
-export interface GaugeThemeGradient{
+export interface GaugeThemeGradient {
     rotationDegrees: number
     stopStart: string
     stopEnd: string
@@ -130,30 +130,34 @@ export interface GaugeThemeTiles {
     defaultBorderThickness: number;
 }
 
-export interface GaugeThemeThreshold{
+export interface GaugeThemeThreshold {
     defaultRed: number;
     defaultYellow: number;
 }
 
-export interface GaugeThemeOptions{
+export interface GaugeThemeOptions {
     defaultCircleScale: number;
 }
 
-export interface GaugeSizePreset{
+export interface GaugeThemeAnimation {
+    durationMs: number;
+}
+
+export interface GaugeSizePreset {
     width: number;
     height: number;
 }
 
 export interface GaugeThemeSizePresets {
-    xxs:GaugeSizePreset
-    xs:GaugeSizePreset
-    s:GaugeSizePreset
-    sm:GaugeSizePreset
-    m:GaugeSizePreset
-    l:GaugeSizePreset
-    xl:GaugeSizePreset
-    xxl:GaugeSizePreset
-    xxxl:GaugeSizePreset
+    xxs: GaugeSizePreset
+    xs: GaugeSizePreset
+    s: GaugeSizePreset
+    sm: GaugeSizePreset
+    m: GaugeSizePreset
+    l: GaugeSizePreset
+    xl: GaugeSizePreset
+    xxl: GaugeSizePreset
+    xxxl: GaugeSizePreset
 
 }
 
@@ -164,7 +168,7 @@ export interface GaugeTheme {
     pointer: GaugeThemePointer
     interaction: GaugeThemeInteraction
     layout: GaugeThemeLayout
-    geometry : GaugeThemeGeometry
+    geometry: GaugeThemeGeometry
     radius: GaugeThemeRadius
     ticks: GaugeThemeTicks
     tooltip: GaugeThemeTooltip
@@ -174,6 +178,7 @@ export interface GaugeTheme {
     tiles: GaugeThemeTiles
     threshold: GaugeThemeThreshold
     options: GaugeThemeOptions
+    animation: GaugeThemeAnimation
     sizesPresets: GaugeThemeSizePresets
 }
 

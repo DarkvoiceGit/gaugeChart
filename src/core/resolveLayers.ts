@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import type {GaugeTheme} from '../types/theme.types';
 import type {ArcConfig, GaugeLayer, GaugeScale} from '../types';
-import type {TileSegmentRenderData} from '../utils/computeTileSegment';
+import {computeTileSegments, TileSegmentRenderData} from '../utils/computeTileSegment';
 import type {PointerMarkerSpec} from '../components/GaugePointerMarkers';
 import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/gaugeCalculations';
 import {resolveTileCount} from '../utils/gaugeGuards';
@@ -211,16 +211,58 @@ function resolvePointer(
     };
 }
 
+function resolveLayerSegments(
+    layer: GaugeLayer,
+    segmentedStyle: SegmentedLayerStyle,
+    arcConfig: ArcConfig,
+    tileAngles: number[],
+    segmentCount: number,
+    normalizedValue: number,
+    scaleMax: number,
+    baseRadius: number,
+    scaleFactor: number,
+    colorScale: d3.ScaleLinear<string, string>,
+    theme: GaugeTheme
+): TileSegmentRenderData[] {
+    return computeTileSegments({
+            layerId: layer.id,
+            tileAngles,
+            numberOfTiles: segmentCount,
+            sumNormalized: normalizedValue,
+            thresholdRed: scaleMax,
+            radius: baseRadius,
+            scaleFactor,
+            isTileHovered: false,
+            enableOpacityEffect: false,
+            colorScale,
+            config: {
+                ...segmentedStyle,
+                arcConfig
+            },
+            theme
+        }
+    )
+}
+
 export function resolveLayers(
     layers: GaugeLayer[],
     scale: GaugeScale,
     baseRadius: number,
     theme: GaugeTheme,
     tickStep?: number,
+    scaleFactor = 1,
 ): ResolvedGaugeLayers {
     const max = scale.max;
     const yellowThreshold = scale.zones?.[1]?.upTo ?? theme.threshold.defaultYellow;
     const thresholdYellowNormalized = normalize(yellowThreshold, max);
+
+    const colorScale = d3.scaleLinear<string>()
+        .domain([0, thresholdYellowNormalized, theme.scale.normalizedMax])
+        .range([
+            scale.zones?.[0]?.color ?? theme.colors.tileDefault,
+            scale.zones?.[1]?.color ?? theme.colors.tileYellow,
+            scale.zones?.[scale.zones.length - 1]?.color ?? theme.colors.tileRed,
+        ])
 
     const sortedLayers = [...layers].sort(
         (left, right) => (left.zIndex ?? 0) - (right.zIndex ?? 0),
@@ -265,6 +307,19 @@ export function resolveLayers(
             : {solidPath: null, hoverSolidPath: null};
 
         const segmentedStyle = resolveSegmentedStyle(layer, scale, theme, thresholdYellowNormalized);
+        const segments = layer.render === 'segmented' ? resolveLayerSegments(
+            layer,
+            segmentedStyle,
+            arcConfig,
+            tileAngles,
+            segmentCount,
+            normalizedValue,
+            max,
+            baseRadius,
+            scaleFactor,
+            colorScale,
+            theme
+        ) : []
 
         const pointer = resolvePointer(layer, normalizedValue, baseRadius, theme);
         if (pointer) {
@@ -287,21 +342,13 @@ export function resolveLayers(
             arcConfig,
             solidPath: solidPaths.solidPath,
             hoverSolidPath: solidPaths.hoverSolidPath,
-            segments: [],
+            segments,
             tileAngles,
             segmentCount,
             segmentedStyle,
             pointer,
         });
     }
-
-    const colorScale = d3.scaleLinear<string>()
-        .domain([0, thresholdYellowNormalized, theme.scale.normalizedMax])
-        .range([
-            scale.zones?.[0]?.color ?? theme.colors.tileDefault,
-            scale.zones?.[1]?.color ?? theme.colors.tileYellow,
-            scale.zones?.[scale.zones.length - 1]?.color ?? theme.colors.tileRed,
-        ]);
 
     const referenceLayer = resolvedLayers.find((layer) => layer.render === 'segmented');
     const defaultStep = referenceLayer?.segmentCount

@@ -18,6 +18,8 @@ export interface ResolvedChartSettings {
     hubColor: string;
     scaleMax: number;
     scaleYellow: number;
+    animationEnabled: boolean;
+    animationDurationMs: number;
 }
 
 export function resolveChartSettings(
@@ -44,6 +46,8 @@ export function resolveChartSettings(
         hubColor: props.hub?.color ?? theme.hub.color,
         scaleMax,
         scaleYellow,
+        animationEnabled: props.animation?.enabled ?? false,
+        animationDurationMs: props.animation?.durationMs ?? theme.animation.durationMs
     };
 }
 
