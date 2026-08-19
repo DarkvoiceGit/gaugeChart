@@ -46,7 +46,7 @@ export function computeGaugeLayout(
     const bounds = computeGaugeContentBounds(geometry, radius, tickLabelRadius);
 
     const viewBoxMinX = centerX + bounds.minX - sideMargin;
-    const viewBoxMaxX = centerY + bounds.maxY - sideMargin;
+    const viewBoxMaxX = centerX + bounds.maxX - sideMargin;
     const viewBoxMinY = Math.max(0, centerY + bounds.minY - sideMargin);
     const viewBoxMaxY = centerY + bounds.maxY + Math.max(layout.viewBoxMinBottomPadding, logicalHeight * layout.viewBoxBottomPaddingRatio)
 
