@@ -1,4 +1,4 @@
-import {DEFAULT_THEME} from "../theme/defaultTheme.ts";
+import {DEFAULT_THEME} from "../theme/defaultTheme";
 
 export const ANGLE_RANGE = {
     START: DEFAULT_THEME.geometry.startAngle,

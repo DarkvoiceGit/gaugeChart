@@ -1,6 +1,6 @@
 import React from 'react';
-import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
-import {normalize} from "../utils/gaugeCalculations.ts";
+import {useGaugeTheme} from "../theme/useGaugeTheme";
+import {normalize} from "../utils/gaugeCalculations";
 
 interface GaugeGradientsProps {
     layerId: string;

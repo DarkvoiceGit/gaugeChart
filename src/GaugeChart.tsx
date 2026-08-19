@@ -1,18 +1,17 @@
 import React, {useMemo, useRef} from 'react';
 import type {GaugeChartProps} from './types';
 import {computeGaugeLayoutFromSize} from './utils/computeGaugeLayout';
-import {resolvePointerStrokeScale} from './utils/pointerScale';
 import {mergeTheme} from './theme/mergeTheme';
 import {GaugeThemeProvider} from './theme/GaugeThemeContext';
 import {resolveLayers} from './core/resolveLayers';
 import {assertValidLayers, resolveChartSettings} from './core/resolveChartSettings';
-import {useLayerInteraction} from './hooks/useLayerInteraction';
 import GaugeTooltip from './GaugeTooltip';
-import GaugePointer from './GaugePointer';
-import GaugePointerMarkers from './components/GaugePointerMarkers';
 import GaugeLayer from './components/GaugeLayer';
 import GaugeTickLabels from './components/GaugeTickLabels';
-import GaugeGradients from './components/GaugeGradients';
+import {useGaugeInteraction} from "./hooks/useGaugeInteraction.ts";
+import GaugeDefs from "./components/GaugeDefs.tsx";
+import GaugeHub from "./components/GaugeHub.tsx";
+import GaugePointers from "./components/GaugePointers.tsx";
 
 function logGaugeDebug(debugMode: boolean | undefined, payload: Record<string, unknown>): void {
     if (!debugMode) {
@@ -50,14 +49,15 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
         [props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep],
     );
 
-    const {tooltip, hoveredLayerId, getLayerHandlers} = useLayerInteraction(
+    const {tooltip, hoveredLayerId, getLayerHandlers, getLayerOpacity} = useGaugeInteraction({
         svgRef,
-        resolved.layers,
-        props.formatters,
-        settings.tooltipMode,
-    );
-
-    const tickLabels = resolved.tickLabels;
+        layers: resolved.layers,
+        formatters: props.formatters,
+        tooltipMode: settings.tooltipMode,
+        tooltipsEnabled: settings.tooltips,
+        hoverDimming: settings.hoverDimming,
+        interaction: mergedTheme.interaction,
+    });
 
     const gradientLayer = resolved.layers.find(
         (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
@@ -74,16 +74,12 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                     preserveAspectRatio="xMidYMid meet"
                 >
                     <defs>
-                        <GaugePointerMarkers markers={resolved.pointerMarkers}/>
-                        {gradientLayer && (
-                            <GaugeGradients
-                                layerId={gradientLayer.id}
-                                tileAngles={gradientLayer.tileAngles}
-                                numberOfTiles={gradientLayer.segmentCount}
-                                thresholdRed={settings.scaleMax}
+                            <GaugeDefs
+                                pointerMarkers={resolved.pointerMarkers}
+                                gradientLayer={gradientLayer}
+                                scaleMax={settings.scaleMax}
                                 colorScale={resolved.colorScale}
                             />
-                        )}
                     </defs>
 
                     <g transform={`translate(${layout.logicalWidth / 2}, ${layout.logicalHeight / 2})`}>
@@ -96,39 +92,26 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                                 scaleFactor={layout.scaleFactor}
                                 colorScale={resolved.colorScale}
                                 hoveredLayerId={hoveredLayerId}
-                                enableOpacityEffect={settings.hoverDimming}
+                                hoverDimming={settings.hoverDimming}
+                                getLayerOpacity={getLayerOpacity}
                                 handlers={getLayerHandlers(layer.id)}
                             />
                         ))}
 
                         <g>
-                            {resolved.pointers.map((pointer) => (
-                                <GaugePointer
-                                    key={pointer.layerId}
-                                    x={pointer.x}
-                                    y={pointer.y}
-                                    color={pointer.color}
-                                    markerId={pointer.layerId}
-                                    strokeScale={resolvePointerStrokeScale(
-                                        layout.scaleFactor,
-                                        pointer.strokeScale,
-                                        mergedTheme.scale.referenceScaleFactor,
-                                    )}
-                                />
-                            ))}
 
-                            <circle
-                                cx={0}
-                                cy={0}
-                                r={layout.radius * (settings.hubScale / mergedTheme.hub.scaleDivisor)}
-                                fill={settings.hubColor}
-                            />
+                                <GaugePointers
+                                    pointers={resolved.pointers}
+                                    scaleFactor={layout.scaleFactor}
+                                    referenceScaleFactor={mergedTheme.scale.referenceScaleFactor}
+                                />
+                            <GaugeHub radius={layout.radius} hubScale={settings.hubScale} hubColor={settings.hubColor} scaleDivisor={mergedTheme.hub.scaleDivisor} />
                         </g>
 
                         {settings.ticksEnabled && (
                             <GaugeTickLabels
                                 radius={layout.radius}
-                                tickLabels={tickLabels}
+                                tickLabels={resolved.tickLabels}
                                 thresholdRed={settings.scaleMax}
                                 unit={props.formatters?.tick}
                                 scaleFactor={layout.scaleFactor}
@@ -147,8 +130,6 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                         text={tooltip.text}
                         x={tooltip.x}
                         y={tooltip.y}
-                        fontColor={settings.fontColor}
-                        bgColor={settings.tooltipBackground}
                         theme={mergedTheme.tooltip}
                     />
                 )}

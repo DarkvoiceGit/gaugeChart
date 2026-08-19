@@ -30,9 +30,9 @@ export function buildLayerTooltipContent(options: {
 
     return visibleLayers.map((layer) => ({
         label: formatTooltipLabel(layer.tooltipLabel, `${layer.id}:`),
-    value: formatValue(layer.rawValue, options.formatters?.tick, options.formatters?.value),
+        value: formatValue(layer.rawValue, undefined, options.formatters?.value),
         color: layer.color,
-}));
+    }));
 }
 
 export function createTooltipState(

@@ -1,16 +1,10 @@
 import React, {useMemo} from 'react';
 import type * as d3 from 'd3';
 import type {ResolvedLayer} from '../core/resolveLayers';
-import {getLayerOpacity} from '../utils/getLayerOpacity';
+import type {LayerHandlers} from '../hooks/useGaugeInteraction';
 import {computeTileSegments} from '../utils/computeTileSegment';
 import {buildArcPath} from '../utils/gaugeCalculations';
 import {useGaugeTheme} from '../theme/useGaugeTheme';
-
-interface LayerHandlers {
-    onMouseEnter: (event: React.MouseEvent) => void;
-    onMouseMove: (event: React.MouseEvent) => void;
-    onMouseLeave: () => void;
-}
 
 interface GaugeLayerProps {
     layer: ResolvedLayer;
@@ -19,19 +13,20 @@ interface GaugeLayerProps {
     scaleFactor: number;
     colorScale: d3.ScaleLinear<string, string>;
     hoveredLayerId: string | null;
-    enableOpacityEffect: boolean;
+    hoverDimming: boolean;
+    getLayerOpacity: (layerId: string) => number;
     handlers: LayerHandlers;
 }
 
 const SolidGaugeLayer: React.FC<GaugeLayerProps> = ({
                                                         layer,
                                                         hoveredLayerId,
-                                                        enableOpacityEffect,
+                                                        hoverDimming,
+                                                        getLayerOpacity,
                                                         handlers,
                                                     }) => {
     const theme = useGaugeTheme();
     const isHovered = hoveredLayerId === layer.id;
-    const opacity = getLayerOpacity(layer.id, hoveredLayerId, enableOpacityEffect, theme.interaction);
     const sharedStroke = {
         stroke: theme.stroke.color,
         strokeWidth: theme.stroke.thin,
@@ -42,13 +37,13 @@ const SolidGaugeLayer: React.FC<GaugeLayerProps> = ({
             <path
                 d={layer.solidPath ?? undefined}
                 fill={layer.color}
-                opacity={opacity}
+                opacity={getLayerOpacity(layer.id)}
                 {...sharedStroke}
                 onMouseEnter={layer.hoverable ? handlers.onMouseEnter : undefined}
                 onMouseLeave={layer.hoverable ? handlers.onMouseLeave : undefined}
                 onMouseMove={layer.hoverable ? handlers.onMouseMove : undefined}
             />
-            {isHovered && enableOpacityEffect && (
+            {isHovered && hoverDimming && (
                 <path
                     d={layer.hoverSolidPath ?? undefined}
                     fill={layer.color}
@@ -68,7 +63,8 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                                                             scaleFactor,
                                                             colorScale,
                                                             hoveredLayerId,
-                                                            enableOpacityEffect,
+                                                            hoverDimming,
+                                                            getLayerOpacity,
                                                             handlers,
                                                         }) => {
     const theme = useGaugeTheme();
@@ -84,7 +80,7 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
             radius,
             scaleFactor,
             isTileHovered: isHovered,
-            enableOpacityEffect,
+            enableOpacityEffect: hoverDimming,
             colorScale,
             config: {
                 ...layer.segmentedStyle,
@@ -92,7 +88,7 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
             },
             theme,
         }),
-        [colorScale, enableOpacityEffect, isHovered, layer, radius, scaleFactor, scaleMax, theme],
+        [colorScale, hoverDimming, isHovered, layer, radius, scaleFactor, scaleMax, theme],
     );
 
     const hoverOverlayPath = buildArcPath({
@@ -112,14 +108,14 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                         strokeWidth={segment.strokeWidth}
                         strokeDasharray={segment.strokeDasharray}
                         fill={segment.backgroundFill}
-                        opacity={getLayerOpacity(`${layer.id}-bg`, hoveredLayerId, enableOpacityEffect, theme.interaction)}
+                        opacity={getLayerOpacity(`${layer.id}-bg`)}
                     />
                     {segment.foregroundPath && (
                         <path
                             d={segment.foregroundPath}
                             fill={segment.fillColor}
                             strokeWidth={theme.stroke.normal}
-                            opacity={getLayerOpacity(layer.id, hoveredLayerId, enableOpacityEffect, theme.interaction)}
+                            opacity={getLayerOpacity(layer.id)}
                         />
                     )}
                 </g>

@@ -1,5 +1,5 @@
-import {GaugeThemeInteraction} from "../types/theme.types.ts";
-import {DEFAULT_THEME} from "../theme/defaultTheme.ts";
+import {GaugeThemeInteraction} from "../types/theme.types";
+import {DEFAULT_THEME} from "../theme/defaultTheme";
 
 export function getLayerOpacity(
     layerId: string,
