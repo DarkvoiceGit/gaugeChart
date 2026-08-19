@@ -1,351 +1,1020 @@
-# GaugeChart
+# @darkvoice/gauge-chart
 
-A highly customizable gauge chart component for React applications, built with D3.js.
+A configurable, D3-powered gauge chart component for React. The current API is based on a generic **scale + layers** model, so you can combine solid arcs, segmented rings, pointers, cumulative values, offset values, ticks, tooltips, animation, and theme overrides without relying on fixed `primary` / `secondary` props.
 
+## Demo & Package
 
-## Demo
-
-You can see a live demo of the GaugeChart component at [https://DarkvoiceGit.github.io/gaugeChart](https://DarkvoiceGit.github.io/gaugeChart)
+| Resource | URL |
+|---|---|
+| Live demo | https://DarkvoiceGit.github.io/gaugeChart |
+| Package | https://www.npmjs.com/package/@darkvoice/gauge-chart |
+| Repository | https://github.com/DarkvoiceGit/gaugeChart |
 
 ## Features
 
-- Customizable gauge with primary and secondary values
-- Configurable thresholds with color indicators
-- Interactive tooltips with customizable labels
-- Multiple gradient and fill style options
-- Extensive styling options for pointers, arcs, and tiles
-- Unit formatting and custom formatters
+- Generic layer-based gauge API
+- Solid and segmented layers
+- Absolute, cumulative, and offset value modes
+- Optional pointers per layer
+- Independent inner and outer radius per layer
+- Layer ordering with `zIndex`
+- Hover interaction and tooltips
+- Configurable scale and optional color zones
+- Configurable ticks and value formatters
+- Configurable center hub
+- Animation support
+- Theme overrides
+- React 16.8 through React 19 support
 
 ## Installation
 
-This is a React component that can be used in your React projects. To use it in your project:
-
-### Option 1: Clone the Repository
-
 ```bash
-git clone https://github.com/DarkvoiceGit/gaugeChart.git
-cd gaugeChart
-npm install
+npm install @darkvoice/gauge-chart
 ```
 
-### Option 2: Copy the Component
-
-You can also copy the GaugeChart component files directly into your React project and install the required dependencies:
+If you are testing a local `.tgz` build:
 
 ```bash
-npm install d3@^7.9.0
+npm install ./your-package-file.tgz
 ```
 
-The component requires React 18+ and is built with TypeScript.
+Then import the component by its package name:
+
+```tsx
+import { GaugeChart } from '@darkvoice/gauge-chart';
+```
+
+## Requirements
+
+Peer dependencies:
+
+- React `^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0`
+- React DOM `^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0`
+
+Runtime dependency:
+
+- D3 `^7.9.0`
 
 ## Basic Usage
 
-```jsx
-import Gauge from 'gauge-chart';
+```tsx
+import { GaugeChart } from '@darkvoice/gauge-chart';
 
-function MyComponent() {
+export function ExampleGauge() {
   return (
-    <Gauge
-      primary={40}
-      secondary={30}
-      options={{
-        thresholdYellow: 60,
-        thresholdRed: 80,
-        enableToolTip: true
+    <GaugeChart
+      scale={{
+        min: 0,
+        max: 80,
       }}
-      tileArc={{
-        tiles: 10,
-        colorTileThresholdDefault: '#00ff00',
-        colorTileThresholdYellow: '#ffff00',
-        colorTileThresholdRed: '#ff0c4d'
-      }}
-    />
-  );
-}
-```
-
-## Props
-
-The GaugeChart component accepts the following props:
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `width` | number | 800 | Width of the SVG |
-| `height` | number | 600 | Height of the SVG |
-| `primary` | number | - | Primary value to display (required) |
-| `secondary` | number | - | Secondary value to display (optional) |
-| `unitTickFormatter` | function | - | Formatter function for unit tick labels |
-| `unit` | function | - | Formatter function for unit display |
-| `options` | object | - | General gauge configuration |
-| `options.thresholdYellow` | number | - | Threshold value for yellow warning level |
-| `options.thresholdRed` | number | - | Threshold value for red warning level |
-| `options.withOpacitySwitch` | boolean | true | Whether to enable opacity changes on hover |
-| `options.enableToolTip` | boolean | true | Whether to show tooltips |
-| `options.enableUnitTicks` | boolean | true | Whether to show unit ticks |
-| `options.tickFontsize` | string | '1rem' | Font size for tick labels |
-| `options.tickLabelColor` | string | '#ffffff' | Color for tick labels |
-| `options.tickRadiusScale` | number | 1.12 | Scale factor for tick radius |
-| `options.tickColor` | string | '#777777' | Color for ticks |
-| `options.circleScale` | number | 0.5 | Scale factor for center circle |
-| `options.enableInnerArc` | boolean | true | Whether to show inner arcs |
-| `options.fontColor` | string | '#ffffff' | Font color for labels and tooltips |
-| `options.tooltipBgColor` | object | - | Background color for tooltips |
-| `options.tooltipBgColor.r` | number | - | Red component (0-255) |
-| `options.tooltipBgColor.g` | number | - | Green component (0-255) |
-| `options.tooltipBgColor.b` | number | - | Blue component (0-255) |
-| `options.tooltipBgColor.a` | number | - | Alpha component (0-1) |
-| `tileArc` | object | - | Configuration for tile arcs (required) |
-| `tileArc.colorTileThresholdRed` | string | '#ff0c4d' | Color for values above red threshold |
-| `tileArc.colorTileThresholdYellow` | string | '#ffff00' | Color for values above yellow threshold but below red |
-| `tileArc.colorTileThresholdDefault` | string | '#00ff00' | Default color for values below yellow threshold |
-| `tileArc.colorTileBg` | string | '#ddd' | Background color for unfilled tiles |
-| `tileArc.fillStyle` | enum | 'filled' | Fill style for tiles (filled, dotted, dashed, outlined) |
-| `tileArc.borderColor` | string | '#000000' | Border color for outlined tiles |
-| `tileArc.borderThickness` | number | 1 | Border thickness for outlined tiles |
-| `tileArc.tiles` | number | 10 | Number of tiles to display |
-| `tileArc.isTileColorGradient` | boolean | true | Whether to use gradient coloring for tiles |
-| `tileArc.gradientType` | string | 'tile' | Type of gradient to use ('full' or 'tile') |
-| `tileArc.tickEveryNThStep` | number | 0 | Step size for tick labels (0 means auto) |
-| `tileArc.toolTipLabel` | string | 'Sum' | Label for tile tooltip |
-| `tileArc.arcConfig` | object | - | Arc configuration for tiles |
-| `tileArc.arcConfig.padAngle` | number | 2 | Padding angle between arcs |
-| `tileArc.arcConfig.padRadius` | number | 2 | Padding radius for arcs |
-| `tileArc.arcConfig.cornerRadius` | number | 5 | Corner radius for arcs |
-| `primaryArcConfig` | object | - | Configuration for primary arc |
-| `primaryArcConfig.colorPrimaryBar` | string | '#000000' | Color for primary bar |
-| `primaryArcConfig.toolTipLabel` | string | 'Primary' | Label for primary tooltip |
-| `primaryArcConfig.arcConfig` | object | - | Arc configuration for primary arc |
-| `primaryArcConfig.arcConfig.padAngle` | number | 0 | Padding angle between arcs |
-| `primaryArcConfig.arcConfig.padRadius` | number | 0 | Padding radius for arcs |
-| `primaryArcConfig.arcConfig.cornerRadius` | number | 5 | Corner radius for arcs |
-| `primaryArcConfig.pointerPrimaryConfig` | object | - | Pointer configuration for primary value |
-| `primaryArcConfig.pointerPrimaryConfig.scale` | number | 1 | Scale factor for pointer size |
-| `primaryArcConfig.pointerPrimaryConfig.strokeScale` | number | 1 | Scale factor for pointer stroke width |
-| `primaryArcConfig.pointerPrimaryConfig.color` | string | '#025bff' | Color of the pointer |
-| `secondaryArcConfig` | object | - | Configuration for secondary arc |
-| `secondaryArcConfig.colorSecondaryBar` | string | '#aaaaaa' | Color for secondary bar |
-| `secondaryArcConfig.toolTipLabel` | string | 'Secondary' | Label for secondary tooltip |
-| `secondaryArcConfig.arcConfig` | object | - | Arc configuration for secondary arc |
-| `secondaryArcConfig.arcConfig.padAngle` | number | 0 | Padding angle between arcs |
-| `secondaryArcConfig.arcConfig.padRadius` | number | 0 | Padding radius for arcs |
-| `secondaryArcConfig.arcConfig.cornerRadius` | number | 5 | Corner radius for arcs |
-| `secondaryArcConfig.pointerSumConfig` | object | - | Pointer configuration for sum value |
-| `secondaryArcConfig.pointerSumConfig.scale` | number | 1 | Scale factor for pointer size |
-| `secondaryArcConfig.pointerSumConfig.strokeScale` | number | 1 | Scale factor for pointer stroke width |
-| `secondaryArcConfig.pointerSumConfig.color` | string | '#0ed30e' | Color of the pointer |
-
-## Fill Style Options
-
-The component supports different fill styles for tiles:
-
-```typescript
-enum TileFillStyle {
-  FILLED = "filled",
-  DOTTED = "dotted",
-  DASHED = "dashed",
-  OUTLINED = "outlined"
-}
-```
-
-## Advanced Usage Examples
-
-### With Custom Formatters
-
-```jsx
-import Gauge from 'gauge-chart';
-
-function MyComponent() {
-  // Format days with hours and minutes
-  const formatDayHourMinute = (value) => {
-    const days = Math.floor(value);
-    const hours = Math.floor((value - days) * 8); // Assuming 8-hour workdays
-    const minutes = Math.floor(((value - days) * 8 - hours) * 60);
-    
-    return `${days} d, ${hours} h, ${minutes} m`;
-  };
-
-  // Format value with day unit
-  const formatDay = (value) => `${value} d`;
-
-  return (
-    <Gauge
-      width={800}
-      height={600}
-      primary={5.75}
-      secondary={2.25}
-      unit={formatDay}
-      unitTickFormatter={formatDayHourMinute}
-      options={{
-        thresholdYellow: 7,
-        thresholdRed: 10,
-        enableToolTip: true,
-        enableUnitTicks: true
-      }}
-      tileArc={{
-        tiles: 10,
-        colorTileThresholdDefault: '#00ff00',
-        colorTileThresholdYellow: '#ffff00',
-        colorTileThresholdRed: '#ff0c4d'
-      }}
-    />
-  );
-}
-```
-
-### With Custom Styling
-
-```jsx
-import Gauge from 'gauge-chart';
-import { TileFillStyle } from 'gauge-chart';
-
-function MyComponent() {
-  return (
-    <Gauge
-      width={800}
-      height={600}
-      primary={40}
-      secondary={35}
-      options={{
-        thresholdYellow: 60,
-        thresholdRed: 80,
-        enableToolTip: true,
-        tickLabelColor: '#ffffff',
+      layers={[
+        {
+          id: 'tiles',
+          value: 75,
+          innerRadius: 0.72,
+          outerRadius: 1,
+          render: 'segmented',
+          segments: 8,
+          color: '#35ff00',
+          backgroundColor: '#dddddd',
+          hoverable: true,
+          zIndex: 3,
+        },
+        {
+          id: 'base',
+          value: 40,
+          valueMode: 'absolute',
+          innerRadius: 0.58,
+          outerRadius: 0.70,
+          render: 'solid',
+          color: '#000000',
+          pointer: {
+            enabled: true,
+            color: '#0ed30e',
+            scale: 1,
+            strokeScale: 1,
+          },
+          tooltip: {
+            label: 'Base',
+          },
+          hoverable: true,
+          zIndex: 2,
+        },
+        {
+          id: 'additional',
+          value: 35,
+          valueMode: 'cumulative',
+          baseLayerId: 'base',
+          innerRadius: 0.58,
+          outerRadius: 0.70,
+          render: 'solid',
+          color: '#aaaaaa',
+          pointer: {
+            enabled: true,
+            color: '#025bff',
+            scale: 1,
+            strokeScale: 1,
+          },
+          tooltip: {
+            label: 'Additional',
+          },
+          hoverable: true,
+          zIndex: 1,
+        },
+      ]}
+      ticks={{
+        enabled: true,
+        step: 10,
+        labelColor: '#ffffff',
         tickColor: '#777777',
-        circleScale: 0.5,
-        tickFontsize: '1rem',
-        tickRadiusScale: 1.12
+        radiusScale: 1.12,
       }}
-      tileArc={{
-        tiles: 10,
-        colorTileThresholdDefault: '#00ff00',
-        colorTileThresholdYellow: '#ffff00',
-        colorTileThresholdRed: '#ff0c4d',
-        colorTileBg: '#ddd',
-        fillStyle: TileFillStyle.DASHED,
-        borderColor: '#000000',
-        borderThickness: 1,
-        isTileColorGradient: true,
-        gradientType: 'tile',
-        arcConfig: {
-          cornerRadius: 5,
-          padRadius: 2,
-          padAngle: 2
-        },
-        toolTipLabel: 'Total'
+      hub={{
+        color: '#000000',
+        scale: 0.5,
       }}
-      primaryArcConfig={{
-        colorPrimaryBar: '#000000',
-        pointerPrimaryConfig: {
-          color: '#025bff',
-          scale: 1,
-          strokeScale: 1
-        },
-        arcConfig: {
-          cornerRadius: 5,
-          padRadius: 0,
-          padAngle: 0
-        },
-        toolTipLabel: 'Primary'
+      interaction={{
+        tooltips: true,
+        tooltipMode: 'all',
+        hoverDimming: true,
       }}
-      secondaryArcConfig={{
-        colorSecondaryBar: '#aaaaaa',
-        pointerSumConfig: {
-          color: '#0ed30e',
-          scale: 1,
-          strokeScale: 1
+      animation={{
+        enabled: true,
+        durationMs: 400,
+      }}
+      size="xl"
+    />
+  );
+}
+```
+
+## Core Model
+
+The component is configured with two required props:
+
+```ts
+scale: GaugeScale;
+layers: GaugeLayer[];
+```
+
+The scale defines the numeric range. Each layer defines how a value is rendered inside that range.
+
+```tsx
+<GaugeChart
+  scale={{ min: 0, max: 100 }}
+  layers={[...]}
+/>
+```
+
+## `GaugeChart` Props
+
+```ts
+interface GaugeChartProps {
+  size?: GaugeSize;
+  scale: GaugeScale;
+  layers: GaugeLayer[];
+  geometry?: GaugeGeometryConfig;
+  ticks?: GaugeTicksConfig;
+  interaction?: GaugeInteractionConfig;
+  hub?: GaugeHubConfig;
+  formatters?: GaugeFormatters;
+  animation?: GaugeAnimationConfig;
+  theme?: DeepPartial<GaugeTheme>;
+  debugMode?: boolean;
+}
+```
+
+| Prop | Type | Description |
+|---|---|---|
+| `size` | `GaugeSize` | Optional preset size. |
+| `scale` | `GaugeScale` | Numeric range used by all layers. |
+| `layers` | `GaugeLayer[]` | Gauge layers to render. |
+| `geometry` | `GaugeGeometryConfig` | Optional gauge geometry overrides. |
+| `ticks` | `GaugeTicksConfig` | Tick visibility and styling. |
+| `interaction` | `GaugeInteractionConfig` | Hover and tooltip behavior. |
+| `hub` | `GaugeHubConfig` | Center hub configuration. |
+| `formatters` | `GaugeFormatters` | Value and tick formatting functions. |
+| `animation` | `GaugeAnimationConfig` | Animation configuration. |
+| `theme` | `DeepPartial<GaugeTheme>` | Partial theme override. |
+| `debugMode` | `boolean` | Enables debug output / behavior where supported. |
+
+## Size Presets
+
+```ts
+type GaugeSize =
+  | 'default'
+  | 'xxs'
+  | 'xs'
+  | 's'
+  | 'sm'
+  | 'm'
+  | 'l'
+  | 'xl'
+  | 'xxl'
+  | 'xxxl';
+```
+
+Example:
+
+```tsx
+<GaugeChart
+  size="xl"
+  scale={{ max: 80 }}
+  layers={layers}
+/>
+```
+
+## Scale
+
+```ts
+interface GaugeScale {
+  min?: number;
+  max: number;
+  zones?: GaugeZone[];
+}
+```
+
+`max` is required. `min` is optional.
+
+```tsx
+scale={{
+  min: 0,
+  max: 80,
+}}
+```
+
+### Zones
+
+Zones are optional.
+
+```ts
+interface GaugeZone {
+  upTo: number;
+  color: string;
+}
+```
+
+Example:
+
+```tsx
+scale={{
+  min: 0,
+  max: 80,
+  zones: [
+    { upTo: 40, color: '#00ff00' },
+    { upTo: 60, color: '#ffff00' },
+    { upTo: 80, color: '#ff0c4d' },
+  ],
+}}
+```
+
+You do not need zones if you set layer colors directly.
+
+## Layers
+
+```ts
+interface GaugeLayer {
+  id: string;
+  value: number;
+  innerRadius: number;
+  outerRadius: number;
+  render: 'solid' | 'segmented';
+
+  segments?: number;
+
+  valueMode?: 'absolute' | 'cumulative' | 'offset';
+  baseLayerId?: string;
+  offsetValue?: number;
+
+  color: string;
+  fillStyle?: TileFillStyle;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderThickness?: number;
+
+  gradient?: LayerGradientConfig;
+  arc?: Partial<ArcConfig>;
+  pointer?: LayerPointerConfig;
+  tooltip?: LayerTooltipConfig;
+
+  hoverable?: boolean;
+  zIndex?: number;
+}
+```
+
+### Required Layer Properties
+
+Every layer requires:
+
+```ts
+id
+value
+innerRadius
+outerRadius
+render
+color
+```
+
+Example:
+
+```tsx
+{
+  id: 'capacity',
+  value: 65,
+  innerRadius: 0.55,
+  outerRadius: 0.70,
+  render: 'solid',
+  color: '#222222',
+}
+```
+
+## Render Modes
+
+### Solid
+
+Use `render: 'solid'` for a continuous arc.
+
+```tsx
+{
+  id: 'base',
+  value: 40,
+  innerRadius: 0.58,
+  outerRadius: 0.70,
+  render: 'solid',
+  color: '#000000',
+}
+```
+
+### Segmented
+
+Use `render: 'segmented'` for tiles / discrete segments.
+
+```tsx
+{
+  id: 'tiles',
+  value: 75,
+  innerRadius: 0.72,
+  outerRadius: 1,
+  render: 'segmented',
+  segments: 8,
+  color: '#35ff00',
+  backgroundColor: '#dddddd',
+}
+```
+
+## Value Modes
+
+```ts
+type LayerValueMode = 'absolute' | 'cumulative' | 'offset';
+```
+
+### Absolute
+
+The layer starts at the beginning of the gauge and ends at its own value.
+
+```tsx
+{
+  id: 'base',
+  value: 40,
+  valueMode: 'absolute',
+  ...
+}
+```
+
+For a `0..80` scale this represents:
+
+```text
+0 ---------- 40
+```
+
+### Cumulative
+
+A cumulative layer starts at the end of another layer.
+
+```tsx
+{
+  id: 'additional',
+  value: 35,
+  valueMode: 'cumulative',
+  baseLayerId: 'base',
+  ...
+}
+```
+
+With:
+
+```text
+base  = 40
+additional = 35
+```
+
+this conceptually represents:
+
+```text
+0 ---------- 40 ---------- 75
+   base          additional
+```
+
+`value` remains the layer's own value (`35`). `baseLayerId` identifies the layer after which it should be placed.
+
+### Offset
+
+An offset layer starts at `offsetValue` and spans its own `value`.
+
+```tsx
+{
+  id: 'window',
+  value: 20,
+  valueMode: 'offset',
+  offsetValue: 30,
+  ...
+}
+```
+
+Conceptually:
+
+```text
+30 ---------- 50
+```
+
+## Layer Radius
+
+Each layer defines its radial position using:
+
+```ts
+innerRadius: number;
+outerRadius: number;
+```
+
+Example outer ring:
+
+```tsx
+innerRadius: 0.72,
+outerRadius: 1,
+```
+
+Example inner ring:
+
+```tsx
+innerRadius: 0.42,
+outerRadius: 0.54,
+```
+
+Use `innerRadius < outerRadius`.
+
+## Layer Ordering
+
+Use `zIndex` to control the normal rendering order.
+
+```tsx
+{
+  id: 'tiles',
+  zIndex: 3,
+  ...
+}
+```
+
+Higher values are intended to render above lower values.
+
+## Pointer Configuration
+
+Pointers are optional and configured per layer.
+
+```ts
+interface LayerPointerConfig {
+  enabled?: boolean;
+  scale?: number;
+  strokeScale?: number;
+  color?: string;
+  lengthRatio?: number;
+}
+```
+
+Example:
+
+```tsx
+pointer={{
+  enabled: true,
+  color: '#025bff',
+  scale: 1,
+  strokeScale: 1,
+}}
+```
+
+## Arc Configuration
+
+Each layer can override arc styling:
+
+```ts
+interface ArcConfig {
+  padAngle: number;
+  padRadius: number;
+  cornerRadius: number;
+}
+```
+
+Example:
+
+```tsx
+arc={{
+  padAngle: 2,
+  padRadius: 2,
+  cornerRadius: 5,
+}}
+```
+
+All fields are optional when passed through a layer because `arc` is `Partial<ArcConfig>`.
+
+## Gradient Configuration
+
+```ts
+interface LayerGradientConfig {
+  enabled?: boolean;
+  type?: GradientType | string;
+}
+```
+
+Example:
+
+```tsx
+gradient={{
+  enabled: true,
+  type: 'tile',
+}}
+```
+
+## Fill Styles
+
+The package exports `TileFillStyle`.
+
+```tsx
+import {
+  GaugeChart,
+  TileFillStyle,
+} from '@darkvoice/gauge-chart';
+```
+
+Available values:
+
+```ts
+TileFillStyle.FILLED
+TileFillStyle.DOTTED
+TileFillStyle.DASHED
+TileFillStyle.OUTLINED
+```
+
+Example:
+
+```tsx
+{
+  id: 'tiles',
+  render: 'segmented',
+  fillStyle: TileFillStyle.OUTLINED,
+  borderColor: '#000000',
+  borderThickness: 1,
+  ...
+}
+```
+
+## Tooltips
+
+Tooltips are controlled globally through `interaction` and labeled per layer.
+
+```ts
+interface GaugeInteractionConfig {
+  hoverDimming?: boolean;
+  tooltips?: boolean;
+  tooltipMode?: 'layer' | 'all';
+}
+```
+
+Enable them with:
+
+```tsx
+interaction={{
+  tooltips: true,
+  tooltipMode: 'all',
+  hoverDimming: true,
+}}
+```
+
+### Tooltip Modes
+
+`'layer'` shows the hovered layer's tooltip information.
+
+```tsx
+interaction={{
+  tooltips: true,
+  tooltipMode: 'layer',
+}}
+```
+
+`'all'` shows tooltip information for all relevant layers.
+
+```tsx
+interaction={{
+  tooltips: true,
+  tooltipMode: 'all',
+}}
+```
+
+### Tooltip Labels
+
+Labels are configured per layer:
+
+```tsx
+{
+  id: 'base',
+  tooltip: {
+    label: 'Base',
+  },
+  hoverable: true,
+  ...
+}
+```
+
+The current public type is:
+
+```ts
+interface LayerTooltipConfig {
+  label?: string;
+}
+```
+
+## Hover Interaction
+
+Set `hoverable: true` on layers that should react to hover.
+
+```tsx
+{
+  id: 'base',
+  hoverable: true,
+  ...
+}
+```
+
+Global hover dimming is configured with:
+
+```tsx
+interaction={{
+  hoverDimming: true,
+}}
+```
+
+## Ticks
+
+```ts
+interface GaugeTicksConfig {
+  enabled?: boolean;
+  step?: number;
+  fontSize?: string;
+  labelColor?: string;
+  tickColor?: string;
+  radiusScale?: number;
+}
+```
+
+Example:
+
+```tsx
+ticks={{
+  enabled: true,
+  step: 10,
+  fontSize: '1rem',
+  labelColor: '#ffffff',
+  tickColor: '#777777',
+  radiusScale: 1.12,
+}}
+```
+
+## Formatters
+
+Use `formatters.value` for tooltip / value text and `formatters.tick` for ticks.
+
+```ts
+interface GaugeFormatters {
+  value?: (value: number) => string;
+  tick?: (value: number) => string;
+}
+```
+
+Example with a unit:
+
+```tsx
+<GaugeChart
+  scale={{ max: 80 }}
+  layers={layers}
+  formatters={{
+    value: (value) => `${value} km`,
+    tick: (value) => `${value} km`,
+  }}
+/>
+```
+
+If you want units only in tooltips but not on every tick:
+
+```tsx
+formatters={{
+  value: (value) => `${value} km`,
+  tick: (value) => `${value}`,
+}}
+```
+
+## Hub
+
+The center hub can be customized using:
+
+```ts
+interface GaugeHubConfig {
+  scale?: number;
+  color?: string;
+}
+```
+
+Example:
+
+```tsx
+hub={{
+  color: '#000000',
+  scale: 0.5,
+}}
+```
+
+## Animation
+
+```ts
+interface GaugeAnimationConfig {
+  enabled?: boolean;
+  durationMs?: number;
+}
+```
+
+Example:
+
+```tsx
+animation={{
+  enabled: true,
+  durationMs: 400,
+}}
+```
+
+## Geometry
+
+The optional `geometry` prop is a partial `GaugeThemeGeometry` configuration.
+
+```tsx
+<GaugeChart
+  geometry={{
+    // override supported geometry fields
+  }}
+  scale={{ max: 80 }}
+  layers={layers}
+/>
+```
+
+Because `GaugeGeometryConfig` is defined from the theme geometry type, see the exported TypeScript declarations for the exact geometry fields available in the installed version.
+
+## Theme Overrides
+
+The `theme` prop accepts a deep partial `GaugeTheme`.
+
+```tsx
+<GaugeChart
+  theme={{
+    // partial theme overrides
+  }}
+  scale={{ max: 80 }}
+  layers={layers}
+/>
+```
+
+## Complete Example: Base + Additional + Tiles
+
+```tsx
+import { GaugeChart } from '@darkvoice/gauge-chart';
+
+export function CapacityGauge() {
+  const base = 40;
+  const additional = 35;
+  const max = 80;
+
+  return (
+    <GaugeChart
+      size="xl"
+      scale={{
+        min: 0,
+        max,
+      }}
+      layers={[
+        {
+          id: 'tiles',
+          value: base + additional,
+          innerRadius: 0.72,
+          outerRadius: 1,
+          render: 'segmented',
+          segments: 8,
+          color: '#35ff00',
+          backgroundColor: '#dddddd',
+          gradient: {
+            enabled: true,
+            type: 'tile',
+          },
+          tooltip: {
+            label: 'Total',
+          },
+          hoverable: true,
+          zIndex: 3,
         },
-        arcConfig: {
-          cornerRadius: 5,
-          padRadius: 0,
-          padAngle: 0
+        {
+          id: 'base',
+          value: base,
+          valueMode: 'absolute',
+          innerRadius: 0.58,
+          outerRadius: 0.70,
+          render: 'solid',
+          color: '#000000',
+          backgroundColor: 'transparent',
+          pointer: {
+            enabled: true,
+            color: '#0ed30e',
+            scale: 1,
+            strokeScale: 1,
+          },
+          tooltip: {
+            label: 'Base',
+          },
+          hoverable: true,
+          zIndex: 2,
         },
-        toolTipLabel: 'Secondary'
+        {
+          id: 'additional',
+          value: additional,
+          valueMode: 'cumulative',
+          baseLayerId: 'base',
+          innerRadius: 0.58,
+          outerRadius: 0.70,
+          render: 'solid',
+          color: '#aaaaaa',
+          backgroundColor: 'transparent',
+          pointer: {
+            enabled: true,
+            color: '#025bff',
+            scale: 1,
+            strokeScale: 1,
+          },
+          tooltip: {
+            label: 'Additional',
+          },
+          hoverable: true,
+          zIndex: 1,
+        },
+      ]}
+      ticks={{
+        enabled: true,
+        step: 10,
+        fontSize: '1rem',
+        labelColor: '#ffffff',
+        tickColor: '#777777',
+        radiusScale: 1.12,
+      }}
+      interaction={{
+        tooltips: true,
+        tooltipMode: 'all',
+        hoverDimming: true,
+      }}
+      hub={{
+        color: '#000000',
+        scale: 0.5,
+      }}
+      animation={{
+        enabled: true,
+        durationMs: 400,
+      }}
+      formatters={{
+        value: (value) => `${value} m`,
+        tick: (value) => `${value}`,
       }}
     />
   );
 }
 ```
 
-## Customization Examples
+## Migration from the Legacy API
 
-### Changing Thresholds and Colors
+Older versions of the README documented a fixed API using props such as:
 
-```jsx
-<Gauge
+```tsx
+<GaugeChart
   primary={40}
   secondary={35}
-  options={{
-    thresholdYellow: 60,  // Yellow warning starts at 60%
-    thresholdRed: 80,     // Red warning starts at 80%
-  }}
-  tileArc={{
-    colorTileThresholdDefault: '#00ff00',  // Green for normal values
-    colorTileThresholdYellow: '#ffff00',   // Yellow for warning values
-    colorTileThresholdRed: '#ff0c4d',      // Red for critical values
-  }}
+  options={...}
+  tileArc={...}
+  primaryArcConfig={...}
+  secondaryArcConfig={...}
 />
 ```
 
-### Customizing Tooltips
+That is no longer the current public API of this package build.
 
-```jsx
-<Gauge
-  primary={40}
-  secondary={35}
-  options={{
-    enableToolTip: true,  // Enable tooltips
-  }}
-  tileArc={{
-    toolTipLabel: 'Total',  // Label for tile tooltip
-  }}
-  primaryArcConfig={{
-    toolTipLabel: 'Booked',  // Label for primary tooltip
-  }}
-  secondaryArcConfig={{
-    toolTipLabel: 'Planned',  // Label for secondary tooltip
-  }}
+The current model uses:
+
+```tsx
+<GaugeChart
+  scale={{ min: 0, max: 80 }}
+  layers={[...]}
 />
 ```
 
-### Customizing Tile Appearance
+A former primary value typically becomes an absolute solid layer:
 
-```jsx
-<Gauge
-  primary={40}
-  secondary={35}
-  tileArc={{
-    tiles: 15,  // Number of tiles
-    fillStyle: TileFillStyle.DOTTED,  // Dotted fill style
-    borderColor: '#000000',  // Border color
-    borderThickness: 2,  // Border thickness
-    isTileColorGradient: true,  // Use gradient coloring
-    gradientType: 'full',  // Full gradient type
-  }}
+```tsx
+{
+  id: 'primary',
+  value: 40,
+  valueMode: 'absolute',
+  render: 'solid',
+  ...
+}
+```
+
+A former secondary value that should continue after the primary layer can be expressed as a cumulative layer:
+
+```tsx
+{
+  id: 'secondary',
+  value: 35,
+  valueMode: 'cumulative',
+  baseLayerId: 'primary',
+  render: 'solid',
+  ...
+}
+```
+
+A former tile arc becomes a segmented layer:
+
+```tsx
+{
+  id: 'tiles',
+  value: 75,
+  render: 'segmented',
+  segments: 8,
+  ...
+}
+```
+
+## TypeScript
+
+The package ships TypeScript declarations. The primary exported types include the layer, scale, interaction, tick, formatter, animation, geometry, and theme configuration types used by `GaugeChart`.
+
+Example:
+
+```tsx
+import {
+  GaugeChart,
+  type GaugeLayer,
+} from '@darkvoice/gauge-chart';
+
+const layers: GaugeLayer[] = [
+  {
+    id: 'value',
+    value: 50,
+    innerRadius: 0.55,
+    outerRadius: 0.70,
+    render: 'solid',
+    color: '#000000',
+  },
+];
+```
+
+## Debug Mode
+
+Enable debug mode with:
+
+```tsx
+<GaugeChart
+  debugMode
+  scale={{ max: 80 }}
+  layers={layers}
 />
 ```
 
-### Customizing Pointers
+Use this during development only when you need the package's debug behavior.
 
-```jsx
-<Gauge
-  primary={40}
-  secondary={35}
-  primaryArcConfig={{
-    pointerPrimaryConfig: {
-      color: '#025bff',  // Blue pointer for primary
-      scale: 1.2,  // Larger pointer
-      strokeScale: 1.5  // Thicker stroke
-    }
-  }}
-  secondaryArcConfig={{
-    pointerSumConfig: {
-      color: '#0ed30e',  // Green pointer for secondary
-      scale: 1,  // Normal size
-      strokeScale: 1  // Normal stroke width
-    }
-  }}
-/>
-```
+## Notes
+
+- `scale.max` is required.
+- Every layer needs a unique `id`.
+- Every layer requires `value`, `innerRadius`, `outerRadius`, `render`, and `color`.
+- Use `hoverable: true` when a layer should participate in hover interaction.
+- `segments` is relevant for segmented layers.
+- `baseLayerId` is used by cumulative layers.
+- `offsetValue` is used by offset layers.
+- Tooltip labels are configured per layer, while the current tooltip display mode is configured globally through `interaction.tooltipMode`.
+
+## License
+
+See the repository / package metadata for licensing information.
+
 
 ## Technologies
 
