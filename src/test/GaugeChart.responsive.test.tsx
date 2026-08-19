@@ -1,7 +1,7 @@
 import {render} from '@testing-library/react';
 import {computeGaugeLayoutFromSize, GaugeChart,} from '../index';
 import {describe, expect, it} from "vitest";
-import {testScale, tileLayer} from "./fixtures/gaugeFixtures.ts";
+import {testScale, tileLayer} from "./fixtures/gaugeFixtures";
 
 describe('GaugeChart responsive sizing and viewBox', () => {
 

@@ -1,7 +1,7 @@
 import React from "react";
-import {ResolvedPointer} from "../core/resolveLayers.ts";
-import GaugePointer from "../GaugePointer.tsx";
-import {resolvePointerStrokeScale} from "../utils/pointerScale.ts";
+import {ResolvedPointer} from "../core/resolveLayers";
+import GaugePointer from "../GaugePointer";
+import {resolvePointerStrokeScale} from "../utils/pointerScale";
 
 interface GaugePointersProps {
     pointers: ResolvedPointer[];

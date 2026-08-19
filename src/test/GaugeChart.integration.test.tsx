@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import {fireEvent, render, screen} from "@testing-library/react";
-import {GaugeChart} from "../index.ts";
-import {classicThreeLayerGauge, primaryLayer, testScale, tileLayer} from "./fixtures/gaugeFixtures.ts";
+import {GaugeChart} from "../index";
+import {classicThreeLayerGauge, primaryLayer, testScale, tileLayer} from "./fixtures/gaugeFixtures";
 
 describe('GaugeChart.integration', () => {
     it('renders segmented and solid layers together', () => {

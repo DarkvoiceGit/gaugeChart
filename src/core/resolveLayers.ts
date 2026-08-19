@@ -6,7 +6,7 @@ import type {PointerMarkerSpec} from '../components/GaugePointerMarkers';
 import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/gaugeCalculations';
 import {resolveTileCount} from '../utils/gaugeGuards';
 import {GradientType, TileFillStyle} from '../utils/constants';
-import {buildTileAngles} from "./gaugeGeometry.ts";
+import {buildTileAngles} from "./gaugeGeometry";
 
 export interface ResolvedPointer {
     layerId: string;

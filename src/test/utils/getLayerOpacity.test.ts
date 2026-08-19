@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest";
-import {getLayerOpacity} from "../../utils/getLayerOpacity.ts";
-import {DEFAULT_THEME} from "../../theme/defaultTheme.ts";
+import {getLayerOpacity} from "../../utils/getLayerOpacity";
+import {DEFAULT_THEME} from "../../theme/defaultTheme";
 
 describe('getLayerOpacity', () => {
     it('returns active opacity when dimming is disabled', () => {

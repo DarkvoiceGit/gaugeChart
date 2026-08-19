@@ -1,5 +1,5 @@
 import {DeepPartial, GaugeTheme, GaugeThemeGeometry} from "./types/theme.types";
-import {GradientType, TileFillStyle} from "./utils/constants.ts";
+import {GradientType, TileFillStyle} from "./utils/constants";
 
 export type GaugeGeometryConfig = Partial<GaugeThemeGeometry>
 

@@ -3,7 +3,7 @@ import {DEFAULT_THEME} from '../theme/defaultTheme';
 import {GAUGE_SIZE_PRESETS} from './constants';
 import {assertPositiveDimensions} from './gaugeGuards';
 import type {GaugeSize} from '../types';
-import {computeGaugeContentBounds} from "../core/gaugeGeometry.ts";
+import {computeGaugeContentBounds} from "../core/gaugeGeometry";
 
 export interface GaugeLayout {
     logicalWidth: number;

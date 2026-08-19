@@ -8,12 +8,12 @@ import {assertValidLayers, resolveChartSettings} from './core/resolveChartSettin
 import GaugeTooltip from './GaugeTooltip';
 import GaugeLayer from './components/GaugeLayer';
 import GaugeTickLabels from './components/GaugeTickLabels';
-import {useGaugeInteraction} from "./hooks/useGaugeInteraction.ts";
-import GaugeDefs from "./components/GaugeDefs.tsx";
-import GaugeHub from "./components/GaugeHub.tsx";
-import GaugePointers from "./components/GaugePointers.tsx";
-import {resolveGeometry} from "./core/gaugeGeometry.ts";
-import {assertValidGeometry} from "./utils/gaugeGuards.ts";
+import {useGaugeInteraction} from "./hooks/useGaugeInteraction";
+import GaugeDefs from "./components/GaugeDefs";
+import GaugeHub from "./components/GaugeHub";
+import GaugePointers from "./components/GaugePointers";
+import {resolveGeometry} from "./core/gaugeGeometry";
+import {assertValidGeometry} from "./utils/gaugeGuards";
 
 function logGaugeDebug(debugMode: boolean | undefined, payload: Record<string, unknown>): void {
     if (!debugMode) {

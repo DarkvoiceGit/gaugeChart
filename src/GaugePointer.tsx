@@ -1,6 +1,6 @@
 import {useGaugeTheme} from "./theme/useGaugeTheme";
 import {useRef} from "react";
-import {useAnimatedSvgAttribute} from "./hooks/useAnimatedSvgAttribute.ts";
+import {useAnimatedSvgAttribute} from "./hooks/useAnimatedSvgAttribute";
 
 interface GaugePointerProps {
     x: number;

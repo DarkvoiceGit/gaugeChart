@@ -5,7 +5,7 @@ import type {LayerHandlers} from '../hooks/useGaugeInteraction';
 import {computeTileSegments} from '../utils/computeTileSegment';
 import {buildArcPath} from '../utils/gaugeCalculations';
 import {useGaugeTheme} from '../theme/useGaugeTheme';
-import {useAnimatedSvgAttribute} from "../hooks/useAnimatedSvgAttribute.ts";
+import {useAnimatedSvgAttribute} from "../hooks/useAnimatedSvgAttribute";
 
 interface GaugeLayerProps {
     layer: ResolvedLayer;
