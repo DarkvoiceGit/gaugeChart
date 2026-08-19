@@ -15,9 +15,16 @@ export type {
   GaugeSize,
 } from './types';
 
+export type {
+  GaugeTheme,
+    DeepPartial,
+    RgbaColor
+} from './types/theme.types';
+
 // Export utility functions that might be useful for consumers
 export { formatValue, colorSelector } from './utils/gaugeUtils';
-export { calculatePointer, normalize } from './utils/gaugeCalculations';
+export { calculatePointer, normalize, buildArcPath, valueToAngle } from './utils/gaugeCalculations';
+export { computeGaugeLayout, computeGaugeLayoutFromSize, resolveSizePreset } from './utils/computeGaugeLayout';
 
 // Export constants that might be useful for consumers
 export {

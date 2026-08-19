@@ -1,30 +1,33 @@
+import {DEFAULT_THEME} from "../theme/defaultTheme.ts";
+
 export const ANGLE_RANGE = {
-    START: -Math.PI / 2,
-    END: Math.PI / 2
+    START: DEFAULT_THEME.geometry.startAngle,
+    END: DEFAULT_THEME.geometry.endAngle
 };
 
 export const RADIUS_SCALES = {
-    INNER_ARC: 0.6,
-    OUTER_ARC: 0.7,
-    TILE_ARC: 1.0,
-    TICK_LABEL: 1.15,
-    HOVER_DETECTION: 0.72,
-    HOVER_INNER_SCALE: 0.92,
-    HOVER_OUTER_SCALE: 1.07
+    INNER_ARC: DEFAULT_THEME.radius.innerArc,
+    OUTER_ARC: DEFAULT_THEME.radius.outerArc,
+    TILE_ARC: DEFAULT_THEME.radius.tileArc,
+    TICK_LABEL: DEFAULT_THEME.radius.tickLabel,
+    HOVER_DETECTION: DEFAULT_THEME.interaction.hoverHitAreaInnerRatio,
+    HOVER_INNER_SCALE: DEFAULT_THEME.interaction.hoverHighlight.innerScale,
+    HOVER_OUTER_SCALE: DEFAULT_THEME.interaction.hoverHighlight.outerScale
 };
 
 export const OPTIONS_DEFAULTS = {
     withOpacitySwitch: true,
     enableInnerArc: false,
-    circleScale: 0.5,
-    thresholdRed: 80,
-    thresholdYellow: 60,
+    circleScale: DEFAULT_THEME.options.defaultCircleScale,
+    thresholdRed: DEFAULT_THEME.threshold.defaultRed,
+    thresholdYellow: DEFAULT_THEME.threshold.defaultYellow,
     enableToolTip: true,
     enableUnitTicks: true,
-    tickFontSize: '1rem',
-    tickLabelColor: '#fff',
-    tickColor: '#000',
-    fontColor: '#fff',
+    tickFontSize: DEFAULT_THEME.ticks.defaultFontSize,
+    tickLabelColor: DEFAULT_THEME.colors.tickLabel,
+    tickColor: DEFAULT_THEME.colors.tick,
+    fontColor: DEFAULT_THEME.colors.font,
+    tooltipBgColor: DEFAULT_THEME.tooltip.background
 };
 
 export enum TileFillStyle {
@@ -35,61 +38,56 @@ export enum TileFillStyle {
 }
 
 export const TILE_ARC_DEFAULTS = {
-    tiles: 10,
-    colorTileThresholdYellow: '#ffff00',
-    colorTileThresholdRed: '#ff0c4d',
-    colorTileThresholdDefault: '#00ff00',
+    tiles: DEFAULT_THEME.tiles.defaultCount,
+    colorTileThresholdYellow: DEFAULT_THEME.colors.tileYellow,
+    colorTileThresholdRed: DEFAULT_THEME.colors.tileRed,
+    colorTileThresholdDefault: DEFAULT_THEME.colors.tileDefault,
     isTileColorGradient: false,
     gradientType: 'tile',
-    colorTileBg: '#ddd',
+    colorTileBg: DEFAULT_THEME.colors.tileBg,
     fillStyle: TileFillStyle.FILLED,
-    borderColor: '#000',
-    borderThickness: 1,
+    borderColor: DEFAULT_THEME.colors.tileBorder,
+    borderThickness: DEFAULT_THEME.tiles.defaultBorderThickness,
     tickEveryNThStep: 0,
     arcConfig: {
-        cornerRadius: 5,
-        padAngle: 2,
-        padRadius: 2
+        cornerRadius: DEFAULT_THEME.arc.defaultCornerRadius,
+        padAngle: DEFAULT_THEME.arc.tilePadAngle,
+        padRadius: DEFAULT_THEME.arc.tilePadRadius
     },
     toolTipLabel: 'Total',
 };
 
 export const SECONDARY_ARC_DEFAULTS = {
     arcConfig: {
-        cornerRadius: 5,
-        padAngle: 0,
-        padRadius: 0
+        cornerRadius: DEFAULT_THEME.arc.defaultCornerRadius,
+        padAngle: DEFAULT_THEME.arc.tilePadAngle,
+        padRadius: DEFAULT_THEME.arc.tilePadRadius
     },
     pointerSumConfig: {
-        scale: 1,
-        strokeScale: 1,
-        color: '#0ed30e'
+        scale: DEFAULT_THEME.pointer.defaultScale,
+        strokeScale: DEFAULT_THEME.pointer.defaultStrokeScale,
+        color: DEFAULT_THEME.colors.pointerSecondary
     },
-    colorSecondaryBar: '#aaa',
+    colorSecondaryBar: DEFAULT_THEME.colors.secondaryBar,
     toolTipLabel: 'Secondary',
 };
 
 export const PRIMARY_ARC_DEFAULTS = {
     arcConfig: {
-        cornerRadius: 5,
-        padAngle: 0,
-        padRadius: 0
+        cornerRadius: DEFAULT_THEME.arc.defaultCornerRadius,
+        padAngle: DEFAULT_THEME.arc.tilePadAngle,
+        padRadius: DEFAULT_THEME.arc.tilePadRadius
     },
     pointerPrimaryConfig: {
-        scale: 1,
-        strokeScale: 1,
-        color: '#025bff'
+        scale: DEFAULT_THEME.pointer.defaultScale,
+        strokeScale: DEFAULT_THEME.pointer.defaultStrokeScale,
+        color: DEFAULT_THEME.colors.pointerPrimary
     },
-    colorPrimaryBar: '#000',
+    colorPrimaryBar: DEFAULT_THEME.colors.primaryBar,
     toolTipLabel: 'Primary',
-    tickFontSize: '1rem',
-    fontColor: '#fff',
-    tooltipBgColor: {
-        r: 0,
-        g: 0,
-        b: 0,
-        a: 0.8
-    }
+    tickFontSize: DEFAULT_THEME.ticks.defaultFontSize,
+    fontColor: DEFAULT_THEME.colors.font,
+    tooltipBgColor: DEFAULT_THEME.tooltip.background
 };
 
 export enum GradientType {
@@ -102,17 +100,17 @@ export enum FormatterType {
     CUSTOM = 'custom'
 }
 
-export const REFERENCE_WIDTH = 600;
+export const REFERENCE_WIDTH = DEFAULT_THEME.layout.referenceWidth;
 
 export const ARC_CONSTANTS = {
-    ANGLE_OFFSET: 0.01,
-    STROKE_WIDTH_THIN: 0.5,
-    STROKE_WIDTH_NORMAL: 1,
-    HOVER_OFFSET_INNER: 15,
-    HOVER_OFFSET_OUTER: 10,
+    ANGLE_OFFSET: DEFAULT_THEME.geometry.angleOffset,
+    STROKE_WIDTH_THIN: DEFAULT_THEME.stroke.thin,
+    STROKE_WIDTH_NORMAL: DEFAULT_THEME.stroke.normal,
+    HOVER_OFFSET_INNER: DEFAULT_THEME.interaction.hoverHighlight.tileInnerOffset,
+    HOVER_OFFSET_OUTER: DEFAULT_THEME.interaction.hoverHighlight.tileOuterOffset,
 
-    DOTTED_STROKE_PATTERN: "1,3",
-    DASHED_STROKE_PATTERN: "5,5"
+    DOTTED_STROKE_PATTERN: DEFAULT_THEME.arc.dottedStrokePattern,
+    DASHED_STROKE_PATTERN: DEFAULT_THEME.arc.dashedStrokePattern
 };
 
 /**
@@ -121,14 +119,4 @@ export const ARC_CONSTANTS = {
  * that matches the existing 800x600 default while providing smaller and larger
  * variants with minimal outer whitespace.
  */
-export const GAUGE_SIZE_PRESETS = {
-    xxs: {width: 160, height: 120},
-    xs: {width: 480, height: 360},
-    s: {width: 640, height: 480},
-    sm: {width: 720, height: 540},
-    m: {width: 800, height: 600},
-    l: {width: 960, height: 720},
-    xl: {width: 1120, height: 840},
-    xxl: {width: 1280, height: 960},
-    xxxl: {width: 1440, height: 1080},
-} as const;
+export const GAUGE_SIZE_PRESETS = DEFAULT_THEME.sizesPresets

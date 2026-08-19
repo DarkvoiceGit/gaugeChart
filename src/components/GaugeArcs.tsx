@@ -1,7 +1,51 @@
 import React from 'react';
-import * as d3 from 'd3';
-import {getOpacity, ElementType} from '../utils/gaugeUtils';
-import {ANGLE_RANGE, RADIUS_SCALES, ARC_CONSTANTS} from '../utils/constants';
+import {ElementType, getOpacity} from '../utils/gaugeUtils';
+import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
+import {buildArcPath, valueToAngle} from "../utils/gaugeCalculations.ts";
+
+interface ArcLayerPathProps{
+    innerRadius: number;
+    outerRadius: number;
+    startAngle: number;
+    endAngle: number;
+    cornerRadius: number;
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    opacity: number;
+    onMouseEnter?: (evt: React.MouseEvent) => void;
+    onMouseLeave?: () => void;
+    onMouseMove?: (evt: React.MouseEvent) => void;
+    pointerEvents?: React.CSSProperties['pointerEvents'];
+}
+
+const ArcLayerPath: React.FC<ArcLayerPathProps>= ({
+    innerRadius,
+    outerRadius,
+    startAngle,
+    endAngle,
+    cornerRadius,
+    fill,
+    stroke,
+    strokeWidth,
+    opacity,
+    onMouseEnter,
+    onMouseLeave,
+    onMouseMove,
+    pointerEvents
+})=>(
+    <path
+        d={buildArcPath({innerRadius, outerRadius, startAngle, endAngle, cornerRadius}) ?? undefined}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        opacity={opacity}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onMouseMove={onMouseMove}
+        style={pointerEvents ? { pointerEvents } : undefined}
+        />
+)
 
 interface GaugeArcsProps {
     radius: number;
@@ -58,101 +102,61 @@ const GaugeArcs: React.FC<GaugeArcsProps> = ({
                                                  onSecondaryMouseLeave,
                                                  onSecondaryMouseMove
                                              }) => {
+   const theme = useGaugeTheme()
     const {primary: primaryNormalized, secondary: secondaryNormalized} = normalizedValues;
-    const innerRadius = radius * RADIUS_SCALES.INNER_ARC;
-    const outerRadius = radius * RADIUS_SCALES.OUTER_ARC;
+   const innerRadius = radius * theme.radius.innerArc;
+   const outerRadius = radius * theme.radius.outerArc;
+   const hoverInnerRadius = innerRadius * theme.interaction.hoverHighlight.innerScale
+    const hoverOutRadius = outerRadius * theme.interaction.hoverHighlight.outerScale
 
-    // Determine the start angle for the secondary arc based on hover state
-    // Only adjust the start angle when opacity effects are enabled
-    const secondaryStartAngle = (hoverStates.secondaryBar || hoverStates.tile) && enableOpacityEffect
-        ? d3.scaleLinear().domain([0, 1]).range([ANGLE_RANGE.START, ANGLE_RANGE.END])(primaryNormalized)
-        : ANGLE_RANGE.START + ARC_CONSTANTS.ANGLE_OFFSET;
+    const secondaryEndAngle = valueToAngle(primaryNormalized + secondaryNormalized)
+    const primaryEndAngle = valueToAngle(primaryNormalized)
+    const primaryStartAngle = theme.geometry.startAngle + theme.geometry.angleOffset
 
+    const secondaryStarkAngle = (hoverStates.secondaryBar || hoverStates.tile) && enableOpacityEffect ? valueToAngle(primaryNormalized): theme.geometry.startAngle + theme.geometry.angleOffset
+
+    const sharedStroke = {
+       stroke: theme.stroke.color,
+        strokeWidth: theme.stroke.thin
+    }
     return (
         <>
-            {/* Secondary Arc */}
-            <path
-                d={d3.arc<d3.DefaultArcObject>()
-                    .innerRadius(innerRadius)
-                    .outerRadius(outerRadius)
-                    .startAngle(secondaryStartAngle)
-                    .cornerRadius(config.secondaryArc.arcConfig.cornerRadius)
-                    .endAngle(Math.min(
-                        d3.scaleLinear().domain([0, 1]).range([ANGLE_RANGE.START, ANGLE_RANGE.END])(primaryNormalized + secondaryNormalized),
-                        ANGLE_RANGE.END
-                    ))({} as any) || undefined}
-                fill={config.secondaryArc.color}
-                stroke={'#000'}
-                strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_THIN}
-                opacity={getOpacity(ElementType.SECONDARY_BAR, hoverStates, enableOpacityEffect)}
-                onMouseEnter={onSecondaryMouseEnter}
-                onMouseLeave={onSecondaryMouseLeave}
-                onMouseMove={onSecondaryMouseMove}
+           <ArcLayerPath innerRadius={innerRadius} outerRadius={outerRadius} startAngle={secondaryStarkAngle} endAngle={secondaryEndAngle}
+                         cornerRadius={config.secondaryArc.arcConfig.cornerRadius} fill={config.secondaryArc.color} opacity={getOpacity(ElementType.SECONDARY_BAR, hoverStates, enableOpacityEffect, theme.interaction)}
+           onMouseEnter={onSecondaryMouseEnter}
+                         onMouseLeave={onSecondaryMouseLeave}
+                         onMouseMove={onSecondaryMouseMove}
+                         {...sharedStroke}
+           />
+
+            <ArcLayerPath innerRadius={innerRadius} outerRadius={outerRadius} startAngle={primaryStartAngle} endAngle={primaryEndAngle}
+                          cornerRadius={config.primaryArc.arcConfig.cornerRadius} fill={config.primaryArc.color} opacity={getOpacity(ElementType.PRIMARY_BAR, hoverStates, enableOpacityEffect, theme.interaction)}
+                          onMouseEnter={onPrimaryMouseEnter}
+                          onMouseLeave={onPrimaryMouseLeave}
+                          onMouseMove={onPrimaryMouseMove}
+                          {...sharedStroke}
             />
 
-            {/* Primary Arc */}
-            <path
-                d={d3.arc<d3.DefaultArcObject>()
-                    .innerRadius(innerRadius)
-                    .outerRadius(outerRadius)
-                    .startAngle(ANGLE_RANGE.START + ARC_CONSTANTS.ANGLE_OFFSET)
-                    .cornerRadius(config.primaryArc.arcConfig.cornerRadius)
-                    .endAngle(Math.min(
-                        d3.scaleLinear().domain([0, 1]).range([ANGLE_RANGE.START, ANGLE_RANGE.END])(primaryNormalized),
-                        ANGLE_RANGE.END
-                    ))({} as any) || undefined}
-                fill={config.primaryArc.color}
-                stroke={'#000'}
-                strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_THIN}
-                onMouseEnter={onPrimaryMouseEnter}
-                onMouseLeave={onPrimaryMouseLeave}
-                onMouseMove={onPrimaryMouseMove}
-                opacity={getOpacity(ElementType.PRIMARY_BAR, hoverStates, enableOpacityEffect)}
-            />
-
-            {/* Hover effect for secondary arc */}
-            {hoverStates.secondaryBar && enableOpacityEffect && (
-                <path
-                    d={d3.arc<d3.DefaultArcObject>()
-                        .innerRadius(innerRadius * RADIUS_SCALES.HOVER_INNER_SCALE) // Slightly smaller inner radius for hover effect
-                        .outerRadius(outerRadius * RADIUS_SCALES.HOVER_OUTER_SCALE) // Slightly larger outer radius for hover effect
-                        .startAngle(d3.scaleLinear().domain([0, 1]).range([ANGLE_RANGE.START, ANGLE_RANGE.END])(primaryNormalized))
-                        .cornerRadius(config.secondaryArc.arcConfig.cornerRadius)
-                        .endAngle(Math.min(
-                            d3.scaleLinear().domain([0, 1]).range([ANGLE_RANGE.START, ANGLE_RANGE.END])(primaryNormalized + secondaryNormalized),
-                            ANGLE_RANGE.END
-                        ))({} as any) || undefined}
-                    fill={config.secondaryArc.color}
-                    stroke="#000"
-                    strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_THIN}
-                    opacity={1}
-                    onMouseEnter={onSecondaryMouseEnter}
-                    onMouseLeave={onSecondaryMouseLeave}
-                    onMouseMove={onSecondaryMouseMove}
-                    style={{pointerEvents: 'none'}} // Prevents re-triggering hover
+            {hoverStates.secondaryBar && enableOpacityEffect &&(
+                <ArcLayerPath innerRadius={hoverInnerRadius} outerRadius={hoverOutRadius} startAngle={valueToAngle(primaryNormalized)} endAngle={secondaryEndAngle}
+                              cornerRadius={config.secondaryArc.arcConfig.cornerRadius} fill={config.secondaryArc.color} opacity={theme.interaction.activeOpacity}
+                              onMouseEnter={onSecondaryMouseEnter}
+                              onMouseLeave={onSecondaryMouseLeave}
+                              onMouseMove={onSecondaryMouseMove}
+                              pointerEvents={"none"}
+                              {...sharedStroke}
                 />
             )}
 
-            {/* Hover effect for primary arc */}
-            {hoverStates.primaryBar && enableOpacityEffect && (
-                <path
-                    d={d3.arc<d3.DefaultArcObject>()
-                        .innerRadius(innerRadius * RADIUS_SCALES.HOVER_INNER_SCALE) // Slightly smaller inner radius for hover effect
-                        .outerRadius(outerRadius * RADIUS_SCALES.HOVER_OUTER_SCALE) // Slightly larger outer radius for hover effect
-                        .startAngle(ANGLE_RANGE.START + ARC_CONSTANTS.ANGLE_OFFSET)
-                        .cornerRadius(config.primaryArc.arcConfig.cornerRadius)
-                        .endAngle(Math.min(
-                            d3.scaleLinear().domain([0, 1]).range([ANGLE_RANGE.START, ANGLE_RANGE.END])(primaryNormalized),
-                            ANGLE_RANGE.END
-                        ))({} as any) || undefined}
-                    fill={config.primaryArc.color}
-                    stroke="#000"
-                    strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_THIN}
-                    opacity={1}
-                    onMouseEnter={onPrimaryMouseEnter}
-                    onMouseLeave={onPrimaryMouseLeave}
-                    onMouseMove={onPrimaryMouseMove}
-                    style={{pointerEvents: 'none'}} // Prevents re-triggering hover
+
+            {hoverStates.primaryBar && enableOpacityEffect &&(
+                <ArcLayerPath innerRadius={hoverInnerRadius} outerRadius={hoverOutRadius} startAngle={primaryNormalized} endAngle={primaryEndAngle}
+                              cornerRadius={config.primaryArc.arcConfig.cornerRadius} fill={config.primaryArc.color} opacity={theme.interaction.activeOpacity}
+                              onMouseEnter={onPrimaryMouseEnter}
+                              onMouseLeave={onPrimaryMouseLeave}
+                              onMouseMove={onPrimaryMouseMove}
+                              pointerEvents={"none"}
+                              {...sharedStroke}
                 />
             )}
         </>

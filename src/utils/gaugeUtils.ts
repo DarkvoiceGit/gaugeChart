@@ -1,4 +1,6 @@
 import {FormatterType} from './constants';
+import {GaugeThemeInteraction} from "../types/theme.types.ts";
+import {DEFAULT_THEME} from "../theme/defaultTheme.ts";
 
 /**
  * Element type constants for getOpacity function
@@ -15,6 +17,7 @@ export enum ElementType {
  * @param elementType Type of the element (FILLED_TILE, PRIMARY_BAR, SECONDARY_BAR, or NONE)
  * @param hoverStates Object containing hover states for different elements
  * @param enableOpacityEffect Whether the opacity effect is enabled
+ * @param interaction Theme interaction opacity settings
  * @returns The calculated opacity value
  */
 export const getOpacity = (
@@ -24,24 +27,25 @@ export const getOpacity = (
         primaryBar: boolean;
         secondaryBar: boolean;
     },
-    enableOpacityEffect: boolean
+    enableOpacityEffect: boolean,
+    interaction: GaugeThemeInteraction = DEFAULT_THEME.interaction
 ): number => {
-    if (!enableOpacityEffect) return 1;
+    if (!enableOpacityEffect) return interaction.activeOpacity;
 
     const {tile: isTileHovered, primaryBar: isBarPrimaryHovered, secondaryBar: isBarSecondaryHovered} = hoverStates;
 
     // Return 100% opacity for hovered elements
-    if (isBarPrimaryHovered && elementType === ElementType.PRIMARY_BAR) return 1;
-    if (isBarSecondaryHovered && elementType === ElementType.SECONDARY_BAR) return 1;
-    if (isTileHovered && elementType === ElementType.FILLED_TILE) return 1;
+    if (isBarPrimaryHovered && elementType === ElementType.PRIMARY_BAR) return interaction.activeOpacity;
+    if (isBarSecondaryHovered && elementType === ElementType.SECONDARY_BAR) return interaction.activeOpacity;
+    if (isTileHovered && elementType === ElementType.FILLED_TILE) return interaction.activeOpacity;
 
     // Return 80% opacity for non-hovered elements when any element is hovered
     if (isTileHovered || isBarPrimaryHovered || isBarSecondaryHovered) {
-        return 0.5;
+        return interaction.dimedOpacity;
     }
 
     // Return 100% opacity when nothing is hovered
-    return 1;
+    return interaction.activeOpacity;
 };
 
 /**
@@ -93,11 +97,11 @@ export const colorSelector = (
 ): string => {
     if (value < thresholdMid) {
         return colorDefault;
-    } else if (value >= thresholdMid && value < thresholdMax) {
-        return colorMid;
-    } else {
-        return colorMax;
     }
+    if (value >= thresholdMid && value < thresholdMax) {
+        return colorMid;
+    }
+        return colorMax;
 };
 
 /**
@@ -120,7 +124,7 @@ export const getTileColor = (
         colorTileThresholdYellow: string;
         colorTileThresholdRed: string;
     },
-    colorScale: any
+    colorScale: ((value: number)=> string) | null
 ): string => {
     const {
         isTileColorGradient,
@@ -140,7 +144,7 @@ export const getTileColor = (
     }
 
     // If using full gradient, use color scale
-    if (gradientType === "full") {
+    if (gradientType === "full" && colorScale) {
         return colorScale(value);
     }
 

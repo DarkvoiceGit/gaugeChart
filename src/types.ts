@@ -1,4 +1,5 @@
 import { GradientType, TileFillStyle } from './utils/constants';
+import {DeepPartial, GaugeTheme} from "./types/theme.types.ts";
 
 /**
  * Supported size presets for the gauge.
@@ -117,7 +118,7 @@ export interface GaugeConfig {
     /** Whether to show unit ticks */
     enableUnitTicks?: boolean;
     /** Font size for tick labels */
-    tickFontsize?: string;
+    tickFontSize?: string;
     tickLabelColor?: string,
     tickRadiusScale?: number;
     tickColor?: string,
@@ -185,5 +186,6 @@ export interface GaugeProps {
     unitTickFormatter?: (value: number) => string;
     /** Formatter function for unit display */
     unit?: (value: number) => string;
+    theme?: DeepPartial<GaugeTheme>
     debugMode?: boolean;
 }

@@ -1,7 +1,10 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import * as d3 from 'd3';
-import {getTileColor, getOpacity, ElementType} from '../utils/gaugeUtils';
-import {ANGLE_RANGE, RADIUS_SCALES, ARC_CONSTANTS, TileFillStyle} from '../utils/constants';
+import {ElementType, getOpacity,} from '../utils/gaugeUtils';
+import {TileFillStyle} from '../utils/constants';
+import {computeTileSegments} from "../utils/computeTileSegment.ts";
+import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
+import {buildArcPath} from "../utils/gaugeCalculations.ts";
 
 interface GaugeTilesProps {
     radius: number;
@@ -40,116 +43,87 @@ interface GaugeTilesProps {
     onMouseMove?: (event: React.MouseEvent) => void;
 }
 
+
+interface TileSegmentProps {
+    segment: ReturnType<typeof computeTileSegments>[number];
+    hoverStates: GaugeTilesProps['hoverStates'];
+    enableOpacityEffect: boolean;
+    themeStrokeNormal: number;
+    interaction: ReturnType<typeof useGaugeTheme>['interaction'];
+
+}
+
+const TileSegment: React.FC<TileSegmentProps> = ({
+    segment, hoverStates, enableOpacityEffect, themeStrokeNormal, interaction
+})=>(
+    <g>
+        <path
+        d={segment.backgroundPath ?? undefined}
+        stroke={segment.stroke}
+        strokeWidth={segment.strokeWidth}
+        strokeDasharray={segment.strokeDasharray}
+        opacity={getOpacity(ElementType.NONE, hoverStates, enableOpacityEffect, interaction)}
+        fill={segment.backgroundFill}
+        />
+        {segment.foregroundPath &&(
+            <path
+            d={segment.foregroundPath}
+            fill={segment.fillColor}
+            strokeWidth={themeStrokeNormal}
+            opacity={getOpacity(ElementType.FILLED_TILE, hoverStates, enableOpacityEffect, interaction)}
+            />
+        )}
+
+    </g>
+)
+
 /**
  * Component for rendering the tile arcs of the gauge
  */
-const GaugeTiles: React.FC<GaugeTilesProps> = ({
-                                                   radius,
-                                                   tileAngles,
-                                                   numberOfTiles,
-                                                   sumNormalized,
-                                                   thresholdRed,
-                                                   colorScale,
-                                                   config,
-                                                   hoverStates,
-                                                   enableOpacityEffect,
-                                                   scaleFactor,
-                                                   onMouseEnter,
-                                                   onMouseLeave,
-                                                   onMouseMove
-                                               }) => {
-    // Helper function to normalize values
-    const normalize = (value: number) => {
-        return Math.min(1, value / thresholdRed);
-    };
+const GaugeTiles: React.FC<GaugeTilesProps> = (props) => {
+    const theme  = useGaugeTheme();
 
-    return (
-        <>
-            {tileAngles.map((angle, index) => {
-                const tileStartAngle = angle;
-                const tileEndAngle = angle + (Math.PI / numberOfTiles);
-                const tileValueRange = thresholdRed / numberOfTiles;
-                const tileMinValue = index * tileValueRange;
-                const tileMinValueNormalized = normalize(tileMinValue);
-                const tileValueRangeNormalized = normalize(tileValueRange);
+    const segments = useMemo(() =>computeTileSegments({
+        tileAngles: props.tileAngles,
+        numberOfTiles: props.numberOfTiles,
+        sumNormalized: props.sumNormalized,
+        thresholdRed: props.thresholdRed,
+        radius: props.radius,
+        scaleFactor: props.scaleFactor,
+        isTileHovered: props.hoverStates.tile,
+        enableOpacityEffect: props.enableOpacityEffect,
+        colorScale: props.colorScale,
+        config: props.config,
+        theme
+    }),[props, theme])
 
-                // Determine how much of the tile should be filled
-                const fillRatio = Math.min(
-                    1,
-                    Math.max(0, (sumNormalized - tileMinValueNormalized) / tileValueRangeNormalized)
-                );
-                const tileFillEndAngle = tileStartAngle + fillRatio * (tileEndAngle - tileStartAngle);
+    const hoverOverlayPath = buildArcPath({
+        innerRadius: props.radius * theme.interaction.hoverHitAreaInnerRatio,
+        outerRadius: props.radius,
+        startAngle: theme.geometry.startAngle,
+        endAngle: theme.geometry.endAngle,
+    })
 
-                // Create arc generators for background and foreground
-                const tileBackgroundArc = d3.arc<d3.DefaultArcObject>()
-                    .innerRadius(radius * RADIUS_SCALES.OUTER_ARC)
-                    .outerRadius(radius)
-                    .startAngle(tileStartAngle)
-                    .endAngle(tileEndAngle)
-                    .padRadius(config.arcConfig.padRadius)
-                    .padAngle(config.arcConfig.padAngle)
-                    .cornerRadius(config.arcConfig.cornerRadius);
-
-                // Adjust inner/outer radius when hovered for visual effect
-                const tileForegroundArc = d3.arc<d3.DefaultArcObject>()
-                    .innerRadius(hoverStates.tile && enableOpacityEffect ? radius * RADIUS_SCALES.OUTER_ARC - (ARC_CONSTANTS.HOVER_OFFSET_INNER * scaleFactor) : radius * RADIUS_SCALES.OUTER_ARC)
-                    .outerRadius(hoverStates.tile && enableOpacityEffect ? radius + (ARC_CONSTANTS.HOVER_OFFSET_OUTER * scaleFactor) : radius)
-                    .startAngle(tileStartAngle)
-                    .endAngle(tileFillEndAngle)
-                    .padRadius(config.arcConfig.padRadius)
-                    .padAngle(config.arcConfig.padAngle)
-                    .cornerRadius(config.arcConfig.cornerRadius);
-
-                const fillColor = getTileColor(
-                    sumNormalized,
-                    index,
-                    config,
-                    colorScale
-                );
-
-                return (
-                    <g key={index}>
-                        {/* Unfilled part of the tile */}
-                        <path
-                            d={tileBackgroundArc({} as any) || undefined}
-                            stroke={config.fillStyle !== TileFillStyle.FILLED ? config.borderColor : "#000"}
-                            strokeWidth={config.fillStyle !== TileFillStyle.FILLED ? config.borderThickness : ARC_CONSTANTS.STROKE_WIDTH_NORMAL}
-                            strokeDasharray={
-                                config.fillStyle === TileFillStyle.DOTTED ? ARC_CONSTANTS.DOTTED_STROKE_PATTERN :
-                                    config.fillStyle === TileFillStyle.DASHED ? ARC_CONSTANTS.DASHED_STROKE_PATTERN :
-                                        "none"
-                            }
-                            opacity={getOpacity(ElementType.NONE, hoverStates, enableOpacityEffect)}
-                            fill={config.fillStyle !== TileFillStyle.FILLED ? "transparent" : config.colorTileBg}
-                        />
-
-                        {/* Filled part of the tile */}
-                        {fillRatio > 0 && (
-                            <path
-                                d={tileForegroundArc({} as any) || undefined}
-                                fill={fillColor}
-                                strokeWidth={ARC_CONSTANTS.STROKE_WIDTH_NORMAL}
-                                opacity={getOpacity(ElementType.FILLED_TILE, hoverStates, enableOpacityEffect)}
-                            />
-                        )}
-                    </g>
-                );
-            })}
-
-            {/* Invisible overlay for hover detection */}
-            <path
-                d={d3.arc<d3.DefaultArcObject>()
-                    .innerRadius(radius * RADIUS_SCALES.HOVER_DETECTION)
-                    .outerRadius(radius)
-                    .startAngle(ANGLE_RANGE.START)
-                    .endAngle(ANGLE_RANGE.END)({} as any) || undefined}
-                fill="transparent"
-                onMouseEnter={onMouseEnter}
-                onMouseLeave={onMouseLeave}
-                onMouseMove={onMouseMove}
+    return(<>
+        {segments.map((segment) => (
+            <TileSegment
+                key={segment.index}
+                segment={segment}
+                hoverStates={props.hoverStates}
+                enableOpacityEffect={props.enableOpacityEffect}
+                themeStrokeNormal={theme.stroke.normal}
+                interaction={theme.interaction}
             />
-        </>
-    );
+        ))}
+        <path
+            d={hoverOverlayPath ?? undefined}
+            fill={'transparent'}
+            onMouseEnter={props.onMouseEnter}
+            onMouseLeave={props.onMouseLeave}
+            onMouseMove={props.onMouseMove}
+            />
+    </>)
+
 };
 
 export default GaugeTiles;

@@ -1,5 +1,6 @@
 import React from 'react';
-import * as d3 from 'd3';
+import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
+import {normalize} from "../utils/gaugeCalculations.ts";
 
 interface GaugeGradientsProps {
     tileAngles: number[];
@@ -17,10 +18,7 @@ const GaugeGradients: React.FC<GaugeGradientsProps> = ({
                                                            thresholdRed,
                                                            colorScale
                                                        }) => {
-    // Helper function to normalize values
-    const normalize = (value: number) => {
-        return Math.min(1, value / thresholdRed);
-    };
+  const theme = useGaugeTheme()
 
     return (
         <>
@@ -28,8 +26,8 @@ const GaugeGradients: React.FC<GaugeGradientsProps> = ({
                 // Calculate the value range for this tile
                 const tileValueRange = thresholdRed / numberOfTiles;
                 const tileMinValue = index * tileValueRange;
-                const tileMinValueNormalized = normalize(tileMinValue);
-                const tileValueRangeNormalized = normalize(tileValueRange);
+                const tileMinValueNormalized = normalize(tileMinValue, thresholdRed);
+                const tileValueRangeNormalized = normalize(tileValueRange, thresholdRed);
 
                 // Calculate the normalized value for this tile
                 const tileValue = tileMinValueNormalized + tileValueRangeNormalized;
@@ -41,16 +39,10 @@ const GaugeGradients: React.FC<GaugeGradientsProps> = ({
                 return (
                     <linearGradient
                         key={index}
-                        id={`gradient-${index}`}
-                        transform={'rotate(-90)'}
-                        cx="50%"
-                        cy="50%"
-                        r="50%"
-                        fx="50%"
-                        fy="50%"
+                       gradientTransform={`rotate(${theme.gradient.rotationDegrees})`}
                     >
-                        <stop offset="0%" stopColor={startColor}/>
-                        <stop offset="100%" stopColor={endColor}/>
+                        <stop offset={theme.gradient.stopStart} stopColor={startColor}/>
+                        <stop offset={theme.gradient.stopEnd} stopColor={endColor}/>
                     </linearGradient>
                 );
             })}
