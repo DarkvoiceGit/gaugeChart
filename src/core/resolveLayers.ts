@@ -6,6 +6,7 @@ import type {PointerMarkerSpec} from '../components/GaugePointerMarkers';
 import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/gaugeCalculations';
 import {resolveTileCount} from '../utils/gaugeGuards';
 import {GradientType, TileFillStyle} from '../utils/constants';
+import {buildTileAngles} from "./gaugeGeometry.ts";
 
 export interface ResolvedPointer {
     layerId: string;
@@ -106,8 +107,8 @@ function resolveLayerAngles(
     if (valueMode === 'offset') {
         const offsetNormalized = normalize(layer.offsetValue ?? 0, scaleMax);
         return {
-            startAngle: valueToAngle(offsetNormalized),
-            endAngle: valueToAngle(Math.min(1, offsetNormalized + normalizedValue)),
+            startAngle: valueToAngle(offsetNormalized, geometry),
+            endAngle: valueToAngle(Math.min(1, offsetNormalized + normalizedValue), geometry),
         };
     }
 
@@ -120,7 +121,7 @@ function resolveLayerAngles(
 
     return {
         startAngle: startBase,
-        endAngle: valueToAngle(normalizedValue),
+        endAngle: valueToAngle(normalizedValue, geometry),
     };
 }
 
@@ -197,7 +198,7 @@ function resolvePointer(
         normalizedValue,
         radius,
         pointerConfig.lengthRatio * pointerConfig.scale,
-        theme.geometry.pointerAngleOffset,
+        theme.geometry
     );
 
     return {
@@ -249,7 +250,7 @@ export function resolveLayers(
         });
 
         const tileAngles = layer.render === 'segmented'
-            ? d3.range(theme.geometry.startAngle, theme.geometry.endAngle, Math.PI / segmentCount)
+            ? buildTileAngles(theme.geometry, segmentCount)
             : [];
 
         if (layer.render === 'segmented') {

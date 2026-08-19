@@ -1,6 +1,7 @@
-import {DeepPartial, GaugeTheme} from "./types/theme.types";
+import {DeepPartial, GaugeTheme, GaugeThemeGeometry} from "./types/theme.types";
 import {GradientType, TileFillStyle} from "./utils/constants.ts";
 
+export type GaugeGeometryConfig = Partial<GaugeThemeGeometry>
 
 export type GaugeSize =
     | 'default'
@@ -120,6 +121,7 @@ export interface GaugeChartProps {
     size?: GaugeSize;
     scale: GaugeScale;
     layers: GaugeLayer[];
+    geometry?: GaugeGeometryConfig;
     ticks?: GaugeTicksConfig;
     interaction?: GaugeInteractionConfig
     hub?: GaugeHubConfig;

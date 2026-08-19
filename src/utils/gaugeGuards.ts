@@ -54,3 +54,19 @@ export function assertPositiveDimensions(width: number, height: number): void {
         throw new RangeError('Gauge layout requires positive finite width and height');
     }
 }
+
+export function assertValidGeometry(geometry: {
+    startAngle: number;
+    endAngle: number;
+}): void {
+    if(!Number.isFinite(geometry.startAngle) || !Number.isFinite(geometry.endAngle)) {
+        throw new RangeError('geometry startAngle and endAngle must be finite numbers');
+    }
+
+    if(geometry.endAngle <= geometry.startAngle){
+        throw new RangeError('geometry endAngle must be greater than startAngle');
+    }
+    if(geometry.endAngle - geometry.startAngle > 2 * Math.PI){
+        throw new RangeError('geometry sweep cannot exceed a full circle')
+    }
+}

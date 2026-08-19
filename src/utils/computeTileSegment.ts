@@ -53,7 +53,8 @@ export function computeTileSegments(options: ComputeTileSegmentsOptions): TileSe
 
     for (let index = 0; index < tileAngles.length; index += 1) {
         const tileStartAngle = tileAngles[index];
-        const tileEndAngle = tileStartAngle + (Math.PI / numberOfTiles);
+        const tileAngleStep = (theme.geometry.endAngle - theme.geometry.startAngle) / numberOfTiles;
+        const tileEndAngle = tileStartAngle + tileAngleStep;
         const tileValueRange = thresholdRed / numberOfTiles;
         const tileMinValue = index * tileValueRange;
         const tileMinValueNormalized = normalize(tileMinValue, thresholdRed);

@@ -1,14 +1,6 @@
 import * as d3 from 'd3';
-import {ANGLE_RANGE} from './constants';
 import {DEFAULT_THEME} from "../theme/defaultTheme";
-
-/**
- * Scale for the angle (from min to max)
- * Maps values from 0-1 to the angle range defined in constants
- */
-export const angleScale = d3.scaleLinear()
-    .domain([0, 1])
-    .range([ANGLE_RANGE.START, ANGLE_RANGE.END]);
+import {createAngleScale, valueToAngle as mapValueToAngle} from "../core/gaugeGeometry";
 
 const EMPTY_ARRC: d3.DefaultArcObject = {
     innerRadius: 0,
@@ -16,6 +8,8 @@ const EMPTY_ARRC: d3.DefaultArcObject = {
     startAngle: 0,
     endAngle: 0,
 }
+
+export const angleScale = createAngleScale(DEFAULT_THEME.geometry)
 
 export interface ArcPathSpec {
     innerRadius: number;
@@ -30,7 +24,9 @@ export interface ArcPathSpec {
 /**
  * Maps a normalized value (0-1) to an arc angle, capped at ANGLE_RANGE.END
  * */
-export const valueToAngle = (normalizedValue: number): number => Math.min(angleScale(normalizedValue), ANGLE_RANGE.END);
+export function valueToAngle(normalizedValue: number, geometry = DEFAULT_THEME.geometry): number {
+    return mapValueToAngle(normalizedValue, geometry);
+}
 
 /**
  * Normalizes a value based on a threshold
@@ -38,29 +34,21 @@ export const valueToAngle = (normalizedValue: number): number => Math.min(angleS
  * @param thresholdRed The maximum threshold value
  * @returns The normalized value between 0 and 1
  */
-export const normalize = (value: number, thresholdRed: number): number => {
+export function normalize (value: number, thresholdRed: number): number  {
     if (thresholdRed <= 0) {
         return 0;
     }
     return Math.min(DEFAULT_THEME.scale.normalizedMax, value / thresholdRed);
 };
 
-/**
- * Calculates the pointer position based on a normalized value
- * @param normalizedValue The normalized value (0-1)
- * @param radius The radius of the gauge
- * @param length The length factor for the pointer
- * @param pointerAngleOffset Angle subtracted from the scale output for x/y coordinates
- * @returns Object with x, y coordinates and angle
- */
-export const calculatePointer = (
+export function calculatePointer  (
     normalizedValue: number,
     radius: number,
     length: number,
-    pointerAngleOffset: number = DEFAULT_THEME.geometry.pointerAngleOffset
-): { x: number; y: number; angle: number } => {
+    geometry = DEFAULT_THEME.geometry,
+): { x: number; y: number; angle: number }  {
     // Calculate angle based on the normalized value
-    const angle = angleScale(normalizedValue) - pointerAngleOffset;
+    const angle = createAngleScale(geometry)(normalizedValue) - geometry.pointerAngleOffset;
 
     // Calculate x and y coordinates
     const pointerX = (Math.cos(angle) * radius) * length;
@@ -69,10 +57,14 @@ export const calculatePointer = (
     return {x: pointerX, y: pointerY, angle};
 };
 
-export const buildArcPath = (spec: ArcPathSpec): string | null => {
+export function buildArcPath (spec: ArcPathSpec): string | null  {
 
-    const generator = d3.arc<d3.DefaultArcObject>().innerRadius(spec.innerRadius).outerRadius(spec.outerRadius)
-        .startAngle(spec.startAngle).endAngle(spec.endAngle);
+    const generator = d3.arc<d3.DefaultArcObject>()
+        .innerRadius(spec.innerRadius)
+        .outerRadius(spec.outerRadius)
+        .startAngle(spec.startAngle)
+        .endAngle(spec.endAngle);
+
     if (spec.cornerRadius != null) {
         generator.cornerRadius(spec.cornerRadius);
     }
@@ -95,13 +87,13 @@ export const buildArcPath = (spec: ArcPathSpec): string | null => {
  * @param arcConfig Configuration for the arc (cornerRadius, padAngle, padRadius)
  * @returns A D3 arc function
  */
-export const createArc = (
+export function createArc  (
     innerRadius: number,
     outerRadius: number,
     startAngle: number,
     endAngle: number,
     arcConfig: { cornerRadius: number; padAngle: number; padRadius: number }
-) => {
+) {
     return d3.arc<d3.DefaultArcObject>()
         .innerRadius(innerRadius)
         .outerRadius(outerRadius)

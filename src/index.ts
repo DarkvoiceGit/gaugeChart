@@ -3,13 +3,20 @@ export { default as GaugeChart } from './GaugeChart';
 
 // Export types
 export type {
-  GaugeProps,
-  GaugeConfig,
-  TileArcConfig,
-  PrimaryArcConfig,
-  SecondaryArcConfig,
+  GaugeChartProps,
+    GaugeLayer,
+    GaugeScale,
+    GaugeGeometryConfig,
+    GaugeInteractionConfig,
+    GaugeTicksConfig,
+    GaugeHubConfig,
+    GaugeFormatters,
+    LayerValueMode,
+    LayerRenderMode,
   PointerConfig,
   ArcConfig,
+    LayerPointerConfig,
+    LayerTooltipConfig,
   TooltipState,
   TooltipItem,
   GaugeSize,
@@ -17,6 +24,7 @@ export type {
 
 export type {
   GaugeTheme,
+    GaugeThemeGeometry,
     DeepPartial,
     RgbaColor
 } from './types/theme.types';
@@ -25,6 +33,8 @@ export type {
 export { formatValue, colorSelector } from './utils/gaugeUtils';
 export { calculatePointer, normalize, buildArcPath, valueToAngle } from './utils/gaugeCalculations';
 export { computeGaugeLayout, computeGaugeLayoutFromSize, resolveSizePreset } from './utils/computeGaugeLayout';
+export { DEFAULT_THEME } from './theme/defaultTheme'
+export { mergeTheme } from './theme/mergeTheme'
 
 // Export constants that might be useful for consumers
 export {

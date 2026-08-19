@@ -1,8 +1,9 @@
-import type {GaugeThemeLayout, GaugeThemeRadius} from '../types/theme.types';
+import type {GaugeThemeGeometry, GaugeThemeLayout, GaugeThemeRadius} from '../types/theme.types';
 import {DEFAULT_THEME} from '../theme/defaultTheme';
 import {GAUGE_SIZE_PRESETS} from './constants';
 import {assertPositiveDimensions} from './gaugeGuards';
 import type {GaugeSize} from '../types';
+import {computeGaugeContentBounds} from "../core/gaugeGeometry.ts";
 
 export interface GaugeLayout {
     logicalWidth: number;
@@ -27,6 +28,7 @@ export function computeGaugeLayout(
     height: number,
     layout: GaugeThemeLayout = DEFAULT_THEME.layout,
     radiusScales: Pick<GaugeThemeRadius, 'tickLabel'> = DEFAULT_THEME.radius,
+    geometry: GaugeThemeGeometry = DEFAULT_THEME.geometry,
 ): GaugeLayout {
     assertPositiveDimensions(width, height);
 
@@ -38,15 +40,18 @@ export function computeGaugeLayout(
 
     const centerX = logicalWidth / 2;
     const centerY = logicalHeight / 2;
-    const viewBoxHeight = centerY + Math.max(
-        layout.viewBoxMinBottomPadding,
-        logicalHeight * layout.viewBoxBottomPaddingRatio
-    );
 
     const tickLabelRadius = radius * radiusScales.tickLabel;
     const sideMargin = Math.max(layout.mindSideMargin, radius * layout.sideMarginRadiusRatio);
-    const viewBoxMinX = centerX - tickLabelRadius - sideMargin;
-    const viewBoxWidth = 2 * tickLabelRadius + 2 * sideMargin;
+    const bounds = computeGaugeContentBounds(geometry, radius, tickLabelRadius);
+
+    const viewBoxMinX = centerX + bounds.minX - sideMargin;
+    const viewBoxMaxX = centerY + bounds.maxY - sideMargin;
+    const viewBoxMinY = Math.max(0, centerY + bounds.minY - sideMargin);
+    const viewBoxMaxY = centerY + bounds.maxY + Math.max(layout.viewBoxMinBottomPadding, logicalHeight * layout.viewBoxBottomPaddingRatio)
+
+    const viewBoxWidth = viewBoxMaxX - viewBoxMinX
+    const viewBoxHeight = viewBoxMaxY - viewBoxMinY
 
     return {
         logicalWidth,
@@ -58,7 +63,7 @@ export function computeGaugeLayout(
         viewBoxHeight,
         viewBoxMinX,
         viewBoxWidth,
-        viewBox: `${viewBoxMinX} 0 ${viewBoxWidth} ${viewBoxHeight}`,
+        viewBox: `${viewBoxMinX} ${viewBoxMinY} ${viewBoxWidth} ${viewBoxHeight}`,
 };
 }
 
@@ -66,7 +71,8 @@ export function computeGaugeLayoutFromSize(
     size: GaugeSize = 'default',
     layout: GaugeThemeLayout = DEFAULT_THEME.layout,
     radiusScales: Pick<GaugeThemeRadius, 'tickLabel'> = DEFAULT_THEME.radius,
+    geometry: GaugeThemeGeometry = DEFAULT_THEME.geometry,
 ): GaugeLayout {
     const preset = resolveSizePreset(size);
-    return computeGaugeLayout(preset.width, preset.height, layout, radiusScales);
+    return computeGaugeLayout(preset.width, preset.height, layout, radiusScales, geometry);
 }

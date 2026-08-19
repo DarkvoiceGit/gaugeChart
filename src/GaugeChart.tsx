@@ -12,6 +12,8 @@ import {useGaugeInteraction} from "./hooks/useGaugeInteraction.ts";
 import GaugeDefs from "./components/GaugeDefs.tsx";
 import GaugeHub from "./components/GaugeHub.tsx";
 import GaugePointers from "./components/GaugePointers.tsx";
+import {resolveGeometry} from "./core/gaugeGeometry.ts";
+import {assertValidGeometry} from "./utils/gaugeGuards.ts";
 
 function logGaugeDebug(debugMode: boolean | undefined, payload: Record<string, unknown>): void {
     if (!debugMode) {
@@ -25,7 +27,16 @@ function logGaugeDebug(debugMode: boolean | undefined, payload: Record<string, u
 }
 
 const Gauge: React.FC<GaugeChartProps> = (props) => {
-    const mergedTheme = useMemo(() => mergeTheme(props.theme), [props.theme]);
+    const mergedTheme = useMemo(() => {
+        const base = mergeTheme(props.theme)
+        return {
+            ...base,
+            geometry: resolveGeometry(base.geometry, props.geometry)
+        }
+
+    }, [props.theme, props.geometry]);
+
+    assertValidGeometry(mergedTheme.geometry)
     const settings = useMemo(() => resolveChartSettings(props, mergedTheme), [props, mergedTheme]);
 
     assertValidLayers(props.layers);
@@ -33,6 +44,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
     logGaugeDebug(props.debugMode, {
         scale: props.scale,
         layers: props.layers,
+        geometry: mergedTheme.geometry,
         interaction: props.interaction,
         ticks: props.ticks,
         theme: mergedTheme,
@@ -40,8 +52,8 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
 
     const svgRef = useRef<SVGSVGElement>(null);
     const layout = useMemo(
-        () => computeGaugeLayoutFromSize(props.size, mergedTheme.layout, mergedTheme.radius),
-        [props.size, mergedTheme.layout, mergedTheme.radius],
+        () => computeGaugeLayoutFromSize(props.size, mergedTheme.layout, mergedTheme.radius, mergedTheme.geometry),
+        [props.size, mergedTheme.layout, mergedTheme.radius, mergedTheme.geometry],
     );
 
     const resolved = useMemo(
@@ -74,12 +86,12 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                     preserveAspectRatio="xMidYMid meet"
                 >
                     <defs>
-                            <GaugeDefs
-                                pointerMarkers={resolved.pointerMarkers}
-                                gradientLayer={gradientLayer}
-                                scaleMax={settings.scaleMax}
-                                colorScale={resolved.colorScale}
-                            />
+                        <GaugeDefs
+                            pointerMarkers={resolved.pointerMarkers}
+                            gradientLayer={gradientLayer}
+                            scaleMax={settings.scaleMax}
+                            colorScale={resolved.colorScale}
+                        />
                     </defs>
 
                     <g transform={`translate(${layout.logicalWidth / 2}, ${layout.logicalHeight / 2})`}>
@@ -99,13 +111,13 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                         ))}
 
                         <g>
-
-                                <GaugePointers
-                                    pointers={resolved.pointers}
-                                    scaleFactor={layout.scaleFactor}
-                                    referenceScaleFactor={mergedTheme.scale.referenceScaleFactor}
-                                />
-                            <GaugeHub radius={layout.radius} hubScale={settings.hubScale} hubColor={settings.hubColor} scaleDivisor={mergedTheme.hub.scaleDivisor} />
+                            <GaugePointers
+                                pointers={resolved.pointers}
+                                scaleFactor={layout.scaleFactor}
+                                referenceScaleFactor={mergedTheme.scale.referenceScaleFactor}
+                            />
+                            <GaugeHub radius={layout.radius} hubScale={settings.hubScale} hubColor={settings.hubColor}
+                                      scaleDivisor={mergedTheme.hub.scaleDivisor}/>
                         </g>
 
                         {settings.ticksEnabled && (

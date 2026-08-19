@@ -1,6 +1,6 @@
 import React from 'react';
 import {useGaugeTheme} from "../theme/useGaugeTheme";
-import {angleScale} from "../utils/gaugeCalculations";
+import {labelAngleFromNormalized} from "../core/gaugeGeometry.ts";
 
 interface GaugeTickLabelsProps {
     radius: number;
@@ -48,7 +48,7 @@ const GaugeTickLabels: React.FC<GaugeTickLabelsProps> = ({
                 const normalizedValue = value / thresholdRed;
 
                 // Calculate the angle for this tick
-                const angle = angleScale(normalizedValue) - theme.geometry.pointerAngleOffset;
+                const angle = labelAngleFromNormalized(normalizedValue,theme.geometry);
 
                 // Calculate the position for the label
                 const labelX = Math.cos(angle) * tickLabelRadius;
