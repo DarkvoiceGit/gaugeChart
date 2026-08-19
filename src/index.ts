@@ -29,13 +29,6 @@ export { computeGaugeLayout, computeGaugeLayoutFromSize, resolveSizePreset } fro
 // Export constants that might be useful for consumers
 export {
   ANGLE_RANGE,
-  ARC_CONSTANTS,
-  OPTIONS_DEFAULTS,
-  PRIMARY_ARC_DEFAULTS,
-  RADIUS_SCALES,
-  REFERENCE_WIDTH,
-  SECONDARY_ARC_DEFAULTS,
-  TILE_ARC_DEFAULTS,
   GradientType,
   TileFillStyle,
   GAUGE_SIZE_PRESETS,

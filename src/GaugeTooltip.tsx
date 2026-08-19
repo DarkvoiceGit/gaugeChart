@@ -1,6 +1,6 @@
-import {TooltipItem} from "./types.ts";
-import {GaugeThemeTooltip, RgbaColor} from "./types/theme.types.ts";
-import {DEFAULT_THEME} from "./theme/defaultTheme.ts";
+import {TooltipItem} from "./types";
+import {GaugeThemeTooltip, RgbaColor} from "./types/theme.types";
+import {DEFAULT_THEME} from "./theme/defaultTheme";
 
 interface GaugeTooltipProps {
     text: TooltipItem[];

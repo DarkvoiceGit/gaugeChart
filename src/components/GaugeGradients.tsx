@@ -3,16 +3,15 @@ import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
 import {normalize} from "../utils/gaugeCalculations.ts";
 
 interface GaugeGradientsProps {
+    layerId: string;
     tileAngles: number[];
     numberOfTiles: number;
     thresholdRed: number;
     colorScale: d3.ScaleLinear<string, string>;
 }
 
-/**
- * Component for rendering the gradient definitions used by the tiles
- */
 const GaugeGradients: React.FC<GaugeGradientsProps> = ({
+    layerId,
                                                            tileAngles,
                                                            numberOfTiles,
                                                            thresholdRed,
@@ -38,7 +37,8 @@ const GaugeGradients: React.FC<GaugeGradientsProps> = ({
 
                 return (
                     <linearGradient
-                        key={index}
+                        key={`${layerId}-${index}`}
+                        id={`gradient-${layerId}-${index}`}
                        gradientTransform={`rotate(${theme.gradient.rotationDegrees})`}
                     >
                         <stop offset={theme.gradient.stopStart} stopColor={startColor}/>

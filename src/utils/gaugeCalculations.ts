@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import {ANGLE_RANGE} from './constants';
-import {DEFAULT_THEME} from "../theme/defaultTheme.ts";
+import {DEFAULT_THEME} from "../theme/defaultTheme";
 
 /**
  * Scale for the angle (from min to max)

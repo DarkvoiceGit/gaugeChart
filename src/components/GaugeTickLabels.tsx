@@ -1,6 +1,6 @@
 import React from 'react';
-import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
-import {angleScale} from "../utils/gaugeCalculations.ts";
+import {useGaugeTheme} from "../theme/useGaugeTheme";
+import {angleScale} from "../utils/gaugeCalculations";
 
 interface GaugeTickLabelsProps {
     radius: number;

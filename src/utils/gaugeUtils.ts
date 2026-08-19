@@ -1,52 +1,4 @@
 import {FormatterType} from './constants';
-import {GaugeThemeInteraction} from "../types/theme.types.ts";
-import {DEFAULT_THEME} from "../theme/defaultTheme.ts";
-
-/**
- * Element type constants for getOpacity function
- */
-export enum ElementType {
-    NONE = 0,
-    FILLED_TILE = 1,
-    PRIMARY_BAR = 2,
-    SECONDARY_BAR = 3
-}
-
-/**
- * Calculates the opacity for elements based on hover states
- * @param elementType Type of the element (FILLED_TILE, PRIMARY_BAR, SECONDARY_BAR, or NONE)
- * @param hoverStates Object containing hover states for different elements
- * @param enableOpacityEffect Whether the opacity effect is enabled
- * @param interaction Theme interaction opacity settings
- * @returns The calculated opacity value
- */
-export const getOpacity = (
-    elementType: ElementType,
-    hoverStates: {
-        tile: boolean;
-        primaryBar: boolean;
-        secondaryBar: boolean;
-    },
-    enableOpacityEffect: boolean,
-    interaction: GaugeThemeInteraction = DEFAULT_THEME.interaction
-): number => {
-    if (!enableOpacityEffect) return interaction.activeOpacity;
-
-    const {tile: isTileHovered, primaryBar: isBarPrimaryHovered, secondaryBar: isBarSecondaryHovered} = hoverStates;
-
-    // Return 100% opacity for hovered elements
-    if (isBarPrimaryHovered && elementType === ElementType.PRIMARY_BAR) return interaction.activeOpacity;
-    if (isBarSecondaryHovered && elementType === ElementType.SECONDARY_BAR) return interaction.activeOpacity;
-    if (isTileHovered && elementType === ElementType.FILLED_TILE) return interaction.activeOpacity;
-
-    // Return 80% opacity for non-hovered elements when any element is hovered
-    if (isTileHovered || isBarPrimaryHovered || isBarSecondaryHovered) {
-        return interaction.dimedOpacity;
-    }
-
-    // Return 100% opacity when nothing is hovered
-    return interaction.activeOpacity;
-};
 
 /**
  * Formats a value using the provided formatters
@@ -124,7 +76,8 @@ export const getTileColor = (
         colorTileThresholdYellow: string;
         colorTileThresholdRed: string;
     },
-    colorScale: ((value: number)=> string) | null
+    colorScale: ((value: number)=> string) | null,
+    layerId = 'default'
 ): string => {
     const {
         isTileColorGradient,
@@ -149,5 +102,5 @@ export const getTileColor = (
     }
 
     // If using tile gradient, use gradient ID
-    return `url(#gradient-${index})`;
+    return `url(#gradient-${layerId}-${index})`;
 };

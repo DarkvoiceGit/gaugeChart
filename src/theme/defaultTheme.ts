@@ -1,4 +1,4 @@
-import {GaugeTheme} from "../types/theme.types.ts";
+import {GaugeTheme} from "../types/theme.types";
 
 export const DEFAULT_THEME : GaugeTheme ={
    stroke:{

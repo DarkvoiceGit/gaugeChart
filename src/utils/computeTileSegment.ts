@@ -16,6 +16,7 @@ export interface TileSegmentRenderData {
 }
 
 export interface ComputeTileSegmentsOptions {
+    layerId: string;
     tileAngles: number[];
     numberOfTiles: number;
     sumNormalized: number;
@@ -80,7 +81,7 @@ export function computeTileSegments(options: ComputeTileSegmentsOptions): TileSe
             cornerRadius: options.config.arcConfig.cornerRadius,
         };
 
-        const fillColor = getTileColor(sumNormalized, index, options.config, options.colorScale);
+        const fillColor = getTileColor(sumNormalized, index, options.config, options.colorScale, options.layerId);
         const isOutlined = options.config.fillStyle !== TileFillStyle.FILLED;
 
         segments.push({

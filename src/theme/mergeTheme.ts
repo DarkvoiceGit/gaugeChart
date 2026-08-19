@@ -1,5 +1,5 @@
-import {DeepPartial, GaugeTheme} from "../types/theme.types.ts";
-import {DEFAULT_THEME} from "./defaultTheme.ts";
+import {DeepPartial, GaugeTheme} from "../types/theme.types";
+import {DEFAULT_THEME} from "./defaultTheme";
 
 function isPlainObject(value: unknown): value is Record<string, unknown>{
     return typeof value === 'object' && value !== null && !Array.isArray(value)

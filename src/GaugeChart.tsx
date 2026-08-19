@@ -1,23 +1,20 @@
 import React, {useMemo, useRef} from 'react';
-import {GaugeProps} from './types';
+import type {GaugeChartProps} from './types';
 import {computeGaugeLayoutFromSize} from './utils/computeGaugeLayout';
-import {computeGaugeDerivedData, resolvePointerStrokeScale} from './utils/computeGaugeDerivedData';
-import {resolveGaugeConfig} from './utils/resolveGaugeConfig';
+import {resolvePointerStrokeScale} from './utils/pointerScale';
 import {mergeTheme} from './theme/mergeTheme';
 import {GaugeThemeProvider} from './theme/GaugeThemeContext';
-import {useGaugeTooltip} from './hooks/useGaugeTooltip';
+import {resolveLayers} from './core/resolveLayers';
+import {assertValidLayers, resolveChartSettings} from './core/resolveChartSettings';
+import {useLayerInteraction} from './hooks/useLayerInteraction';
 import GaugeTooltip from './GaugeTooltip';
 import GaugePointer from './GaugePointer';
 import GaugePointerMarkers from './components/GaugePointerMarkers';
-import GaugeArcs from './components/GaugeArcs';
+import GaugeLayer from './components/GaugeLayer';
 import GaugeTickLabels from './components/GaugeTickLabels';
 import GaugeGradients from './components/GaugeGradients';
-import GaugeTiles from './components/GaugeTiles';
 
-function logGaugeDebug(
-    debugMode: boolean | undefined,
-    payload: Record<string, unknown>,
-): void {
+function logGaugeDebug(debugMode: boolean | undefined, payload: Record<string, unknown>): void {
     if (!debugMode) {
         return;
     }
@@ -28,22 +25,17 @@ function logGaugeDebug(
     console.log('[Gauge] Debug mode:', payload);
 }
 
-const Gauge: React.FC<GaugeProps> = (props) => {
+const Gauge: React.FC<GaugeChartProps> = (props) => {
     const mergedTheme = useMemo(() => mergeTheme(props.theme), [props.theme]);
-    const config = useMemo(
-        () => resolveGaugeConfig(props, mergedTheme),
-        [props, mergedTheme],
-    );
+    const settings = useMemo(() => resolveChartSettings(props, mergedTheme), [props, mergedTheme]);
+
+    assertValidLayers(props.layers);
 
     logGaugeDebug(props.debugMode, {
-        primary: props.primary,
-        secondary: props.secondary,
-        options: props.options,
-        tileArc: props.tileArc,
-        primaryArcConfig: props.primaryArcConfig,
-        secondaryArcConfig: props.secondaryArcConfig,
-        unitTickFormatter: props.unitTickFormatter,
-        unit: props.unit,
+        scale: props.scale,
+        layers: props.layers,
+        interaction: props.interaction,
+        ticks: props.ticks,
         theme: mergedTheme,
     });
 
@@ -52,59 +44,23 @@ const Gauge: React.FC<GaugeProps> = (props) => {
         () => computeGaugeLayoutFromSize(props.size, mergedTheme.layout, mergedTheme.radius),
         [props.size, mergedTheme.layout, mergedTheme.radius],
     );
-    const derived = useMemo(
-        () => computeGaugeDerivedData(config, layout, mergedTheme),
-        [config, layout, mergedTheme],
+
+    const resolved = useMemo(
+        () => resolveLayers(props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep),
+        [props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep],
     );
 
-    const {tooltip, hoverStates, handlers} = useGaugeTooltip(svgRef, {
-        formatters: {
-            unitTickFormatter: props.unitTickFormatter,
-            unit: props.unit,
-        },
-        thresholdColors: {
-            thresholdRed: config.thresholdRed,
-            thresholdYellow: config.thresholdYellow,
-            colorMax: config.tile.colorTileThresholdRed,
-            colorMid: config.tile.colorTileThresholdYellow,
-            colorDefault: config.tile.colorTileThresholdDefault,
-        },
-        enableInnerArc: config.enableInnerArc,
-        labels: {
-            tile: config.tile.toolTipLabel,
-            primary: config.primary.toolTipLabel,
-            secondary: config.secondary.toolTipLabel,
-        },
-        colors: {
-            primaryBar: config.primary.colorPrimaryBar,
-            secondaryBar: config.secondary.colorSecondaryBar,
-        },
-        values: {
-            primary: config.primaryValue,
-            secondary: config.secondaryValue,
-            sum: config.sumValue,
-        },
-    });
+    const {tooltip, hoveredLayerId, getLayerHandlers} = useLayerInteraction(
+        svgRef,
+        resolved.layers,
+        props.formatters,
+        settings.tooltipMode,
+    );
 
-    const tileColorConfig = {
-        isTileColorGradient: config.tile.isTileColorGradient,
-        gradientType: config.tile.gradientType,
-        thresholdYellowNormalized: derived.normalized.thresholdYellow,
-        thresholdRedNormalized: derived.normalized.thresholdRed,
-        colorTileThresholdDefault: config.tile.colorTileThresholdDefault,
-        colorTileThresholdYellow: config.tile.colorTileThresholdYellow,
-        colorTileThresholdRed: config.tile.colorTileThresholdRed,
-        colorTileBg: config.tile.colorTileBg,
-        fillStyle: config.tile.fillStyle,
-        borderColor: config.tile.borderColor,
-        borderThickness: config.tile.borderThickness,
-        arcConfig: config.tile.arcConfig,
-    };
+    const tickLabels = resolved.tickLabels;
 
-    const resolveStrokeScale = (strokeScale: number) => resolvePointerStrokeScale(
-        layout.scaleFactor,
-        strokeScale,
-        mergedTheme.scale.referenceScaleFactor,
+    const gradientLayer = resolved.layers.find(
+        (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
     );
 
     return (
@@ -118,112 +74,81 @@ const Gauge: React.FC<GaugeProps> = (props) => {
                     preserveAspectRatio="xMidYMid meet"
                 >
                     <defs>
-                        <GaugePointerMarkers markers={derived.pointerMarkers}/>
-                        <GaugeGradients
-                            tileAngles={derived.tileAngles}
-                            numberOfTiles={config.numTiles}
-                            thresholdRed={config.thresholdRed}
-                            colorScale={derived.colorScale}
-                        />
+                        <GaugePointerMarkers markers={resolved.pointerMarkers}/>
+                        {gradientLayer && (
+                            <GaugeGradients
+                                layerId={gradientLayer.id}
+                                tileAngles={gradientLayer.tileAngles}
+                                numberOfTiles={gradientLayer.segmentCount}
+                                thresholdRed={settings.scaleMax}
+                                colorScale={resolved.colorScale}
+                            />
+                        )}
                     </defs>
 
                     <g transform={`translate(${layout.logicalWidth / 2}, ${layout.logicalHeight / 2})`}>
-                        {config.enableInnerArc && (
-                            <GaugeArcs
+                        {resolved.layers.map((layer) => (
+                            <GaugeLayer
+                                key={layer.id}
+                                layer={layer}
                                 radius={layout.radius}
-                                normalizedValues={{
-                                    primary: derived.normalized.primary,
-                                    secondary: derived.normalized.secondary,
-                                    sum: derived.normalized.sum,
-                                }}
-                                config={{
-                                    primaryArc: {
-                                        color: config.primary.colorPrimaryBar,
-                                        arcConfig: config.primary.arcConfig,
-                                    },
-                                    secondaryArc: {
-                                        color: config.secondary.colorSecondaryBar,
-                                        arcConfig: config.secondary.arcConfig,
-                                    },
-                                }}
-                                hoverStates={hoverStates}
-                                enableOpacityEffect={config.withOpacitySwitch}
-                                onPrimaryMouseEnter={handlers.onPrimaryMouseEnter}
-                                onPrimaryMouseLeave={handlers.onPrimaryMouseLeave}
-                                onPrimaryMouseMove={handlers.onPrimaryMouseMove}
-                                onSecondaryMouseEnter={handlers.onSecondaryMouseEnter}
-                                onSecondaryMouseLeave={handlers.onSecondaryMouseLeave}
-                                onSecondaryMouseMove={handlers.onSecondaryMouseMove}
+                                scaleMax={settings.scaleMax}
+                                scaleFactor={layout.scaleFactor}
+                                colorScale={resolved.colorScale}
+                                hoveredLayerId={hoveredLayerId}
+                                enableOpacityEffect={settings.hoverDimming}
+                                handlers={getLayerHandlers(layer.id)}
                             />
-                        )}
-
-                        <GaugeTiles
-                            radius={layout.radius}
-                            tileAngles={derived.tileAngles}
-                            numberOfTiles={config.numTiles}
-                            sumNormalized={derived.normalized.sum}
-                            thresholdRed={config.thresholdRed}
-                            colorScale={derived.colorScale}
-                            config={tileColorConfig}
-                            hoverStates={hoverStates}
-                            enableOpacityEffect={config.withOpacitySwitch}
-                            scaleFactor={layout.scaleFactor}
-                            onMouseEnter={handlers.onTileMouseEnter}
-                            onMouseLeave={handlers.onTileMouseLeave}
-                            onMouseMove={handlers.onTileMouseMove}
-                        />
+                        ))}
 
                         <g>
-                            {derived.showPrimaryPointer && (
+                            {resolved.pointers.map((pointer) => (
                                 <GaugePointer
-                                    x={derived.pointers.primary.x}
-                                    y={derived.pointers.primary.y}
-                                    color={config.primary.pointerPrimaryConfig.color}
-                                    markerId="primary"
-                                    strokeScale={resolveStrokeScale(config.primary.pointerPrimaryConfig.strokeScale)}
+                                    key={pointer.layerId}
+                                    x={pointer.x}
+                                    y={pointer.y}
+                                    color={pointer.color}
+                                    markerId={pointer.layerId}
+                                    strokeScale={resolvePointerStrokeScale(
+                                        layout.scaleFactor,
+                                        pointer.strokeScale,
+                                        mergedTheme.scale.referenceScaleFactor,
+                                    )}
                                 />
-                            )}
-
-                            <GaugePointer
-                                x={derived.pointers.secondary.x}
-                                y={derived.pointers.secondary.y}
-                                color={config.secondary.pointerSumConfig.color}
-                                markerId="secondary"
-                                strokeScale={resolveStrokeScale(config.secondary.pointerSumConfig.strokeScale)}
-                            />
+                            ))}
 
                             <circle
                                 cx={0}
                                 cy={0}
-                                r={layout.radius * (config.circleScale / mergedTheme.hub.scaleDivisor)}
-                                fill={mergedTheme.hub.color}
+                                r={layout.radius * (settings.hubScale / mergedTheme.hub.scaleDivisor)}
+                                fill={settings.hubColor}
                             />
                         </g>
 
-                        {config.enableUnitTicks && (
+                        {settings.ticksEnabled && (
                             <GaugeTickLabels
                                 radius={layout.radius}
-                                tickLabels={derived.tickLabels}
-                                thresholdRed={config.thresholdRed}
-                                unit={props.unit}
+                                tickLabels={tickLabels}
+                                thresholdRed={settings.scaleMax}
+                                unit={props.formatters?.tick}
                                 scaleFactor={layout.scaleFactor}
-                                fontSize={config.tickFontSize}
-                                tickColor={config.tickColor}
-                                tickLabelColor={config.tickLabelColor}
-                                fontColor={config.fontColor}
-                                radiusScale={config.tickRadiusScale}
+                                fontSize={settings.tickFontSize}
+                                tickColor={settings.tickColor}
+                                tickLabelColor={settings.tickLabelColor}
+                                fontColor={settings.fontColor}
+                                radiusScale={settings.tickRadiusScale}
                             />
                         )}
                     </g>
                 </svg>
 
-                {tooltip && config.enableToolTip && (
+                {tooltip && settings.tooltips && (
                     <GaugeTooltip
                         text={tooltip.text}
                         x={tooltip.x}
                         y={tooltip.y}
-                        fontColor={config.fontColor}
-                        bgColor={config.tooltipBgColor}
+                        fontColor={settings.fontColor}
+                        bgColor={settings.tooltipBackground}
                         theme={mergedTheme.tooltip}
                     />
                 )}

@@ -1,6 +1,6 @@
-import {GaugeTheme} from "../types/theme.types.ts";
+import {GaugeTheme} from "../types/theme.types";
 import React from "react";
-import { GaugeThemeContext } from "./useGaugeTheme.ts";
+import { GaugeThemeContext } from "./useGaugeTheme";
 
 export const GaugeThemeProvider : React.FC<{
     theme: GaugeTheme;

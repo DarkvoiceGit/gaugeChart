@@ -1,4 +1,4 @@
-import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
+import {useGaugeTheme} from "../theme/useGaugeTheme";
 
 export interface PointerMarkerSpec {
     id: string;
