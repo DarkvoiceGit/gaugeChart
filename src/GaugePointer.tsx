@@ -1,7 +1,7 @@
 import {useGaugeTheme} from "./theme/useGaugeTheme";
 import {useRef} from "react";
 import {useAnimatedSvgAttribute} from "./hooks/useAnimatedSvgAttribute";
-import {PointerStlye} from "./types";
+import {PointerStyle} from "./types";
 
 interface GaugePointerProps {
     x: number;
@@ -9,7 +9,7 @@ interface GaugePointerProps {
     color: string;
     markerId: string;
     strokeScale: number;
-    style?: PointerStlye;
+    style?: PointerStyle;
     animate?: boolean;
     animationDurationMs?: number;
 }

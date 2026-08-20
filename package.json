@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/DarkvoiceGit/gaugeChart.git"
   },
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "module",
   "homepage": "https://DarkvoiceGit.github.io/gaugeChart",
   "main": "dist/index.js",

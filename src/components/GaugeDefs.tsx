@@ -2,6 +2,10 @@ import GaugePointerMarkers, {PointerMarkerSpec} from "./GaugePointerMarkers";
 import {ResolvedLayer} from "../core/resolveLayers";
 import GaugeGradients from "./GaugeGradients";
 import {GradientType} from "../utils/constants";
+import type * as d3 from 'd3'
+import React from "react";
+
+
 
 interface GaugeDefsProps {
     pointerMarkers: PointerMarkerSpec[];

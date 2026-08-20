@@ -19,7 +19,7 @@ export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
 export type LayerRenderMode = 'solid' | 'segmented'
 export type LayerRadiusGrow = 'inward' | 'outward' | 'center'
 
-export type PointerStlye = 'arrow' | 'needle'
+export type PointerStyle = 'arrow' | 'needle'
 
 export interface PointerConfig {
     scale: number;
@@ -27,7 +27,7 @@ export interface PointerConfig {
     color: string;
     lengthRatio?: number;
     /** Visual Pointer style. Defaults to `'arrow'` (line + arrowhead) */
-    style?: PointerStlye
+    style?: PointerStyle
 }
 
 

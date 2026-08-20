@@ -1,25 +1,73 @@
 import * as d3 from 'd3';
 import type {GaugeThemeGeometry} from '../types/theme.types';
-import {GaugeLayer, LayerRadiusGrow} from "../types";
+import {GaugeLayer} from "../types";
 
+export type LayerRadiusInput = Pick<
+    GaugeLayer,
+    'radius' | 'thickness' | 'grow'
+> & {
+    id?: string;
+};
 
 export interface ResolvedLayerRadii {
     innerRatio: number;
     outerRatio: number;
 }
 
-export function resolveLayerRadii(layer: Pick<GaugeLayer, 'radius' | 'thickness' | 'grow'>): ResolvedLayerRadii {
-    const grow: LayerRadiusGrow = layer.grow ?? 'inward'
-    const {radius, thickness} = layer
+export function resolveLayerRadii(layer: LayerRadiusInput): ResolvedLayerRadii {
+    const {
+        radius,
+        thickness,
+        grow = 'inward',
+    } = layer;
+
+    const layerName = layer.id
+        ? ` for "${layer.id}"`
+        : '';
+
+    if (!Number.isFinite(radius) || !Number.isFinite(thickness)) {
+        throw new Error(
+            `Invalid layer radii for "${layerName}": radius and thickness must be finite numbers.`
+        );
+    }
+
+    if (thickness < 0) {
+        throw new Error(
+            `Invalid layer thickness for "${layerName}": thickness must be >= 0.`
+        );
+    }
+
+    let innerRatio: number;
+    let outerRatio: number;
 
     switch (grow) {
         case 'inward':
-            return {innerRatio: radius - thickness, outerRatio: radius}
+            innerRatio = radius - thickness;
+            outerRatio = radius;
+            break;
         case 'outward':
-            return {innerRatio: radius, outerRatio: radius + thickness}
+            innerRatio = radius;
+            outerRatio = radius + thickness;
+            break;
         case 'center':
-            return {innerRatio: radius - thickness / 2, outerRatio: radius + thickness / 2}
+            innerRatio = radius - thickness / 2;
+            outerRatio = radius + thickness / 2;
+            break;
+        default: {
+            throw new Error(`Unsupported grow mode: ${grow}`);
+        }
     }
+    if (innerRatio < 0 || outerRatio > 1) {
+        throw new RangeError(
+            `Invalid layer geometry for "${layerName}": resolved radii must stay within 0..1 ` +
+            `(inner=${innerRatio}, outer=${outerRatio}).`
+        );
+    }
+
+    return {
+        innerRatio,
+        outerRatio,
+    };
 }
 
 export function createAngleScale(geometry: Pick<GaugeThemeGeometry, 'startAngle' | 'endAngle'>) {
