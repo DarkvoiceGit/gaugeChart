@@ -13,8 +13,8 @@ describe('computeTickLabelValues', () => {
     })
 
     it('respects a custom scale min', () => {
-        expect(computeTickLabelValues(10, 50, 10)).toEqual([0, 20, 30, 40, 80, 50])
-        expect(computeTickLabelValues(10, 55, 10)).toEqual([0, 20, 30, 40, 80, 50, 55])
+        expect(computeTickLabelValues(10, 50, 10)).toEqual([10, 20, 30, 40, 50])
+        expect(computeTickLabelValues(10, 55, 10)).toEqual([10, 20, 30, 40, 50, 55])
     })
 
     it('never emits values above min', () => {
