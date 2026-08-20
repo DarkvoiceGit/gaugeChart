@@ -14,6 +14,7 @@ import GaugeHub from "./components/GaugeHub";
 import GaugePointers from "./components/GaugePointers";
 import {resolveGeometry} from "./core/gaugeGeometry";
 import {assertValidGeometry} from "./utils/gaugeGuards";
+import {resolveTooltipScaleFactor} from "./utils/resolveTooltipScaleFactor";
 
 function logGaugeDebug(debugMode: boolean | undefined, payload: Record<string, unknown>): void {
     if (!debugMode) {
@@ -84,6 +85,9 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
     const gradientLayers = useMemo(() => resolved.layers.filter(
         (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
     ), [resolved.layers]);
+
+    const tooltipScaleFactor = resolveTooltipScaleFactor(props.tooltipScale, mergedTheme.tooltip.scaleFactor, layout.scaleFactor)
+
 
     return (
         <GaugeThemeProvider theme={mergedTheme}>
@@ -156,7 +160,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                         text={tooltip.text}
                         x={tooltip.x}
                         y={tooltip.y}
-                        scaleFactor={props.tooltipScale ?? layout.scaleFactor}
+                        scaleFactor={tooltipScaleFactor}
                         theme={mergedTheme.tooltip}
                     />
                 )}

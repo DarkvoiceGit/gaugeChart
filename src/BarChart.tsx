@@ -12,6 +12,7 @@ import {mergeTheme} from './theme/mergeTheme';
 import {GaugeThemeProvider} from './theme/GaugeThemeContext';
 import GaugeTooltip from './GaugeTooltip';
 import {assertValidBarLayers} from './utils/barGuards';
+import {resolveTooltipScaleFactor} from "./utils/resolveTooltipScaleFactor";
 
 export function BarChart(props: BarChartProps) {
     assertValidBarLayers(props.layers);
@@ -78,6 +79,7 @@ export function BarChart(props: BarChartProps) {
     }, [resolved.layers, hoveredLayerId]);
 
     const svgRef = useRef<SVGSVGElement>(null);
+    const tooltipScaleFactor = resolveTooltipScaleFactor(props.tooltipScale, mergedTheme.tooltip.scaleFactor, layout.scaleFactor)
 
     return (
         <GaugeThemeProvider theme={mergedTheme}>
@@ -136,7 +138,7 @@ export function BarChart(props: BarChartProps) {
                         text={tooltip.text}
                         x={tooltip.x}
                         y={tooltip.y}
-                        scaleFactor={props.tooltipScale ?? layout.scaleFactor}
+                        scaleFactor={tooltipScaleFactor}
                         theme={mergedTheme.tooltip}
                     />
                 )}

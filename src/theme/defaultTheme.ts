@@ -86,7 +86,7 @@ export const DEFAULT_THEME: GaugeTheme = {
         swatchSize: 12,
         swatchColumnWidth: 16,
         cellPaddingRight: 10,
-        swatchBorder: '0.1em solid white'
+        swatchBorder: '0.1em solid white',
     },
     gradient: {
         rotationDegrees: -90,

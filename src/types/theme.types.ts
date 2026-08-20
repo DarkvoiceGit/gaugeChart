@@ -107,6 +107,8 @@ export interface GaugeThemeTooltip {
     swatchColumnWidth: number;
     cellPaddingRight: number;
     swatchBorder: string;
+    /** Overrides layout-derived tooltip scale when set. */
+    scaleFactor?: number;
 }
 
 export interface GaugeThemeGradient {
