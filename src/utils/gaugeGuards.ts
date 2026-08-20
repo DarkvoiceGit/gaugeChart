@@ -1,3 +1,6 @@
+import {GaugeLayer} from "../types.ts";
+import {resolveLayerRadii} from "../core/gaugeGeometry.ts";
+
 const MAX_TILE_COUNT = 500;
 
 /**
@@ -68,5 +71,29 @@ export function assertValidGeometry(geometry: {
     }
     if (geometry.endAngle - geometry.startAngle > 2 * Math.PI) {
         throw new RangeError('geometry sweep cannot exceed a full circle')
+    }
+}
+
+export function assertValidLayerRadius(layer: GaugeLayer){
+    if (!Number.isFinite(layer.radius)  || layer.radius < 0 || layer.radius > 1) {
+        throw new RangeError(`layer ${layer.id}: radius must be a finite number between 0 and 1`);
+    }
+
+    if (!Number.isFinite(layer.thickness) || layer.thickness <= 0) {
+        throw new RangeError(`layer ${layer.id}: thickness must be a positive finite number `);
+    }
+
+    const {innerRatio, outerRatio} = resolveLayerRadii(layer);
+
+    if(innerRatio < 0 ){
+        throw new RangeError(`layer ${layer.id}: resolved inner radius is below 0 (inner=${innerRatio.toFixed(3)}`);
+    }
+
+    if(outerRatio > 1 ){
+        throw new RangeError(`layer ${layer.id}: resolved outer radius exceeds 1 (inner=${outerRatio.toFixed(3)}`);
+    }
+
+    if(innerRatio >= outerRatio ){
+        throw new RangeError(`layer ${layer.id}: resolved inner radius must be less than outer radius`);
     }
 }

@@ -6,7 +6,7 @@ import type {PointerMarkerSpec} from '../components/GaugePointerMarkers';
 import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/gaugeCalculations';
 import {resolveTileCount} from '../utils/gaugeGuards';
 import {GradientType, TileFillStyle} from '../utils/constants';
-import {buildTileAngles} from "./gaugeGeometry";
+import {buildTileAngles, resolveLayerRadii} from "./gaugeGeometry";
 
 export interface ResolvedPointer {
     layerId: string;
@@ -283,11 +283,6 @@ export function resolveLayers(
 
     const sortedByDependency = topologicalSortLayers(layers);
 
-    const segmentedLayers = layers.filter(l => l.render === 'segmented');
-    if (segmentedLayers.length > 1) {
-        throw new Error("Only one segmented layer is allowed");
-    }
-
     const angleContexts = new Map<string, LayerAngleContext>();
     const resolvedLayers: ResolvedLayer[] = [];
     const tileAnglesByLayerId: Record<string, number[]> = {};
@@ -297,9 +292,10 @@ export function resolveLayers(
     for (const layer of sortedByDependency) {
         const rawNormalizedValue = normalize(layer.value, max);
         const baseLayerContext = layer.baseLayerId ? angleContexts.get(layer.baseLayerId) : undefined;
-        
-        const innerRadius = baseRadius * layer.innerRadius;
-        const outerRadius = baseRadius * layer.outerRadius;
+
+        const {innerRatio, outerRatio} = resolveLayerRadii(layer)
+        const innerRadius = baseRadius * innerRatio;
+        const outerRadius = baseRadius * outerRatio;
         const arcConfig = resolveArcConfig(layer, theme);
         const segmentCount = layer.render === 'segmented'
             ? resolveTileCount(layer.segments, theme.tiles.minCount)

@@ -68,7 +68,6 @@ const SolidGaugeLayer: React.FC<GaugeLayerProps> = ({
 
 const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
                                                             layer,
-                                                            radius,
                                                             scaleMax,
                                                             scaleFactor,
                                                             colorScale,
@@ -110,8 +109,8 @@ const SegmentedGaugeLayer: React.FC<GaugeLayerProps> = ({
     );
 
     const hoverOverlayPath = buildArcPath({
-        innerRadius: radius * theme.interaction.hoverHitAreaInnerRatio,
-        outerRadius: radius,
+        innerRadius: layer.innerRadius,
+        outerRadius: layer.outerRadius,
         startAngle: theme.geometry.startAngle,
         endAngle: theme.geometry.endAngle,
     });

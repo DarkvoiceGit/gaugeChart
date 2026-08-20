@@ -1,6 +1,6 @@
 import type {GaugeChartProps} from '../types';
 import type {GaugeTheme} from '../types/theme.types';
-import {assertPositiveThreshold, assertValidThresholdPair} from '../utils/gaugeGuards';
+import {assertPositiveThreshold, assertValidLayerRadius, assertValidThresholdPair} from '../utils/gaugeGuards';
 
 export interface ResolvedChartSettings {
     hoverDimming: boolean;
@@ -65,5 +65,6 @@ export function assertValidLayers(layers: GaugeChartProps['layers']): void {
             throw new RangeError(`Duplicate gauge layer id: ${layer.id}`);
         }
         ids.add(layer.id);
+        assertValidLayerRadius(layer)
     }
 }

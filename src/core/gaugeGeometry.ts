@@ -1,5 +1,26 @@
 import * as d3 from 'd3';
 import type {GaugeThemeGeometry} from '../types/theme.types';
+import {GaugeLayer, LayerRadiusGrow} from "../types.ts";
+
+
+export interface ResolvedLayerRadii {
+    innerRatio: number;
+    outerRatio: number;
+}
+
+export function resolveLayerRadii(layer: Pick<GaugeLayer, 'radius' | 'thickness' | 'grow'>): ResolvedLayerRadii {
+    const grow: LayerRadiusGrow = layer.grow ?? 'inward'
+    const {radius, thickness} = layer
+
+    switch (grow){
+        case 'inward':
+            return { innerRatio: radius - thickness, outerRatio: radius}
+        case 'outward':
+            return { innerRatio: radius, outerRatio: radius + thickness }
+        case 'center':
+        return { innerRatio: radius - thickness / 2, outerRatio: radius + thickness / 2 }
+    }
+}
 
 export function createAngleScale(geometry: Pick<GaugeThemeGeometry, 'startAngle' | 'endAngle'>) {
     return d3.scaleLinear<number, number>()

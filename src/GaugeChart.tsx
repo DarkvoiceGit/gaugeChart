@@ -82,7 +82,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
         ];
     }, [resolved.layers, hoveredLayerId]);
 
-    const gradientLayer = useMemo(() => resolved.layers.find(
+    const gradientLayers = useMemo(() => resolved.layers.filter(
         (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
     ), [resolved.layers]);
 
@@ -99,7 +99,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                     <defs>
                         <GaugeDefs
                             pointerMarkers={resolved.pointerMarkers}
-                            gradientLayer={gradientLayer}
+                            gradientLayers={gradientLayers}
                             scaleMax={settings.scaleMax}
                             colorScale={resolved.colorScale}
                         />

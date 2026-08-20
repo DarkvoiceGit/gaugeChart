@@ -70,8 +70,9 @@ describe('resolveLayers', () => {
             {
                 id: 'sum',
                 value: 60,
-                innerRadius: 0.6,
-                outerRadius: 0.7,
+                radius: 0.6,
+                thickness: 0.1,
+                grow: 'inward',
                 render: 'solid',
                 color: '#aaa',
                 pointer: {enabled: true, color: '#0f0', scale: 1, strokeScale: 1},
@@ -95,4 +96,36 @@ describe('resolveLayers', () => {
         expect(resolved.layers[0].tileAngles).toHaveLength(4);
         expect(resolved.layers[0].tileAngles[0]).toBe(0);
     });
+
+    it('resolves radius/ thickness/grow to absolute inner and outer radii', () => {
+        const resolved = resolveLayers([tileLayer], testScale, 240, DEFAULT_THEME);
+        const layer = resolved.layers[0];
+
+        expect(layer.innerRadius).toBeCloseTo(240 * 0.7)
+        expect(layer.outerRadius).toBeCloseTo(240)
+
+    })
+
+    it('supports multiple segmented layers', () => {
+        const resolved = resolveLayers([
+            {
+                ...tileLayer,
+                id: 'outer-tiles',
+                radius: 1,
+                thickness: 0.15,
+                zIndex: 0
+            },
+            {
+                ...tileLayer,
+                id: 'inner-tiles',
+                radius: 0.85,
+                thickness: 0.15,
+                zIndex: 1
+            }], testScale, 240, DEFAULT_THEME);
+        const layer = resolved.layers[0];
+
+        expect(layer.innerRadius).toBeCloseTo(240 * 0.7)
+        expect(layer.outerRadius).toBeCloseTo(240)
+
+    })
 });

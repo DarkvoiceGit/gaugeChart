@@ -17,6 +17,7 @@ export type GaugeSize =
 
 export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
 export type LayerRenderMode = 'solid' | 'segmented'
+export type LayerRadiusGrow  = 'inward' | 'outward' | 'center'
 
 
 export interface PointerConfig {
@@ -51,8 +52,9 @@ export interface LayerGradientConfig {
 export interface GaugeLayer {
     id: string;
     value: number;
-    innerRadius: number;
-    outerRadius: number;
+    radius: number;
+    thickness: number;
+    grow?: LayerRadiusGrow;
     render: LayerRenderMode;
     segments?: number;
     valueMode?: LayerValueMode;
