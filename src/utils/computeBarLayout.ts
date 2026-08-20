@@ -32,7 +32,9 @@ export function computeBarLayout(
     let trackLength: number;
     let crossAxisLength: number;
     let crossAxisOffset = 0;
+    // eslint-disable-next-line no-useless-assignment
     let originX = 0;
+    // eslint-disable-next-line no-useless-assignment
     let originY = 0;
 
     if (orientation === 'horizontal') {
