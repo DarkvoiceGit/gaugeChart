@@ -17,6 +17,7 @@ export type {
     LayerRenderMode,
     LayerRadiusGrow,
     PointerConfig,
+    PointerStlye,
     ArcConfig,
     LayerPointerConfig,
     LayerTooltipConfig,

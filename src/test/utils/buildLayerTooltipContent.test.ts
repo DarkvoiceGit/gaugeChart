@@ -97,4 +97,5 @@ describe('buildLayerTooltipContent', () => {
 
         expect(items[0].label).toBe('sum:');
     });
+
 });

@@ -103,10 +103,10 @@ describe('resolveLAyerRadii', () => {
         })
     })
     it('resolves center growth', () => {
-        expect(resolveLayerRadii({radius: 0.7, thickness: 0.2, grow: 'center'})).toEqual({
-            innerRatio: 0.6,
-            outerRatio: 0.8,
-        })
+        const radii = resolveLayerRadii({radius: 0.7, thickness: 0.2, grow: 'center'})
+        expect(radii.innerRatio).toBeCloseTo(0.6)
+        expect(radii.outerRatio).toBeCloseTo(0.8)
+
     })
 })
 

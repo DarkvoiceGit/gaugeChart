@@ -19,12 +19,15 @@ export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
 export type LayerRenderMode = 'solid' | 'segmented'
 export type LayerRadiusGrow  = 'inward' | 'outward' | 'center'
 
+export type PointerStlye = 'arrow' | 'needle'
 
 export interface PointerConfig {
     scale: number;
     strokeScale: number;
     color: string;
     lengthRatio?: number;
+    /** Visual Pointer style. Defaults to `'arrow'` (line + arrowhead) */
+    style?: PointerStlye
 }
 
 
@@ -42,6 +45,8 @@ export interface LayerTooltipConfig {
     enabled?: boolean;
     label?: string;
     mode?: "self" | "all" | "none";
+    /** Optional tooltip swatch color. Falls back to the layer/bar color when unset. */
+    color?: string
 }
 
 export interface LayerGradientConfig {

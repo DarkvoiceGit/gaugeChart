@@ -40,6 +40,10 @@ export interface GaugeThemePointer {
     markerRefXRatio: number;
     defaultScale: number;
     defaultStrokeScale: number;
+    /** Hub diameter as a fraction of total needle length (needle style). default ~1/5 */
+    needleHubLengthRatio: number;
+    /** Arm half-width at tthe hub as a fraction of hub radius (needle style) */
+    needleBaseWidthRatio: number;
 }
 
 export interface GaugeThemeHoverHighlight {

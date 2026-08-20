@@ -122,10 +122,13 @@ describe('resolveLayers', () => {
                 thickness: 0.15,
                 zIndex: 1
             }], testScale, 240, DEFAULT_THEME);
-        const layer = resolved.layers[0];
 
-        expect(layer.innerRadius).toBeCloseTo(240 * 0.7)
-        expect(layer.outerRadius).toBeCloseTo(240)
+        expect(resolved.layers).toHaveLength(2)
+        expect(resolved.layers.map((layer)=> layer.id)).toEqual(['outer-tiles', 'inner-tiles']);
+
+        const outer = resolved.layers[0]
+        expect(outer.innerRadius).toBeCloseTo(240 * 0.85)
+        expect(outer.outerRadius).toBeCloseTo(240)
 
     })
 });

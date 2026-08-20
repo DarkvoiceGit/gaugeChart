@@ -31,7 +31,9 @@ export const DEFAULT_THEME: GaugeTheme = {
         baseStrokeWidth: 3,
         markerRefXRatio: 0.9,
         defaultScale: 1,
-        defaultStrokeScale: 1
+        defaultStrokeScale: 1,
+        needleHubLengthRatio: 0.2,
+        needleBaseWidthRatio: 0.95
     },
     interaction: {
         dimedOpacity: 0.5,
