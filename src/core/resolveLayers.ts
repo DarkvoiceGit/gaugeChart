@@ -6,7 +6,8 @@ import type {PointerMarkerSpec} from '../components/GaugePointerMarkers';
 import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/gaugeCalculations';
 import {resolveTileCount} from '../utils/gaugeGuards';
 import {GradientType, TileFillStyle} from '../utils/constants';
-import {buildTileAngles} from "./gaugeGeometry";
+import {buildTileAngles, resolveLayerRadii} from "./gaugeGeometry";
+import {computeTickLabelValues} from "../utils/computeTickLabelValues";
 
 export interface ResolvedPointer {
     layerId: string;
@@ -15,6 +16,7 @@ export interface ResolvedPointer {
     color: string;
     scale: number;
     strokeScale: number;
+    style: 'arrow' | 'needle'
 }
 
 export interface SegmentedLayerStyle {
@@ -40,6 +42,7 @@ export interface ResolvedLayer {
         enabled?: boolean;
         label?: string;
         mode?: "self" | "all" | "none";
+        color?: string;
     };
     rawValue: number;
     normalizedValue: number;
@@ -202,11 +205,14 @@ function resolvePointer(
         return undefined;
     }
 
+    const style : ResolvedPointer['style'] = layer.pointer.style === 'needle' ? 'needle' : 'arrow';
+
     const pointerConfig = {
         scale: layer.pointer.scale ?? theme.pointer.defaultScale,
         strokeScale: layer.pointer.strokeScale ?? theme.pointer.defaultStrokeScale,
         color: layer.pointer.color ?? layer.color,
         lengthRatio: layer.pointer.lengthRatio ?? theme.pointer.secondaryLengthRatio,
+        style
     };
 
     const position = calculatePointer(
@@ -223,6 +229,7 @@ function resolvePointer(
         color: pointerConfig.color,
         scale: pointerConfig.scale,
         strokeScale: pointerConfig.strokeScale,
+        style: pointerConfig.style,
     };
 }
 
@@ -267,6 +274,7 @@ export function resolveLayers(
     baseRadius: number,
     theme: GaugeTheme,
     tickStep?: number,
+    hideCrowdedEndTick?: boolean | number,
     scaleFactor = 1,
 ): ResolvedGaugeLayers {
     const max = scale.max;
@@ -283,11 +291,6 @@ export function resolveLayers(
 
     const sortedByDependency = topologicalSortLayers(layers);
 
-    const segmentedLayers = layers.filter(l => l.render === 'segmented');
-    if (segmentedLayers.length > 1) {
-        throw new Error("Only one segmented layer is allowed");
-    }
-
     const angleContexts = new Map<string, LayerAngleContext>();
     const resolvedLayers: ResolvedLayer[] = [];
     const tileAnglesByLayerId: Record<string, number[]> = {};
@@ -297,9 +300,10 @@ export function resolveLayers(
     for (const layer of sortedByDependency) {
         const rawNormalizedValue = normalize(layer.value, max);
         const baseLayerContext = layer.baseLayerId ? angleContexts.get(layer.baseLayerId) : undefined;
-        
-        const innerRadius = baseRadius * layer.innerRadius;
-        const outerRadius = baseRadius * layer.outerRadius;
+
+        const {innerRatio, outerRatio} = resolveLayerRadii(layer)
+        const innerRadius = baseRadius * innerRatio;
+        const outerRadius = baseRadius * outerRatio;
         const arcConfig = resolveArcConfig(layer, theme);
         const segmentCount = layer.render === 'segmented'
             ? resolveTileCount(layer.segments, theme.tiles.minCount)
@@ -366,6 +370,7 @@ export function resolveLayers(
                 enabled: layer.tooltip.enabled,
                 label: layer.tooltip.label,
                 mode: layer.tooltip.mode,
+                color: layer.tooltip.color
             } : undefined,
             rawValue: layer.value,
             normalizedValue: rawNormalizedValue,
@@ -392,14 +397,15 @@ export function resolveLayers(
         ? max / referenceLayer.segmentCount
         : max / theme.tiles.defaultCount;
     const resolvedTickStep = tickStep ?? defaultStep;
+    const scaleMin = scale.min ?? 0
 
     return {
         layers: resolvedLayers,
         colorScale,
-        tickLabels: d3.range(0, max + theme.ticks.rangeUpperBoundOffset, resolvedTickStep),
+        tickLabels: computeTickLabelValues(scaleMin, max, resolvedTickStep, {hideCrowdedEndTick}),
         tileAnglesByLayerId,
         gradientLayerIds,
-        pointerMarkers: pointers.map((pointer) => ({
+        pointerMarkers: pointers.filter((pointer) => pointer.style === 'arrow').map((pointer)=>({
             id: pointer.layerId,
             color: pointer.color,
             scale: pointer.scale,

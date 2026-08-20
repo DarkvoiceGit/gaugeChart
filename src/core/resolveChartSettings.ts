@@ -1,6 +1,6 @@
 import type {GaugeChartProps} from '../types';
 import type {GaugeTheme} from '../types/theme.types';
-import {assertPositiveThreshold, assertValidThresholdPair} from '../utils/gaugeGuards';
+import {assertPositiveThreshold, assertValidLayerRadius, assertValidThresholdPair} from '../utils/gaugeGuards';
 
 export interface ResolvedChartSettings {
     hoverDimming: boolean;
@@ -8,6 +8,7 @@ export interface ResolvedChartSettings {
     tooltipMode: 'layer' | 'all';
     ticksEnabled: boolean;
     tickStep: number | undefined;
+    hideCrowdedEndTick: boolean | number | undefined;
     tickFontSize: string;
     tickLabelColor: string;
     tickColor: string;
@@ -36,6 +37,7 @@ export function resolveChartSettings(
         tooltipMode: props.interaction?.tooltipMode ?? 'layer',
         ticksEnabled: props.ticks?.enabled ?? true,
         tickStep: props.ticks?.step,
+        hideCrowdedEndTick: props.ticks?.hideCrowdedEndTick,
         tickFontSize: props.ticks?.fontSize ?? theme.ticks.defaultFontSize,
         tickLabelColor: props.ticks?.labelColor ?? theme.colors.tickLabel,
         tickColor: props.ticks?.tickColor ?? theme.colors.tick,
@@ -65,5 +67,6 @@ export function assertValidLayers(layers: GaugeChartProps['layers']): void {
             throw new RangeError(`Duplicate gauge layer id: ${layer.id}`);
         }
         ids.add(layer.id);
+        assertValidLayerRadius(layer)
     }
 }

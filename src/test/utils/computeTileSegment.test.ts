@@ -6,6 +6,7 @@ import {TileFillStyle} from '../../utils/constants';
 
 function createSegmentOptions(sumNormalized: number, numberOfTiles = 10) {
     const tileAngles = buildTileAngles(DEFAULT_THEME.geometry, numberOfTiles);
+    const baseRadius = 240
 
     return {
         layerId: 'tiles',
@@ -13,6 +14,8 @@ function createSegmentOptions(sumNormalized: number, numberOfTiles = 10) {
         numberOfTiles,
         sumNormalized,
         thresholdRed: 80,
+        innerRadius: baseRadius * 0.7,
+        outerRadius: baseRadius,
         radius: 240,
         scaleFactor: 1,
         isTileHovered: false,

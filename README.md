@@ -73,8 +73,9 @@ export function ExampleGauge() {
         {
           id: 'tiles',
           value: 75,
-          innerRadius: 0.72,
-          outerRadius: 1,
+          radius: 0.72,
+          thickness: 0.28,
+          grow: 'inward',
           render: 'segmented',
           segments: 8,
           color: '#35ff00',
@@ -86,8 +87,9 @@ export function ExampleGauge() {
           id: 'base',
           value: 40,
           valueMode: 'absolute',
-          innerRadius: 0.58,
-          outerRadius: 0.70,
+          radius: 0.7,
+          thickness: 0.12, 
+          grow: 'inward',
           render: 'solid',
           color: '#000000',
           pointer: {
@@ -107,8 +109,9 @@ export function ExampleGauge() {
           value: 35,
           valueMode: 'cumulative',
           baseLayerId: 'base',
-          innerRadius: 0.58,
-          outerRadius: 0.70,
+          radius: 0.7,
+          thickness: 0.12,
+          grow: 'inward',
           render: 'solid',
           color: '#aaaaaa',
           pointer: {
@@ -278,8 +281,9 @@ You do not need zones if you set layer colors directly.
 interface GaugeLayer {
   id: string;
   value: number;
-  innerRadius: number;
-  outerRadius: number;
+  radius: number;
+  thickness: number;
+  grow?:  'inward' | 'outward' | 'center'
   render: 'solid' | 'segmented';
 
   segments?: number;
@@ -311,8 +315,8 @@ Every layer requires:
 ```ts
 id
 value
-innerRadius
-outerRadius
+radius
+thickness
 render
 color
 ```
@@ -323,8 +327,9 @@ Example:
 {
   id: 'capacity',
   value: 65,
-  innerRadius: 0.55,
-  outerRadius: 0.70,
+  radius: 0.7,
+  thickness: 0.15,
+  grow: 'inward',      
   render: 'solid',
   color: '#222222',
 }
@@ -340,8 +345,9 @@ Use `render: 'solid'` for a continuous arc.
 {
   id: 'base',
   value: 40,
-  innerRadius: 0.58,
-  outerRadius: 0.70,
+  radius: 0.7,
+  thickness: 0.12,
+  grow: 'inward',      
   render: 'solid',
   color: '#000000',
 }
@@ -355,8 +361,9 @@ Use `render: 'segmented'` for tiles / discrete segments.
 {
   id: 'tiles',
   value: 75,
-  innerRadius: 0.72,
-  outerRadius: 1,
+  radius: 1,
+  thickness: 0.28,
+  grow: 'inward',      
   render: 'segmented',
   segments: 8,
   color: '#35ff00',
@@ -441,28 +448,38 @@ Conceptually:
 
 ## Layer Radius
 
-Each layer defines its radial position using:
+Each layer defines its radial position using `radius`, `thickness´, and optional `grow`:
 
 ```ts
-innerRadius: number;
-outerRadius: number;
+radius: number; // reference point (0..1 relative to gauge radius)
+thickness: number; // band width (0..1)
+grow?: 'inward' | 'outward' | 'center' // default: 'inward'
+```
+Resolution:
+```text
+grow: 'inward'  -> outer = radius,           inner = radius - thickness
+grow: 'outward' -> inner = radius,           outer = radius + thickness
+grow: 'center'  -> inner = radius -t/2,      outer = radius + t/2
+
 ```
 
-Example outer ring:
+Example outer ring (inward from max radius:
 
 ```tsx
-innerRadius: 0.72,
-outerRadius: 1,
+radius: 1,
+thickness: 0.28,
+grow: 'inward'
 ```
 
 Example inner ring:
 
 ```tsx
-innerRadius: 0.42,
-outerRadius: 0.54,
+radius: 0.54,
+thickness: 0.12,
+grow: 'inward'
 ```
 
-Use `innerRadius < outerRadius`.
+Resolved radii must stay within `0..1`
 
 ## Layer Ordering
 
@@ -811,8 +828,9 @@ export function CapacityGauge() {
         {
           id: 'tiles',
           value: base + additional,
-          innerRadius: 0.72,
-          outerRadius: 1,
+          radius: 1,
+          thickness: 0.28,
+          grow: 'inward',  
           render: 'segmented',
           segments: 8,
           color: '#35ff00',
@@ -831,8 +849,9 @@ export function CapacityGauge() {
           id: 'base',
           value: base,
           valueMode: 'absolute',
-          innerRadius: 0.58,
-          outerRadius: 0.70,
+          radius: 0.7,
+          thickness: 0.12,
+          grow: 'inward',
           render: 'solid',
           color: '#000000',
           backgroundColor: 'transparent',
@@ -853,8 +872,9 @@ export function CapacityGauge() {
           value: additional,
           valueMode: 'cumulative',
           baseLayerId: 'base',
-          innerRadius: 0.58,
-          outerRadius: 0.70,
+          radius: 0.7,
+          thickness: 0.12,
+          grow: 'inward',
           render: 'solid',
           color: '#aaaaaa',
           backgroundColor: 'transparent',
@@ -980,8 +1000,9 @@ const layers: GaugeLayer[] = [
   {
     id: 'value',
     value: 50,
-    innerRadius: 0.55,
-    outerRadius: 0.70,
+    radius: 0.7,
+    thickness: 0.15,
+    grow: 'inward',  
     render: 'solid',
     color: '#000000',
   },
@@ -1006,17 +1027,12 @@ Use this during development only when you need the package's debug behavior.
 
 - `scale.max` is required.
 - Every layer needs a unique `id`.
-- Every layer requires `value`, `innerRadius`, `outerRadius`, `render`, and `color`.
+- Every layer requires `value`, `radius`, `thickness`, `render`, and `color`.
 - Use `hoverable: true` when a layer should participate in hover interaction.
 - `segments` is relevant for segmented layers.
 - `baseLayerId` is used by cumulative layers.
 - `offsetValue` is used by offset layers.
 - Tooltip labels are configured per layer, while the current tooltip display mode is configured globally through `interaction.tooltipMode`.
-
-## License
-
-See the repository / package metadata for licensing information.
-
 
 ## Technologies
 

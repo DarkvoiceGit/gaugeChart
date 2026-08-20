@@ -12,7 +12,7 @@ function createLayer(id: string, overrides: Partial<ResolvedLayer> = {}): Resolv
         render: 'solid',
         zIndex: 0,
         hoverable: true,
-        tooltipLabel: id,
+        tooltip: {label: id},
         rawValue: 10,
         normalizedValue: 0.5,
         color: '#000',

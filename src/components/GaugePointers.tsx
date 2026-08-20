@@ -20,9 +20,16 @@ const GaugePointers: React.FC<GaugePointersProps> = ({
                                                      }) => (
     <>
         {pointers.map((pointer) => (
-            <GaugePointer x={pointer.x} y={pointer.y} color={pointer.color} markerId={pointer.layerId}
-                          strokeScale={resolvePointerStrokeScale(scaleFactor, pointer.strokeScale, referenceScaleFactor)}
-                          animate={animate} animationDurationMs={animationDurationMs}
+            <GaugePointer
+                key={pointer.layerId}
+                x={pointer.x}
+                y={pointer.y}
+                color={pointer.color}
+                markerId={pointer.layerId}
+                strokeScale={resolvePointerStrokeScale(scaleFactor, pointer.strokeScale, referenceScaleFactor)}
+                style={pointer.style}
+                animate={animate}
+                animationDurationMs={animationDurationMs}
             />
         ))}
     </>

@@ -52,7 +52,7 @@ export function buildLayerTooltipContent(options: {
     return visibleLayers.map((layer) => ({
         label: formatTooltipLabel(layer.tooltip?.label, `${layer.id}:`),
         value: formatValue(layer.rawValue, undefined, options.formatters?.value),
-        color: layer.color,
+        color: layer.tooltip?.color ?? layer.color,
     }));
 }
 

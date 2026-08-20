@@ -15,7 +15,9 @@ export type {
     GaugeFormatters,
     LayerValueMode,
     LayerRenderMode,
+    LayerRadiusGrow,
     PointerConfig,
+    PointerStlye,
     ArcConfig,
     LayerPointerConfig,
     LayerTooltipConfig,
@@ -36,6 +38,7 @@ export type {
 export {formatValue, colorSelector} from './utils/gaugeUtils';
 export {calculatePointer, normalize, buildArcPath, valueToAngle} from './utils/gaugeCalculations';
 export {computeGaugeLayout, computeGaugeLayoutFromSize, resolveSizePreset} from './utils/computeGaugeLayout';
+export {resolveLayerRadii} from './core/gaugeGeometry'
 export {computeTileSegments} from './utils/computeTileSegment'
 export {useAnimatedSvgAttribute} from './hooks/useAnimatedSvgAttribute'
 export {DEFAULT_THEME} from './theme/defaultTheme'

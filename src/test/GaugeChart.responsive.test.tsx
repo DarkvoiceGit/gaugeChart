@@ -26,7 +26,7 @@ describe('GaugeChart responsive sizing and viewBox', () => {
         if (!svg) return;
 
 
-        const expected = computeGaugeLayoutFromSize('default')
+        const expected = computeGaugeLayoutFromSize('xxs')
 
         expect(svg.getAttribute('viewBox')).toBe(expected.viewBox);
         expect(svg.getAttribute('width')).toBe(String(expected.viewBoxWidth));

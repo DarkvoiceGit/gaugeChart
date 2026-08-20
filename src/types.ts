@@ -17,13 +17,17 @@ export type GaugeSize =
 
 export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
 export type LayerRenderMode = 'solid' | 'segmented'
+export type LayerRadiusGrow  = 'inward' | 'outward' | 'center'
 
+export type PointerStlye = 'arrow' | 'needle'
 
 export interface PointerConfig {
     scale: number;
     strokeScale: number;
     color: string;
     lengthRatio?: number;
+    /** Visual Pointer style. Defaults to `'arrow'` (line + arrowhead) */
+    style?: PointerStlye
 }
 
 
@@ -41,6 +45,8 @@ export interface LayerTooltipConfig {
     enabled?: boolean;
     label?: string;
     mode?: "self" | "all" | "none";
+    /** Optional tooltip swatch color. Falls back to the layer/bar color when unset. */
+    color?: string
 }
 
 export interface LayerGradientConfig {
@@ -51,8 +57,9 @@ export interface LayerGradientConfig {
 export interface GaugeLayer {
     id: string;
     value: number;
-    innerRadius: number;
-    outerRadius: number;
+    radius: number;
+    thickness: number;
+    grow?: LayerRadiusGrow;
     render: LayerRenderMode;
     segments?: number;
     valueMode?: LayerValueMode;
@@ -91,6 +98,12 @@ export interface GaugeInteractionConfig {
 export interface GaugeTicksConfig {
     enabled?: boolean;
     step?: number;
+    /**
+     * hide the last step tick before max when it sits too close to max
+     * true uses a default threshold of haf a step ; a number sets a custom
+     * fraction of step eg( 0.5)
+     * */
+    hideCrowdedEndTick?: boolean | number;
     fontSize?: string;
     labelColor?: string;
     tickColor?: string;

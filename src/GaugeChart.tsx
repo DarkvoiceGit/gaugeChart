@@ -58,8 +58,8 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
     );
 
     const resolved = useMemo(
-        () => resolveLayers(props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep),
-        [props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep],
+        () => resolveLayers(props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep, settings.hideCrowdedEndTick),
+        [props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep, settings.hideCrowdedEndTick],
     );
 
     const {tooltip, hoveredLayerId, getLayerHandlers, getLayerOpacity} = useGaugeInteraction({
@@ -82,7 +82,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
         ];
     }, [resolved.layers, hoveredLayerId]);
 
-    const gradientLayer = useMemo(() => resolved.layers.find(
+    const gradientLayers = useMemo(() => resolved.layers.filter(
         (layer) => layer.render === 'segmented' && layer.segmentedStyle.isTileColorGradient,
     ), [resolved.layers]);
 
@@ -99,7 +99,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                     <defs>
                         <GaugeDefs
                             pointerMarkers={resolved.pointerMarkers}
-                            gradientLayer={gradientLayer}
+                            gradientLayers={gradientLayers}
                             scaleMax={settings.scaleMax}
                             colorScale={resolved.colorScale}
                         />

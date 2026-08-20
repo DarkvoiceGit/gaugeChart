@@ -5,11 +5,11 @@ import {
     computeTileAngleStep,
     createAngleScale,
     labelAngleFromNormalized,
-    resolveGeometry,
+    resolveGeometry, resolveLayerRadii,
     valueToAngle,
 } from '../../core/gaugeGeometry';
 import {DEFAULT_THEME} from '../../theme/defaultTheme';
-import {assertValidGeometry} from '../../utils/gaugeGuards';
+import {assertValidGeometry, assertValidLayerRadius} from '../../utils/gaugeGuards';
 
 describe('createAngleScale', () => {
     it('maps normalized values to configured angle range', () => {
@@ -87,3 +87,51 @@ describe('assertValidGeometry', () => {
         expect(() => assertValidGeometry({startAngle: 0, endAngle: Math.PI})).not.toThrow();
     });
 });
+
+describe('resolveLAyerRadii', () => {
+    it('resolves inward growth', () => {
+        expect(resolveLayerRadii({radius: 1, thickness: 0.28})).toEqual({
+            innerRatio: 0.72,
+            outerRatio: 1,
+        })
+    })
+
+    it('resolves outward growth', () => {
+        expect(resolveLayerRadii({radius: 0.7, thickness: 0.12, grow: 'outward'})).toEqual({
+            innerRatio: 0.7,
+            outerRatio: 0.82,
+        })
+    })
+    it('resolves center growth', () => {
+        const radii = resolveLayerRadii({radius: 0.7, thickness: 0.2, grow: 'center'})
+        expect(radii.innerRatio).toBeCloseTo(0.6)
+        expect(radii.outerRatio).toBeCloseTo(0.8)
+
+    })
+})
+
+describe('assertValidLayerRadius', () => {
+    it('rejects layers that exceed gauge bounds', () => {
+        expect(() => assertValidLayerRadius({
+            id: 'bad',
+            value: 10,
+            radius: 0.95,
+            thickness: 0.2,
+            grow: 'outward',
+            render: 'solid',
+            color: '#000'
+        })).toThrow(RangeError);
+    })
+
+    it('accepts valid inward layer configuration', () => {
+        expect(() => assertValidLayerRadius({
+            id: 'good',
+            value: 10,
+            radius: 1,
+            thickness: 0.28,
+            grow: 'inward',
+            render: 'solid',
+            color: '#000'
+        })).not.toThrow(RangeError);
+    })
+})
