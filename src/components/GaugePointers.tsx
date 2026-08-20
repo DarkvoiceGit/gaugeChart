@@ -27,7 +27,9 @@ const GaugePointers: React.FC<GaugePointersProps> = ({
                 color={pointer.color}
                 markerId={pointer.layerId}
                 strokeScale={resolvePointerStrokeScale(scaleFactor, pointer.strokeScale, referenceScaleFactor)}
-                animate={animate} animationDurationMs={animationDurationMs}
+                style={pointer.style}
+                animate={animate}
+                animationDurationMs={animationDurationMs}
             />
         ))}
     </>

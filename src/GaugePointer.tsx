@@ -41,7 +41,7 @@ const GaugePointer = ({
     const needleRef = useRef<SVGGElement>(null)
 
     const length = Math.hypot(x, y)
-    const angleDeg = length > 0 ? (Math.atan2(y, x) * 100) / Math.PI : 0
+    const angleDeg = length > 0 ? (Math.atan2(y, x) * 180) / Math.PI : 0
 
     useAnimatedSvgAttribute(lineRef, 'x2', x, animate && style === 'arrow', animationDurationMs)
     useAnimatedSvgAttribute(lineRef, 'y2', y, animate && style === 'arrow', animationDurationMs)

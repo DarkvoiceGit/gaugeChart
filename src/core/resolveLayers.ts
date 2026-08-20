@@ -7,7 +7,7 @@ import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/
 import {resolveTileCount} from '../utils/gaugeGuards';
 import {GradientType, TileFillStyle} from '../utils/constants';
 import {buildTileAngles, resolveLayerRadii} from "./gaugeGeometry";
-import {computeTickLabelValues} from "../utils/computeTickLabelValues.ts";
+import {computeTickLabelValues} from "../utils/computeTickLabelValues";
 
 export interface ResolvedPointer {
     layerId: string;
