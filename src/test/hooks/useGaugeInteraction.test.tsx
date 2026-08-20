@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
-import {createRef, type MouseEvent as ReactMouseEvent} from 'react';
+import {type MouseEvent as ReactMouseEvent} from 'react';
 import {useGaugeInteraction} from '../../hooks/useGaugeInteraction';
 import {DEFAULT_THEME} from '../../theme/defaultTheme';
 import type {ResolvedLayer} from '../../core/resolveLayers';
@@ -50,9 +50,7 @@ describe('useGaugeInteraction', () => {
     ];
 
     it('tracks hovered layer and builds tooltip on enter', () => {
-        const svgRef = createRef<SVGSVGElement>();
         const {result} = renderHook(() => useGaugeInteraction({
-            svgRef,
             layers,
             tooltipMode: 'layer',
             tooltipsEnabled: true,
@@ -75,9 +73,7 @@ describe('useGaugeInteraction', () => {
     });
 
     it('clears state on mouse leave', () => {
-        const svgRef = createRef<SVGSVGElement>();
         const {result} = renderHook(() => useGaugeInteraction({
-            svgRef,
             layers,
             tooltipMode: 'layer',
             tooltipsEnabled: true,
@@ -101,9 +97,7 @@ describe('useGaugeInteraction', () => {
     });
 
     it('dims non-hovered layers via getLayerOpacity', () => {
-        const svgRef = createRef<SVGSVGElement>();
         const {result} = renderHook(() => useGaugeInteraction({
-            svgRef,
             layers,
             tooltipMode: 'layer',
             tooltipsEnabled: false,
@@ -124,9 +118,7 @@ describe('useGaugeInteraction', () => {
     });
 
     it('shows all hoverable layers when tooltipMode is all', () => {
-        const svgRef = createRef<SVGSVGElement>();
         const {result} = renderHook(() => useGaugeInteraction({
-            svgRef,
             layers,
             tooltipMode: 'all',
             tooltipsEnabled: true,
