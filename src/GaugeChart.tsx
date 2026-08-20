@@ -156,7 +156,7 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
                         text={tooltip.text}
                         x={tooltip.x}
                         y={tooltip.y}
-                        scaleFactor={layout.scaleFactor}
+                        scaleFactor={props.tooltipScale ?? layout.scaleFactor}
                         theme={mergedTheme.tooltip}
                     />
                 )}

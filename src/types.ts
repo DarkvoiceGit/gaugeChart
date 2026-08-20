@@ -17,7 +17,7 @@ export type GaugeSize =
 
 export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
 export type LayerRenderMode = 'solid' | 'segmented'
-export type LayerRadiusGrow  = 'inward' | 'outward' | 'center'
+export type LayerRadiusGrow = 'inward' | 'outward' | 'center'
 
 export type PointerStlye = 'arrow' | 'needle'
 
@@ -151,6 +151,7 @@ export interface GaugeChartProps {
     formatters?: GaugeFormatters;
     animation?: GaugeAnimationConfig;
     theme?: DeepPartial<GaugeTheme>;
+    tooltipScale?: number;
     debugMode?: boolean;
 }
 
@@ -185,5 +186,6 @@ export interface BarChartProps {
     formatters?: GaugeFormatters;
     animation?: GaugeAnimationConfig;
     theme?: DeepPartial<GaugeTheme>;
+    tooltipScale?: number;
     debugMode?: boolean;
 }

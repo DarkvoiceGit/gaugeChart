@@ -136,7 +136,7 @@ export function BarChart(props: BarChartProps) {
                         text={tooltip.text}
                         x={tooltip.x}
                         y={tooltip.y}
-                        scaleFactor={layout.scaleFactor}
+                        scaleFactor={props.tooltipScale ?? layout.scaleFactor}
                         theme={mergedTheme.tooltip}
                     />
                 )}
