@@ -1,4 +1,4 @@
-import  * as d3 from 'd3';
+import * as d3 from 'd3';
 import type {BarConfig, BarLayer, BarOrientation, BarRect, GaugeScale} from '../types';
 import type {GaugeTheme} from '../types/theme.types';
 import {GradientType} from '../utils/constants';
@@ -11,7 +11,7 @@ import {
     type BarTileSegmentRenderData,
     computeBarTileSegments,
 } from '../utils/computeBarTileSegments';
-import {buildTilePositions, createValueScale} from './barGeometry';
+import {buildTilePositions, createValueScale, mapBarFillRect} from './barGeometry';
 import {
     createZoneColorScale,
     resolveLayerValues,
@@ -56,37 +56,6 @@ function resolveBarConfig(layer: BarLayer, theme: GaugeTheme, render: BarLayer['
     };
 }
 
-function buildFillRect(
-    fillStart: number,
-    fillEnd: number,
-    trackInner: number,
-    trackOuter: number,
-    orientation: BarOrientation,
-    cornerRadius: number,
-): BarRect {
-    const fillMin = Math.min(fillStart, fillEnd);
-    const fillSize = Math.abs(fillEnd - fillStart);
-    const trackSize = trackOuter - trackInner;
-
-    if (orientation === 'horizontal') {
-        return {
-            x: fillMin,
-            y: trackInner,
-            width: fillSize,
-            height: trackSize,
-            rx: cornerRadius,
-        };
-    }
-
-    return {
-        x: trackInner,
-        y: fillMin,
-        width: trackSize,
-        height: fillSize,
-        rx: cornerRadius,
-    };
-}
-
 function buildHoverSolidRect(
     solidRect: BarRect,
     orientation: BarOrientation,
@@ -108,6 +77,17 @@ function buildHoverSolidRect(
         x: solidRect.x - halfOffset,
         width: solidRect.width + offset,
     };
+}
+
+function buildFillRect(
+    fillStart: number,
+    fillEnd: number,
+    trackInner: number,
+    trackOuter: number,
+    orientation: BarOrientation,
+    cornerRadius: number,
+): BarRect {
+    return mapBarFillRect(fillStart, fillEnd, trackInner, trackOuter, orientation, cornerRadius);
 }
 
 function buildHitAreaRect(
@@ -164,8 +144,8 @@ export function resolveBarLayers(
     for (const layer of sortedLayers) {
         const resolvedValue = resolvedValues.get(layer.id)!;
         const trackBounds = resolveBarTrackBounds(layer);
-        const trackInner = trackBounds.innerRatio * layout.crossAxisLength;
-        const trackOuter = trackBounds.outerRatio * layout.crossAxisLength;
+        const trackInner = layout.crossAxisOffset + trackBounds.innerRatio * layout.crossAxisLength;
+        const trackOuter = layout.crossAxisOffset + trackBounds.outerRatio * layout.crossAxisLength;
         const barConfig = resolveBarConfig(layer, theme, layer.render);
         const segmentedStyle = resolveSegmentedStyle(layer, scale, theme, thresholdYellowNormalized);
 
@@ -187,7 +167,7 @@ export function resolveBarLayers(
             : 0;
 
         const tilePositions = layer.render === 'segmented'
-            ? buildTilePositions(segmentCount, layout.trackLength, barConfig.gap, barConfig.pad)
+            ? buildTilePositions(segmentCount, layout.trackLength, barConfig.gap, barConfig.pad, orientation)
             : [];
 
         if (layer.render === 'segmented' && layer.gradient?.enabled && layer.gradient.type !== GradientType.FULL) {
@@ -263,4 +243,15 @@ export function resolveBarLayers(
 
 export function getBarLayerHitArea(layer: ResolvedBarLayer, trackLength: number): BarRect {
     return buildHitAreaRect(layer.trackInner, layer.trackOuter, trackLength, layer.orientation);
+}
+
+export function buildBarGradientLayers(
+    layers: ResolvedBarLayer[], gradientLayerIds: string[]): Array<Pick<ResolvedBarLayer, 'id' | 'segmentCount' | 'tilePositions' | 'orientation'>> {
+    return layers.filter((layer) => gradientLayerIds.includes(layer.id))
+        .map((layer) => ({
+            id: layer.id,
+            segmentCount: layer.segmentCount,
+            tilePositions: layer.tilePositions,
+            orientation: layer.orientation,
+        }));
 }

@@ -1,7 +1,8 @@
-import {BarLayout} from '../utils/computeBarLayout';
-import {BarOrientation, GaugeFormatters, GaugeScale} from '../types';
+import React from 'react';
+import type {BarLayout} from '../utils/computeBarLayout';
+import type {BarOrientation, GaugeFormatters, GaugeScale} from '../types';
 import {createValueScale} from '../core/barGeometry';
-import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
+import {useGaugeTheme} from '../theme/useGaugeTheme';
 
 interface BarTickLabelsProps {
     tickLabels: number[];
@@ -15,42 +16,42 @@ interface BarTickLabelsProps {
     formatters?: GaugeFormatters;
 }
 
-export function BarTickLabels({
-                                  tickLabels,
-                                  scale,
-                                  layout,
-                                  orientation,
-                                  scaleFactor,
-                                  fontSize,
-                                  tickColor,
-                                  tickLabelColor,
-                                  formatters
-                              }: BarTickLabelsProps) {
-    const theme = useGaugeTheme()
-    const scaleMin = scale.min ?? 0
+export const BarTickLabels: React.FC<BarTickLabelsProps> = ({
+    tickLabels,
+    scale,
+    layout,
+    orientation,
+    scaleFactor,
+    fontSize,
+    tickColor,
+    tickLabelColor,
+    formatters,
+}) => {
+    const theme = useGaugeTheme();
+    const scaleMin = scale.min ?? 0;
 
     const valueScale = createValueScale({
         min: scaleMin,
         max: scale.max,
         trackLength: layout.trackLength,
-        orientation: orientation,
-        padding: 0
+        orientation,
+        padding: 0,
     });
 
-    const effectiveFontSize = fontSize ?? theme.ticks.defaultFontSize
-    const effectiveTickColor = tickColor ?? theme.colors.tick
-    const effectiveLabelColor = tickLabelColor ?? theme.colors.tickLabel
-    const tickStrokeWidth = Math.max(theme.ticks.minsStrokeWidth, scaleFactor)
-    const tickLength = 6 * scaleFactor
-    const labelOffset = layout.tickLabelSpace * 0.45
+    const effectiveFontSize = fontSize ?? theme.ticks.defaultFontSize;
+    const effectiveTickColor = tickColor ?? theme.colors.tick;
+    const effectiveLabelColor = tickLabelColor ?? theme.colors.tickLabel;
+    const tickStrokeWidth = Math.max(theme.ticks.minsStrokeWidth, scaleFactor);
+    const tickLength = 6 * scaleFactor;
+    const labelOffset = layout.tickLabelSpace * 0.45;
 
     return (
         <g>
             {tickLabels.map((value) => {
-                const position = valueScale(value)
+                const position = valueScale(value);
 
                 if (orientation === 'horizontal') {
-                    const tickY = layout.crossAxisLength
+                    const tickY = layout.crossAxisLength;
                     return (
                         <g key={value}>
                             <line
@@ -67,15 +68,15 @@ export function BarTickLabels({
                                 fontSize={effectiveFontSize}
                                 fill={effectiveLabelColor}
                                 textAnchor="middle"
-                                dominantBaseline={'hanging'}
+                                dominantBaseline="hanging"
                             >
                                 {formatters?.tick ? formatters.tick(value) : value}
                             </text>
                         </g>
-                    )
+                    );
                 }
 
-                const tickX = 0
+                const tickX = layout.crossAxisOffset;
                 return (
                     <g key={value}>
                         <line
@@ -92,13 +93,15 @@ export function BarTickLabels({
                             fontSize={effectiveFontSize}
                             fill={effectiveLabelColor}
                             textAnchor="end"
-                            dominantBaseline={'middle'}
+                            dominantBaseline="middle"
                         >
                             {formatters?.tick ? formatters.tick(value) : value}
                         </text>
                     </g>
-                )
+                );
             })}
         </g>
-    )
-}
+    );
+};
+
+export default BarTickLabels;

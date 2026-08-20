@@ -1,9 +1,10 @@
 import React, {useMemo, useRef} from 'react';
-import {getBarLayerHitArea, ResolvedBarLayer} from '../core/resolveBarLayers';
-import {LayerHandlers} from '../hooks/useGaugeInteraction';
-import {useGaugeTheme} from "../theme/useGaugeTheme.ts";
-import {useAnimatedSvgAttribute} from "../hooks/useAnimatedSvgAttribute.ts";
-import {computeBarTileSegments} from "../utils/computeBarTileSegments.ts";
+import type * as d3 from 'd3';
+import {getBarLayerHitArea, type ResolvedBarLayer} from '../core/resolveBarLayers';
+import type {LayerHandlers} from '../hooks/useGaugeInteraction';
+import {useGaugeTheme} from '../theme/useGaugeTheme';
+import {useAnimatedSvgAttribute} from '../hooks/useAnimatedSvgAttribute';
+import {computeBarTileSegments} from '../utils/computeBarTileSegments';
 
 interface BarLayerProps {
     layer: ResolvedBarLayer;
@@ -19,87 +20,90 @@ interface BarLayerProps {
     handlers: LayerHandlers;
 }
 
-const SolidBarLayer : React.FC<BarLayerProps> = ({
-    layer,
-    hoveredLayerId,
-    hoverDimming,
-    animate,
-    animationDurationMs,
-    getLayerOpacity,
-    handlers
-}) =>{
-    const theme = useGaugeTheme()
+const SolidBarLayer: React.FC<BarLayerProps> = ({
+                                                    layer,
+                                                    hoveredLayerId,
+                                                    hoverDimming,
+                                                    animate,
+                                                    animationDurationMs,
+                                                    getLayerOpacity,
+                                                    handlers,
+                                                }) => {
+    const theme = useGaugeTheme();
     const rectRef = useRef<SVGRectElement>(null);
-    const isHovered = hoveredLayerId === hoveredLayerId;
-    const solidRect = layer.solidRect
-    const animatedAttribute = layer.orientation === 'horizontal' ? 'width' : 'height';
-    const animatedValue = layer.orientation === 'horizontal' ? solidRect?.width : solidRect?.height;
+    const isHovered = hoveredLayerId === layer.id;
+    const solidRect = layer.solidRect;
+    const sizeAttribute = layer.orientation === 'horizontal' ? 'width' : 'height';
+    const positionAttribute = layer.orientation === 'horizontal' ? 'x' : 'y';
+    const sizeValue = layer.orientation === 'horizontal' ? solidRect?.width : solidRect?.height;
+    const positionValue = layer.orientation === 'horizontal' ? solidRect?.x : solidRect?.y;
 
-    useAnimatedSvgAttribute(rectRef, animatedAttribute, animatedValue ?? null, animate, animationDurationMs)
+    useAnimatedSvgAttribute(rectRef, sizeAttribute, sizeValue ?? null, animate, animationDurationMs);
+    useAnimatedSvgAttribute(rectRef, positionAttribute, positionValue ?? null, animate, animationDurationMs);
 
-    if(!solidRect) {
-        return null
+    if (!solidRect) {
+        return null;
     }
 
     const sharedStroke = {
-        stroke : theme.stroke.color,
-        strokeWidth : theme.stroke.thin
-    }
+        stroke: theme.stroke.color,
+        strokeWidth: theme.stroke.thin,
+    };
 
     return (
         <>
-        <rect
-            ref={rectRef}
-            x={solidRect.x}
-            y={solidRect.y}
-            width={solidRect.width}
-            height={solidRect.height}
-            rx={solidRect.rx}
-            fill={layer.color}
-            opacity={getLayerOpacity(layer.id)}
-            style={animate ? {transition: `opacity ${animatedValue}ms ease`} : undefined}
-            {...sharedStroke}
-            onMouseEnter={layer.hoverable ? handlers.onMouseEnter : undefined}
-            onMouseLeave={layer.hoverable ? handlers.onMouseLeave : undefined}
-            onMouseMove={layer.hoverable ? handlers.onMouseMove : undefined}
+            <rect
+                ref={rectRef}
+                x={solidRect.x}
+                y={solidRect.y}
+                width={solidRect.width}
+                height={solidRect.height}
+                rx={solidRect.rx}
+                fill={layer.color}
+                opacity={getLayerOpacity(layer.id)}
+                style={animate ? {transition: `opacity ${animationDurationMs}ms ease`} : undefined}
+                {...sharedStroke}
+                onMouseEnter={layer.hoverable ? handlers.onMouseEnter : undefined}
+                onMouseLeave={layer.hoverable ? handlers.onMouseLeave : undefined}
+                onMouseMove={layer.hoverable ? handlers.onMouseMove : undefined}
             />
-            {isHovered && hoverDimming && layer.hoverSolidRect &&(
+            {isHovered && hoverDimming && layer.hoverSolidRect && (
                 <rect
-                    x = {layer.hoverSolidRect.x}
-                    y = {layer.hoverSolidRect.y}
-                    width = {layer.hoverSolidRect.width}
-                    height = {layer.hoverSolidRect.height}
-                    rx = {layer.hoverSolidRect.rx}
+                    x={layer.hoverSolidRect.x}
+                    y={layer.hoverSolidRect.y}
+                    width={layer.hoverSolidRect.width}
+                    height={layer.hoverSolidRect.height}
+                    rx={layer.hoverSolidRect.rx}
                     fill={layer.color}
                     opacity={theme.interaction.activeOpacity}
                     style={{pointerEvents: 'none'}}
                     {...sharedStroke}
-                    />
+                />
             )}
         </>
-    )
-}
+    );
+};
 
-const SegmentedBarLayer: React.FC<BarLayerProps> =({
-    layer,
-    trackLength,
-    scaleMax,
-    scaleFactor,
-    colorScale,
-    hoveredLayerId,
-    hoverDimming,
-    animate,
-    animationDurationMs,
-    getLayerOpacity,
-    handlers
-                                                   })=>{
-    const theme = useGaugeTheme()
-    const isHovered = hoveredLayerId === hoveredLayerId;
-    const hitArea = getBarLayerHitArea(layer, trackLength)
+const SegmentedBarLayer: React.FC<BarLayerProps> = ({
+                                                        layer,
+                                                        trackLength,
+                                                        scaleMax,
+                                                        scaleFactor,
+                                                        colorScale,
+                                                        hoveredLayerId,
+                                                        hoverDimming,
+                                                        animate,
+                                                        animationDurationMs,
+                                                        getLayerOpacity,
+                                                        handlers,
+                                                    }) => {
+    const theme = useGaugeTheme();
+    const isHovered = hoveredLayerId === layer.id;
+    const hitArea = getBarLayerHitArea(layer, trackLength);
 
-    const segments = useMemo(()=>{
-        if(!isHovered || !hoverDimming){
-            return layer.segments
+    const segments = useMemo(() => {
+        if (!isHovered || !hoverDimming) {
+            return layer.segments;
         }
 
         return computeBarTileSegments({
@@ -117,15 +121,15 @@ const SegmentedBarLayer: React.FC<BarLayerProps> =({
             colorScale,
             config: {
                 ...layer.segmentedStyle,
-                cornerRadius: layer.barConfig.cornerRadius
-            }
-            , theme
-        })
-    }, [colorScale, hoverDimming, isHovered, layer, scaleFactor, scaleMax, theme])
+                cornerRadius: layer.barConfig.cornerRadius,
+            },
+            theme,
+        });
+    }, [colorScale, hoverDimming, isHovered, layer, scaleFactor, scaleMax, theme]);
 
     return (
         <>
-            {segments.map((segment)=>(
+            {segments.map((segment) => (
                 <g key={segment.index}>
                     {segment.backgroundRect && (
                         <rect
@@ -160,23 +164,24 @@ const SegmentedBarLayer: React.FC<BarLayerProps> =({
             ))}
             {layer.hoverable && (
                 <rect
-                x={hitArea.x}
-                y={hitArea.y}
-                width={hitArea.width}
-                height={hitArea.height}
-                fill={'transparent'}
-                onMouseEnter={handlers.onMouseEnter}
-                onMouseLeave={handlers.onMouseLeave}
-                onMouseMove={handlers.onMouseMove}
+                    x={hitArea.x}
+                    y={hitArea.y}
+                    width={hitArea.width}
+                    height={hitArea.height}
+                    fill="transparent"
+                    onMouseEnter={handlers.onMouseEnter}
+                    onMouseLeave={handlers.onMouseLeave}
+                    onMouseMove={handlers.onMouseMove}
                 />
             )}
         </>
-    )
-}
+    );
+};
 
-export function BarLayer(props:BarLayerProps) {
-    if(props.layer.render === 'segmented'){
-        return <SegmentedBarLayer {...props} />
+export function BarLayer(props: BarLayerProps) {
+    if (props.layer.render === 'segmented') {
+        return <SegmentedBarLayer {...props} />;
     }
-    return <SolidBarLayer {...props} />
-}
+    return <SolidBarLayer {...props} />;
+};
+

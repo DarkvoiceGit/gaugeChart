@@ -34,6 +34,34 @@ export interface ComputeBarTileSegmentsOptions {
     theme: GaugeTheme;
 }
 
+function buildForegroundRect(
+    tileStart: number,
+    tileEnd: number,
+    fillLength: number,
+    foregroundInner: number,
+    foregroundOuter: number,
+    orientation: BarOrientation,
+    cornerRadius: number,
+): BarRect {
+    if (orientation === 'horizontal') {
+        return {
+            x: tileStart,
+            y: foregroundInner,
+            width: fillLength,
+            height: foregroundOuter - foregroundInner,
+            rx: cornerRadius,
+        };
+    }
+
+    return {
+        x: foregroundInner,
+        y: tileEnd - fillLength,
+        width: foregroundOuter - foregroundInner,
+        height: fillLength,
+        rx: cornerRadius,
+    };
+}
+
 export function computeBarTileSegments(options: ComputeBarTileSegmentsOptions): BarTileSegmentRenderData[] {
     const {
         tilePositions,
@@ -97,21 +125,15 @@ export function computeBarTileSegments(options: ComputeBarTileSegmentsOptions): 
             };
 
         const foregroundRect = fillLength > 0
-            ? (orientation === 'horizontal'
-                ? {
-                    x: tileStart,
-                    y: foregroundInner,
-                    width: fillLength,
-                    height: foregroundOuter - foregroundInner,
-                    rx: options.config.cornerRadius,
-                }
-                : {
-                    x: foregroundInner,
-                    y: tileStart,
-                    width: foregroundOuter - foregroundInner,
-                    height: fillLength,
-                    rx: options.config.cornerRadius,
-                })
+            ? buildForegroundRect(
+                tileStart,
+                tileEnd,
+                fillLength,
+                foregroundInner,
+                foregroundOuter,
+                orientation,
+                options.config.cornerRadius,
+            )
             : null;
 
         segments.push({
@@ -133,3 +155,4 @@ export function computeBarTileSegments(options: ComputeBarTileSegmentsOptions): 
 
     return segments;
 }
+ 

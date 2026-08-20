@@ -1,4 +1,4 @@
-import {useMemo, useRef} from "react";
+import {useMemo, useRef} from 'react';
 import type {BarChartProps} from './types';
 import {computeBarLayoutFromSize} from './utils/computeBarLayout';
 import {resolveBarLayers} from './core/resolveBarLayers';
@@ -6,6 +6,8 @@ import {resolveChartSettings} from './core/resolveChartSettings';
 import {useGaugeInteraction} from './hooks/useGaugeInteraction';
 import {BarLayer} from './components/BarLayer';
 import {BarTickLabels} from './components/BarTickLabels';
+import BarDefs from './components/BarDefs';
+import {buildBarGradientLayers} from './core/resolveBarLayers';
 import {mergeTheme} from './theme/mergeTheme';
 import {GaugeThemeProvider} from './theme/GaugeThemeContext';
 import GaugeTooltip from './GaugeTooltip';
@@ -45,6 +47,11 @@ export function BarChart(props: BarChartProps) {
         ],
     );
 
+    const gradientLayers = useMemo(
+        () => buildBarGradientLayers(resolved.layers, resolved.gradientLayerIds),
+        [resolved.gradientLayerIds, resolved.layers],
+    );
+
     const {hoveredLayerId, tooltip, getLayerHandlers, getLayerOpacity} = useGaugeInteraction({
         layers: resolved.layers,
         formatters: props.formatters,
@@ -82,6 +89,14 @@ export function BarChart(props: BarChartProps) {
                     viewBox={layout.viewBox}
                     preserveAspectRatio="xMidYMid meet"
                 >
+                    <defs>
+                        <BarDefs
+                            gradientLayers={gradientLayers}
+                            scaleMax={settings.scaleMax}
+                            colorScale={resolved.colorScale}
+                        />
+                    </defs>
+
                     <g transform={`translate(${layout.originX}, ${layout.originY})`}>
                         {orderedLayers.map((layer) => (
                             <BarLayer
@@ -129,3 +144,5 @@ export function BarChart(props: BarChartProps) {
         </GaugeThemeProvider>
     );
 }
+
+export default BarChart;

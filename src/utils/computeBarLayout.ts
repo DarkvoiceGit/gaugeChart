@@ -1,5 +1,5 @@
-import {GaugeTheme} from '../types/theme.types';
-import {BarOrientation, GaugeSize} from '../types';
+import type {GaugeTheme} from '../types/theme.types';
+import type {BarOrientation, GaugeSize} from '../types';
 import {GAUGE_SIZE_PRESETS} from './constants';
 
 export interface BarLayout {
@@ -7,6 +7,7 @@ export interface BarLayout {
     logicalHeight: number;
     trackLength: number;
     crossAxisLength: number;
+    crossAxisOffset: number;
     scaleFactor: number;
     originX: number;
     originY: number;
@@ -22,26 +23,29 @@ export function computeBarLayout(
     width: number,
     height: number,
     orientation: BarOrientation,
-    theme: GaugeTheme
+    theme: GaugeTheme,
 ): BarLayout {
     const scaleFactor = width / theme.layout.referenceWidth;
-    const tickLabelSpace = 40 * scaleFactor; // Placeholder value for tickLabelSpace
+    const tickLabelSpace = Math.max(32, 40 * scaleFactor);
+    const trackPadding = theme.bar.trackPadding;
 
     let trackLength: number;
     let crossAxisLength: number;
+    let crossAxisOffset = 0;
     let originX = 0;
     let originY = 0;
 
     if (orientation === 'horizontal') {
-        trackLength = width - theme.bar.trackPadding * 2;
-        crossAxisLength = height;
-        originX = theme.bar.trackPadding;
+        trackLength = width - trackPadding * 2;
+        crossAxisLength = height - tickLabelSpace;
+        originX = trackPadding;
         originY = 0;
     } else {
-        trackLength = height - theme.bar.trackPadding * 2;
-        crossAxisLength = width;
-        originX = 0;
-        originY = theme.bar.trackPadding;
+        trackLength = height - trackPadding * 2;
+        crossAxisLength = width - tickLabelSpace - trackPadding;
+        crossAxisOffset = tickLabelSpace;
+        originX = trackPadding;
+        originY = trackPadding;
     }
 
     return {
@@ -49,6 +53,7 @@ export function computeBarLayout(
         logicalHeight: height,
         trackLength,
         crossAxisLength,
+        crossAxisOffset,
         scaleFactor,
         originX,
         originY,
@@ -64,9 +69,10 @@ export function computeBarLayout(
 export function computeBarLayoutFromSize(
     size: GaugeSize = 'default',
     orientation: BarOrientation,
-    theme: GaugeTheme
+    theme: GaugeTheme,
 ): BarLayout {
-    const presets = GAUGE_SIZE_PRESETS;
-    const preset = size === 'default' ? presets.m : (presets[size as keyof typeof presets] ?? presets.m);
+    const preset = size === 'default'
+        ? GAUGE_SIZE_PRESETS.m
+        : (GAUGE_SIZE_PRESETS[size as keyof typeof GAUGE_SIZE_PRESETS] ?? GAUGE_SIZE_PRESETS.m);
     return computeBarLayout(preset.width, preset.height, orientation, theme);
 }
