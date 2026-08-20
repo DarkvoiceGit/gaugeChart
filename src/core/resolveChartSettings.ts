@@ -1,6 +1,14 @@
-import type {GaugeChartProps} from '../types';
+import {GaugeChartProps, GaugeScale, GaugeInteractionConfig, GaugeTicksConfig, GaugeAnimationConfig, GaugeHubConfig} from '../types';
 import type {GaugeTheme} from '../types/theme.types';
 import {assertPositiveThreshold, assertValidLayerRadius, assertValidThresholdPair} from '../utils/gaugeGuards';
+
+export interface ChartSettingsInput {
+    scale: GaugeScale;
+    interaction?: GaugeInteractionConfig;
+    ticks?: GaugeTicksConfig;
+    animation?: GaugeAnimationConfig;
+    hub?: GaugeHubConfig;
+}
 
 export interface ResolvedChartSettings {
     hoverDimming: boolean;
@@ -24,7 +32,7 @@ export interface ResolvedChartSettings {
 }
 
 export function resolveChartSettings(
-    props: GaugeChartProps,
+    props: ChartSettingsInput,
     theme: GaugeTheme,
 ): ResolvedChartSettings {
     const scaleMax = assertPositiveThreshold(props.scale.max);

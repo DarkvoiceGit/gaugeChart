@@ -150,3 +150,47 @@ export interface GaugeChartProps {
     theme?: DeepPartial<GaugeTheme>;
     debugMode?: boolean;
 }
+
+export type BarOrientation = 'horizontal' | 'vertical';
+
+export interface BarConfig {
+    cornerRadius?: number;
+    gap?: number;
+    pad?: number;
+}
+
+export interface BarLayer {
+    id: string;
+    value: number;
+    track: number;
+    thickness: number;
+    grow?: LayerRadiusGrow;
+    render: LayerRenderMode;
+    segments?: number;
+    valueMode?: LayerValueMode;
+    baseLayerId?: string;
+    offsetValue?: number;
+    color: string;
+    fillStyle?: TileFillStyle;
+    backgroundColor?: string;
+    borderColor?: string;
+    borderThickness?: number;
+    gradient?: LayerGradientConfig;
+    bar?: Partial<BarConfig>;
+    tooltip?: LayerTooltipConfig;
+    hoverable?: boolean;
+    zIndex?: number;
+}
+
+export interface BarChartProps {
+    orientation?: BarOrientation;
+    size?: GaugeSize;
+    scale: GaugeScale;
+    layers: BarLayer[];
+    ticks?: GaugeTicksConfig;
+    interaction?: GaugeInteractionConfig;
+    formatters?: GaugeFormatters;
+    animation?: GaugeAnimationConfig;
+    theme?: DeepPartial<GaugeTheme>;
+    debugMode?: boolean;
+}

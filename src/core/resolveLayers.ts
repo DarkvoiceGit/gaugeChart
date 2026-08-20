@@ -5,9 +5,14 @@ import {computeTileSegments, TileSegmentRenderData} from '../utils/computeTileSe
 import type {PointerMarkerSpec} from '../components/GaugePointerMarkers';
 import {buildArcPath, calculatePointer, normalize, valueToAngle} from '../utils/gaugeCalculations';
 import {resolveTileCount} from '../utils/gaugeGuards';
-import {GradientType, TileFillStyle} from '../utils/constants';
+import {GradientType} from '../utils/constants';
 import {buildTileAngles, resolveLayerRadii} from "./gaugeGeometry";
 import {computeTickLabelValues} from "../utils/computeTickLabelValues";
+import {resolveLayerValues, topologicalSortLayers} from './resolveLayerValues';
+import {resolveSegmentedStyle, resolveLayerColor} from './resolveSegmentedStyle';
+import type { SegmentedLayerStyle } from './resolveSegmentedStyle';
+
+export type { SegmentedLayerStyle } from './resolveSegmentedStyle';
 
 export interface ResolvedPointer {
     layerId: string;
@@ -19,19 +24,7 @@ export interface ResolvedPointer {
     style: 'arrow' | 'needle'
 }
 
-export interface SegmentedLayerStyle {
-    isTileColorGradient: boolean;
-    gradientType: string;
-    thresholdYellowNormalized: number;
-    thresholdRedNormalized: number;
-    colorTileThresholdDefault: string;
-    colorTileThresholdYellow: string;
-    colorTileThresholdRed: string;
-    colorTileBg: string;
-    fillStyle: TileFillStyle;
-    borderColor: string;
-    borderThickness: number;
-}
+// (Removed SegmentedLayerStyle interface)
 
 export interface ResolvedLayer {
     id: string;
@@ -71,43 +64,9 @@ export interface ResolvedGaugeLayers {
     pointers: ResolvedPointer[];
 }
 
-interface LayerAngleContext {
-    id: string;
-    normalizedValue: number;
-    effectiveNormalizedValue: number;
-    endAngle: number;
-}
+// (Removed LayerAngleContext)
 
-function resolveLayerColor(layer: GaugeLayer): string {
-    return layer.color;
-}
-
-function topologicalSortLayers(layers: GaugeLayer[]): GaugeLayer[] {
-    const sorted: GaugeLayer[] = [];
-    const visited = new Set<string>();
-    const visiting = new Set<string>();
-
-    function visit(layer: GaugeLayer) {
-        if (visited.has(layer.id)) return;
-        if (visiting.has(layer.id)) throw new Error(`Cyclic dependency detected for layer ${layer.id}`);
-
-        visiting.add(layer.id);
-        if (layer.baseLayerId) {
-            const baseLayer = layers.find(l => l.id === layer.baseLayerId);
-            if (baseLayer) {
-                visit(baseLayer);
-            }
-        }
-        visiting.delete(layer.id);
-        visited.add(layer.id);
-        sorted.push(layer);
-    }
-
-    for (const layer of layers) {
-        visit(layer);
-    }
-    return sorted;
-}
+// (Removed local topologicalSortLayers, resolveLayerColor, resolveSegmentedStyle)
 
 function resolveArcConfig(layer: GaugeLayer, theme: GaugeTheme): ArcConfig {
     const defaults = layer.render === 'segmented'
@@ -170,30 +129,7 @@ function buildSolidPaths(
     return {solidPath, hoverSolidPath};
 }
 
-function resolveSegmentedStyle(
-    layer: GaugeLayer,
-    scale: GaugeScale,
-    theme: GaugeTheme,
-    thresholdYellowNormalized: number,
-): SegmentedLayerStyle {
-    const zoneDefault = scale.zones?.[0]?.color ?? theme.colors.tileDefault;
-    const zoneWarning = scale.zones?.[1]?.color ?? theme.colors.tileYellow;
-    const zoneCritical = scale.zones?.[scale.zones.length - 1]?.color ?? theme.colors.tileRed;
-
-    return {
-        isTileColorGradient: layer.gradient?.enabled ?? false,
-        gradientType: layer.gradient?.type ?? GradientType.TILE,
-        thresholdYellowNormalized,
-        thresholdRedNormalized: theme.scale.normalizedMax,
-        colorTileThresholdDefault: zoneDefault,
-        colorTileThresholdYellow: zoneWarning,
-        colorTileThresholdRed: zoneCritical,
-        colorTileBg: layer.backgroundColor ?? theme.colors.tileBg,
-        fillStyle: layer.fillStyle ?? TileFillStyle.FILLED,
-        borderColor: layer.borderColor ?? theme.colors.tileBorder,
-        borderThickness: layer.borderThickness ?? theme.tiles.defaultBorderThickness,
-    };
-}
+// (Removed resolveSegmentedStyle)
 
 function resolvePointer(
     layer: GaugeLayer,
@@ -287,19 +223,19 @@ export function resolveLayers(
             scale.zones?.[0]?.color ?? theme.colors.tileDefault,
             scale.zones?.[1]?.color ?? theme.colors.tileYellow,
             scale.zones?.[scale.zones.length - 1]?.color ?? theme.colors.tileRed,
-        ])
+        ]);
 
     const sortedByDependency = topologicalSortLayers(layers);
+    const valueContexts = resolveLayerValues(layers, max);
 
-    const angleContexts = new Map<string, LayerAngleContext>();
     const resolvedLayers: ResolvedLayer[] = [];
     const tileAnglesByLayerId: Record<string, number[]> = {};
     const gradientLayerIds: string[] = [];
     const pointers: ResolvedPointer[] = [];
 
     for (const layer of sortedByDependency) {
-        const rawNormalizedValue = normalize(layer.value, max);
-        const baseLayerContext = layer.baseLayerId ? angleContexts.get(layer.baseLayerId) : undefined;
+        const context = valueContexts.get(layer.id)!;
+        const rawNormalizedValue = context.rawNormalized;
 
         const {innerRatio, outerRatio} = resolveLayerRadii(layer)
         const innerRadius = baseRadius * innerRatio;
@@ -309,21 +245,7 @@ export function resolveLayers(
             ? resolveTileCount(layer.segments, theme.tiles.minCount)
             : 0;
 
-        let effectiveStartValueNormalized = 0;
-        if (layer.valueMode === 'cumulative' && baseLayerContext) {
-            effectiveStartValueNormalized = baseLayerContext.effectiveNormalizedValue;
-        } else if (layer.valueMode === 'offset') {
-            effectiveStartValueNormalized = normalize(layer.offsetValue ?? 0, max);
-        }
-
-        const {startAngle, endAngle, effectiveEndValue} = resolveLayerAngles(rawNormalizedValue, effectiveStartValueNormalized, theme.geometry);
-
-        angleContexts.set(layer.id, {
-            id: layer.id,
-            normalizedValue: rawNormalizedValue,
-            effectiveNormalizedValue: effectiveEndValue,
-            endAngle: endAngle,
-        });
+        const {startAngle, endAngle, effectiveEndValue} = resolveLayerAngles(rawNormalizedValue, context.effectiveStartNormalized, theme.geometry);
 
         const tileAngles = layer.render === 'segmented'
             ? buildTileAngles(theme.geometry, segmentCount)

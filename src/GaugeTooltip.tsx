@@ -2,7 +2,7 @@ import {TooltipItem} from "./types";
 import {GaugeThemeTooltip, RgbaColor} from "./types/theme.types";
 import {DEFAULT_THEME} from "./theme/defaultTheme";
 import {useLayoutEffect, useRef, useState} from "react";
-import {clampTooltipPosition} from "./utils/clampTooltipPosition.ts";
+import {clampTooltipPosition} from "./utils/clampTooltipPosition";
 
 interface GaugeTooltipProps {
     text: TooltipItem[];
