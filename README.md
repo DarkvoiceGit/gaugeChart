@@ -1,9 +1,9 @@
 # GaugeChart
 
-A highly customizable gauge chart component for React applications, built with D3.js.
+Highly customizable **gauge and bar chart components** for React applications, built with D3.js. Both charts share the same scale, layer, interaction, formatter, animation, and theme concepts.
 
 
-## Demo & Packager
+## Demo & Package
 
 
 | Desc                                                             | Url                                                                                                          |
@@ -14,16 +14,16 @@ A highly customizable gauge chart component for React applications, built with D
 
 ## Features
 
-- Generic layer-based gauge API
+- Generic layer-based GaugeChart and BarChart APIs
 - Solid and segmented layers
 - Absolute, cumulative, and offset value modes
 - Optional pointers per layer
-- Independent inner and outer radius per layer
+- Independent gauge radii and bar tracks per layer
 - Layer ordering with `zIndex`
 - Hover interaction and tooltips
 - Configurable scale and optional color zones
 - Configurable ticks and value formatters
-- Configurable center hub
+- Configurable gauge center hub
 - Animation support
 - Theme overrides
 - React 16.8 through React 19 support
@@ -43,7 +43,7 @@ npm install ./your-package-file.tgz
 Then import the component by its package name:
 
 ```tsx
-import { GaugeChart } from '@darkvoice/gauge-chart';
+import { GaugeChart, BarChart } from '@darkvoice/gauge-chart';
 ```
 
 ## Requirements
@@ -656,7 +656,10 @@ The current public type is:
 
 ```ts
 interface LayerTooltipConfig {
+  enabled?: boolean;
   label?: string;
+  mode?: 'self' | 'all' | 'none';
+  color?: string;
 }
 ```
 
@@ -686,6 +689,7 @@ interaction={{
 interface GaugeTicksConfig {
   enabled?: boolean;
   step?: number;
+  hideCrowdedEndTick?: boolean | number;
   fontSize?: string;
   labelColor?: string;
   tickColor?: string;
@@ -705,6 +709,71 @@ ticks={{
   radiusScale: 1.12,
 }}
 ```
+
+## `BarChart`
+
+The package also exports `BarChart`. It uses the same `scale`, layer value modes, render modes, ticks, interactions, formatters, animation, theme overrides, and size presets as `GaugeChart`, but lays layers out on linear tracks.
+
+```ts
+interface BarChartProps {
+  orientation?: 'horizontal' | 'vertical';
+  size?: GaugeSize;
+  scale: GaugeScale;
+  layers: BarLayer[];
+  ticks?: GaugeTicksConfig;
+  interaction?: GaugeInteractionConfig;
+  formatters?: GaugeFormatters;
+  animation?: GaugeAnimationConfig;
+  theme?: DeepPartial<GaugeTheme>;
+  debugMode?: boolean;
+}
+
+interface BarLayer extends BaseLayer {
+  track: number;
+  bar?: {
+    cornerRadius?: number;
+    gap?: number;
+    pad?: number;
+  };
+}
+```
+
+`track` is a ratio on the chart's cross axis. Together with `thickness` and `grow`, it determines the layer's occupied band. As with gauge layers, each bar layer needs a unique `id`, a positive `thickness`, a `render` mode, a `color`, and a value.
+
+### Basic Bar Example
+
+```tsx
+import { BarChart } from '@darkvoice/gauge-chart';
+
+export function CapacityBar() {
+  return (
+    <BarChart
+      orientation="horizontal"
+      size="m"
+      scale={{ min: 0, max: 100 }}
+      layers={[
+        {
+          id: 'capacity',
+          value: 72,
+          track: 0.7,
+          thickness: 0.18,
+          grow: 'inward',
+          render: 'solid',
+          color: '#35ff00',
+          backgroundColor: '#dddddd',
+          hoverable: true,
+          tooltip: { label: 'Capacity' },
+        },
+      ]}
+      ticks={{ enabled: true, step: 20 }}
+      interaction={{ tooltips: true, hoverDimming: true }}
+      animation={{ enabled: true, durationMs: 300 }}
+    />
+  );
+}
+```
+
+For segmented bars, set `render: 'segmented'` and provide `segments`. The optional `bar.gap`, `bar.pad`, and `bar.cornerRadius` settings customize tile spacing, track padding, and corner rounding.
 
 ## Formatters
 
@@ -986,7 +1055,7 @@ A former tile arc becomes a segmented layer:
 
 ## TypeScript
 
-The package ships TypeScript declarations. The primary exported types include the layer, scale, interaction, tick, formatter, animation, geometry, and theme configuration types used by `GaugeChart`.
+The package ships TypeScript declarations. The package ships declarations for both chart components. Primary exports include `GaugeChartProps`, `GaugeLayer`, `BarChartProps`, `BarLayer`, `BarOrientation`, `BarConfig`, and the shared scale, interaction, tick, formatter, animation, geometry, and theme types.
 
 Example:
 
@@ -1027,6 +1096,7 @@ Use this during development only when you need the package's debug behavior.
 
 - `scale.max` is required.
 - Every layer needs a unique `id`.
+- Gauge layers use `radius`; bar layers use `track`.
 - Every layer requires `value`, `radius`, `thickness`, `render`, and `color`.
 - Use `hoverable: true` when a layer should participate in hover interaction.
 - `segments` is relevant for segmented layers.
@@ -1041,7 +1111,6 @@ This project is built with:
 - [React](https://reactjs.org/) - UI library
 - [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
 - [D3.js](https://d3js.org/) - Data visualization library
-- [Material-UI](https://mui.com/) - UI component library (for the demo)
 - [Vite](https://vitejs.dev/) - Build tool and development server
 - [Vitest](https://vitest.dev/) - Testing framework
 
