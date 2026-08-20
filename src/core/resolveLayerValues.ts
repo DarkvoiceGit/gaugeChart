@@ -1,15 +1,7 @@
 import * as d3 from 'd3';
-import {GaugeLayer, GaugeScale} from '../types';
+import {BaseLayer, GaugeScale} from '../types';
 import {normalize} from '../utils/gaugeCalculations';
 import {GaugeTheme} from '../types/theme.types';
-
-export interface GenericLayer {
-    id: string;
-    value: number;
-    valueMode?: 'absolute' | 'cumulative' | 'offset';
-    baseLayerId?: string;
-    offsetValue?: number;
-}
 
 export interface ResolvedLayerValueContext {
     id: string;
@@ -19,12 +11,12 @@ export interface ResolvedLayerValueContext {
     effectiveEndNormalized: number;
 }
 
-export function topologicalSortLayers(layers: GaugeLayer[]): GaugeLayer[] {
-    const sorted: GaugeLayer[] = [];
+export function topologicalSortLayers(layers: BaseLayer[]): BaseLayer[] {
+    const sorted: BaseLayer[] = [];
     const visited = new Set<string>();
     const visiting = new Set<string>();
 
-    function visit(layer: GaugeLayer) {
+    function visit(layer: BaseLayer) {
         if (visited.has(layer.id)) return;
         if (visiting.has(layer.id)) throw new Error(`Cyclic dependency detected for layer ${layer.id}`);
 
@@ -47,7 +39,7 @@ export function topologicalSortLayers(layers: GaugeLayer[]): GaugeLayer[] {
 }
 
 export function resolveLayerValues(
-    layers: GaugeLayer[],
+    layers: BaseLayer[],
     scaleMax: number
 ): Map<string, ResolvedLayerValueContext> {
     const sorted = topologicalSortLayers(layers);

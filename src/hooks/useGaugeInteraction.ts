@@ -1,6 +1,6 @@
 import type {MouseEvent as ReactMouseEvent} from 'react';
 import {useCallback, useState} from 'react';
-import type {ResolvedLayer} from '../core/resolveLayers';
+import type {ResolvedInteractiveLayer} from '../core/resolvedLayerBase';
 import type {GaugeFormatters, TooltipItem, TooltipState} from '../types';
 import type {GaugeThemeInteraction} from '../types/theme.types';
 import {
@@ -22,7 +22,7 @@ export interface GaugeInteractionState {
 }
 
 export interface UseGaugeInteractionOptions {
-    layers: ResolvedLayer[];
+    layers: ResolvedInteractiveLayer[];
     formatters?: GaugeFormatters;
     tooltipMode: 'layer' | 'all';
     tooltipsEnabled: boolean;

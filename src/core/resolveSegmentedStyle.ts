@@ -1,4 +1,4 @@
-import {GaugeLayer, GaugeScale} from '../types';
+import {BaseLayer, GaugeScale} from '../types';
 import {GaugeTheme} from '../types/theme.types';
 import {GradientType, TileFillStyle} from '../utils/constants';
 
@@ -16,12 +16,12 @@ export interface SegmentedLayerStyle {
     borderThickness: number;
 }
 
-export function resolveLayerColor(layer: GaugeLayer): string {
+export function resolveLayerColor(layer: BaseLayer): string {
     return layer.color;
 }
 
 export function resolveSegmentedStyle(
-    layer: GaugeLayer,
+    layer: BaseLayer,
     scale: GaugeScale,
     theme: GaugeTheme,
     thresholdYellowNormalized: number,

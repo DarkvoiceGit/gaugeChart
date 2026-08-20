@@ -54,10 +54,9 @@ export interface LayerGradientConfig {
     type?: GradientType | string;
 }
 
-export interface GaugeLayer {
+export interface BaseLayer {
     id: string;
     value: number;
-    radius: number;
     thickness: number;
     grow?: LayerRadiusGrow;
     render: LayerRenderMode;
@@ -70,12 +69,16 @@ export interface GaugeLayer {
     backgroundColor?: string;
     borderColor?: string;
     borderThickness?: number;
-    gradient?: LayerGradientConfig,
+    gradient?: LayerGradientConfig;
+    tooltip?: LayerTooltipConfig;
+    hoverable?: boolean;
+    zIndex?: number;
+}
+
+export interface GaugeLayer extends BaseLayer {
+    radius: number;
     arc?: Partial<ArcConfig>,
     pointer?: LayerPointerConfig,
-    tooltip?: LayerTooltipConfig,
-    hoverable?: boolean,
-    zIndex?: number,
 }
 
 export interface GaugeZone {
@@ -159,27 +162,17 @@ export interface BarConfig {
     pad?: number;
 }
 
-export interface BarLayer {
-    id: string;
-    value: number;
+export interface BarRect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rx?: number;
+}
+
+export interface BarLayer extends BaseLayer {
     track: number;
-    thickness: number;
-    grow?: LayerRadiusGrow;
-    render: LayerRenderMode;
-    segments?: number;
-    valueMode?: LayerValueMode;
-    baseLayerId?: string;
-    offsetValue?: number;
-    color: string;
-    fillStyle?: TileFillStyle;
-    backgroundColor?: string;
-    borderColor?: string;
-    borderThickness?: number;
-    gradient?: LayerGradientConfig;
     bar?: Partial<BarConfig>;
-    tooltip?: LayerTooltipConfig;
-    hoverable?: boolean;
-    zIndex?: number;
 }
 
 export interface BarChartProps {

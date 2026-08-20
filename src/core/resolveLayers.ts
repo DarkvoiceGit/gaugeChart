@@ -24,22 +24,13 @@ export interface ResolvedPointer {
     style: 'arrow' | 'needle'
 }
 
+import {ResolvedInteractiveLayer} from './resolvedLayerBase';
 // (Removed SegmentedLayerStyle interface)
 
-export interface ResolvedLayer {
-    id: string;
+export interface ResolvedLayer extends ResolvedInteractiveLayer {
     render: GaugeLayer['render'];
     zIndex: number;
-    hoverable: boolean;
-    tooltip?: {
-        enabled?: boolean;
-        label?: string;
-        mode?: "self" | "all" | "none";
-        color?: string;
-    };
-    rawValue: number;
-    normalizedValue: number;
-    color: string;
+    // id, rawValue, normalizedValue, color, hoverable, tooltip are inherited
     startAngle: number;
     endAngle: number;
     innerRadius: number;
@@ -234,37 +225,38 @@ export function resolveLayers(
     const pointers: ResolvedPointer[] = [];
 
     for (const layer of sortedByDependency) {
+        const gaugeLayer = layer as GaugeLayer;
         const context = valueContexts.get(layer.id)!;
         const rawNormalizedValue = context.rawNormalized;
-
-        const {innerRatio, outerRatio} = resolveLayerRadii(layer)
+        
+        const {innerRatio, outerRatio} = resolveLayerRadii(gaugeLayer)
         const innerRadius = baseRadius * innerRatio;
         const outerRadius = baseRadius * outerRatio;
-        const arcConfig = resolveArcConfig(layer, theme);
-        const segmentCount = layer.render === 'segmented'
-            ? resolveTileCount(layer.segments, theme.tiles.minCount)
+        const arcConfig = resolveArcConfig(gaugeLayer, theme);
+        const segmentCount = gaugeLayer.render === 'segmented'
+            ? resolveTileCount(gaugeLayer.segments, theme.tiles.minCount)
             : 0;
 
         const {startAngle, endAngle, effectiveEndValue} = resolveLayerAngles(rawNormalizedValue, context.effectiveStartNormalized, theme.geometry);
 
-        const tileAngles = layer.render === 'segmented'
+        const tileAngles = gaugeLayer.render === 'segmented'
             ? buildTileAngles(theme.geometry, segmentCount)
             : [];
 
-        if (layer.render === 'segmented') {
-            tileAnglesByLayerId[layer.id] = tileAngles;
-            if (layer.gradient?.enabled && layer.gradient.type !== GradientType.FULL) {
-                gradientLayerIds.push(layer.id);
+        if (gaugeLayer.render === 'segmented') {
+            tileAnglesByLayerId[gaugeLayer.id] = tileAngles;
+            if (gaugeLayer.gradient?.enabled && gaugeLayer.gradient.type !== GradientType.FULL) {
+                gradientLayerIds.push(gaugeLayer.id);
             }
         }
 
-        const solidPaths = layer.render === 'solid'
+        const solidPaths = gaugeLayer.render === 'solid'
             ? buildSolidPaths(innerRadius, outerRadius, startAngle, endAngle, arcConfig, theme)
             : {solidPath: null, hoverSolidPath: null};
 
-        const segmentedStyle = resolveSegmentedStyle(layer, scale, theme, thresholdYellowNormalized);
-        const segments = layer.render === 'segmented' ? resolveLayerSegments(
-            layer,
+        const segmentedStyle = resolveSegmentedStyle(gaugeLayer, scale, theme, thresholdYellowNormalized);
+        const segments = gaugeLayer.render === 'segmented' ? resolveLayerSegments(
+            gaugeLayer,
             segmentedStyle,
             arcConfig,
             tileAngles,
@@ -278,25 +270,25 @@ export function resolveLayers(
             theme
         ) : []
 
-        const pointer = resolvePointer(layer, effectiveEndValue, baseRadius, theme);
+        const pointer = resolvePointer(gaugeLayer, effectiveEndValue, baseRadius, theme);
         if (pointer) {
             pointers.push(pointer);
         }
 
         resolvedLayers.push({
-            id: layer.id,
-            render: layer.render,
-            zIndex: layer.zIndex ?? 0,
-            hoverable: layer.hoverable ?? false,
-            tooltip: layer.tooltip ? {
-                enabled: layer.tooltip.enabled,
-                label: layer.tooltip.label,
-                mode: layer.tooltip.mode,
-                color: layer.tooltip.color
+            id: gaugeLayer.id,
+            render: gaugeLayer.render,
+            zIndex: gaugeLayer.zIndex ?? 0,
+            hoverable: gaugeLayer.hoverable ?? false,
+            tooltip: gaugeLayer.tooltip ? {
+                enabled: gaugeLayer.tooltip.enabled,
+                label: gaugeLayer.tooltip.label,
+                mode: gaugeLayer.tooltip.mode,
+                color: gaugeLayer.tooltip.color
             } : undefined,
-            rawValue: layer.value,
+            rawValue: gaugeLayer.value,
             normalizedValue: rawNormalizedValue,
-            color: resolveLayerColor(layer),
+            color: resolveLayerColor(gaugeLayer),
             startAngle,
             endAngle,
             innerRadius,

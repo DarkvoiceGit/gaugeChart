@@ -1,5 +1,5 @@
 import type {MouseEvent as ReactMouseEvent} from 'react';
-import type {ResolvedLayer} from '../core/resolveLayers';
+import type {ResolvedInteractiveLayer} from '../core/resolvedLayerBase';
 import type {GaugeFormatters, TooltipItem, TooltipState} from '../types';
 import {formatValue} from './gaugeUtils';
 
@@ -12,7 +12,7 @@ function getClientPointerPosition(event: ReactMouseEvent): { x: number, y: numbe
 }
 
 export function buildLayerTooltipContent(options: {
-    layers: ResolvedLayer[];
+    layers: ResolvedInteractiveLayer[];
     hoveredLayerId: string;
     tooltipMode: 'layer' | 'all';
     formatters?: GaugeFormatters;
@@ -25,7 +25,7 @@ export function buildLayerTooltipContent(options: {
 
     const mode = hoveredLayer.tooltip?.mode ?? (options.tooltipMode === 'all' ? 'all' : 'self');
 
-    let visibleLayers: ResolvedLayer[] = [];
+    let visibleLayers: ResolvedInteractiveLayer[] = [];
 
     switch (mode) {
         case 'none':
