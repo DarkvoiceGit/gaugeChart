@@ -1,5 +1,5 @@
-import {GaugeLayer} from "../types.ts";
-import {resolveLayerRadii} from "../core/gaugeGeometry.ts";
+import {GaugeLayer} from "../types";
+import {resolveLayerRadii} from "../core/gaugeGeometry";
 
 const MAX_TILE_COUNT = 500;
 
@@ -74,8 +74,8 @@ export function assertValidGeometry(geometry: {
     }
 }
 
-export function assertValidLayerRadius(layer: GaugeLayer){
-    if (!Number.isFinite(layer.radius)  || layer.radius < 0 || layer.radius > 1) {
+export function assertValidLayerRadius(layer: GaugeLayer) {
+    if (!Number.isFinite(layer.radius) || layer.radius < 0 || layer.radius > 1) {
         throw new RangeError(`layer ${layer.id}: radius must be a finite number between 0 and 1`);
     }
 
@@ -85,15 +85,15 @@ export function assertValidLayerRadius(layer: GaugeLayer){
 
     const {innerRatio, outerRatio} = resolveLayerRadii(layer);
 
-    if(innerRatio < 0 ){
+    if (innerRatio < 0) {
         throw new RangeError(`layer ${layer.id}: resolved inner radius is below 0 (inner=${innerRatio.toFixed(3)}`);
     }
 
-    if(outerRatio > 1 ){
+    if (outerRatio > 1) {
         throw new RangeError(`layer ${layer.id}: resolved outer radius exceeds 1 (inner=${outerRatio.toFixed(3)}`);
     }
 
-    if(innerRatio >= outerRatio ){
+    if (innerRatio >= outerRatio) {
         throw new RangeError(`layer ${layer.id}: resolved inner radius must be less than outer radius`);
     }
 }

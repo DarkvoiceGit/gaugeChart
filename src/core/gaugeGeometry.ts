@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import type {GaugeThemeGeometry} from '../types/theme.types';
-import {GaugeLayer, LayerRadiusGrow} from "../types.ts";
+import {GaugeLayer, LayerRadiusGrow} from "../types";
 
 
 export interface ResolvedLayerRadii {
@@ -12,13 +12,13 @@ export function resolveLayerRadii(layer: Pick<GaugeLayer, 'radius' | 'thickness'
     const grow: LayerRadiusGrow = layer.grow ?? 'inward'
     const {radius, thickness} = layer
 
-    switch (grow){
+    switch (grow) {
         case 'inward':
-            return { innerRatio: radius - thickness, outerRatio: radius}
+            return {innerRatio: radius - thickness, outerRatio: radius}
         case 'outward':
-            return { innerRatio: radius, outerRatio: radius + thickness }
+            return {innerRatio: radius, outerRatio: radius + thickness}
         case 'center':
-        return { innerRatio: radius - thickness / 2, outerRatio: radius + thickness / 2 }
+            return {innerRatio: radius - thickness / 2, outerRatio: radius + thickness / 2}
     }
 }
 

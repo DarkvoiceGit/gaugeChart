@@ -1,7 +1,7 @@
 import GaugePointerMarkers, {PointerMarkerSpec} from "./GaugePointerMarkers";
 import {ResolvedLayer} from "../core/resolveLayers";
 import GaugeGradients from "./GaugeGradients";
-import {GradientType} from "../utils/constants.ts";
+import {GradientType} from "../utils/constants";
 
 interface GaugeDefsProps {
     pointerMarkers: PointerMarkerSpec[];
