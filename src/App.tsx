@@ -1,1890 +1,697 @@
 import './App.css';
 
 import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
     Box,
-    Checkbox,
-    Divider,
-    FilledInput,
+    Button,
+    Chip,
     FormControl,
+    FormControlLabel,
     InputLabel,
     MenuItem,
     Paper,
     Select,
+    Slider,
     Stack,
+    Switch,
     Tab,
     Tabs,
+    TextField,
     Tooltip,
     Typography,
-    useMediaQuery,
-    useTheme,
 } from '@mui/material';
-
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-
-import {useState} from 'react';
-
-import {TileFillStyle} from './utils/constants';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded';
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import {useMemo, useState} from 'react';
 import {GaugeChart} from '@darkvoice/gauge-chart';
 
+type GradientType = 'full' | 'tile';
+type TooltipMode = 'all' | 'self';
+type Unit = 'none' | 'km' | 'mile' | 'celsius' | 'fahrenheit' | 'day';
+type Formatter =
+    | 'none'
+    | 'kmToMile'
+    | 'mileToKm'
+    | 'celsiusToFahrenheit'
+    | 'fahrenheitToCelsius'
+    | 'dayHourMinute'
+    | 'dayHour';
+
+type PlaygroundConfig = {
+    primaryValue: number;
+    secondaryValue: number;
+    maxValue: number;
+    tiles: number;
+    tileInnerRadius: number;
+    tileOuterRadius: number;
+    barInnerRadius: number;
+    barOuterRadius: number;
+    tileColor: string;
+    tileBackground: string;
+    primaryColor: string;
+    secondaryColor: string;
+    primaryPointerColor: string;
+    secondaryPointerColor: string;
+    hubColor: string;
+    gradientEnabled: boolean;
+    gradientType: GradientType;
+    primaryPointerEnabled: boolean;
+    secondaryPointerEnabled: boolean;
+    primaryPointerScale: number;
+    secondaryPointerScale: number;
+    primaryPointerStrokeScale: number;
+    secondaryPointerStrokeScale: number;
+    hubScale: number;
+    ticksEnabled: boolean;
+    tooltipsEnabled: boolean;
+    hoverDimming: boolean;
+    animationEnabled: boolean;
+    animationDuration: number;
+    debugMode: boolean;
+    tileTooltipLabel: string;
+    primaryTooltipLabel: string;
+    secondaryTooltipLabel: string;
+    tileTooltipMode: TooltipMode;
+    primaryTooltipMode: TooltipMode;
+    secondaryTooltipMode: TooltipMode;
+    unit: Unit;
+    formatter: Formatter;
+};
+
+const DEFAULT_CONFIG: PlaygroundConfig = {
+    primaryValue: 40,
+    secondaryValue: 35,
+    maxValue: 100,
+    tiles: 20,
+    tileInnerRadius: 0.72,
+    tileOuterRadius: 1,
+    barInnerRadius: 0.58,
+    barOuterRadius: 0.70,
+    tileColor: '#22c55e',
+    tileBackground: '#20283a',
+    primaryColor: '#38bdf8',
+    secondaryColor: '#8b5cf6',
+    primaryPointerColor: '#38bdf8',
+    secondaryPointerColor: '#a78bfa',
+    hubColor: '#0b1020',
+    gradientEnabled: true,
+    gradientType: 'tile',
+    primaryPointerEnabled: true,
+    secondaryPointerEnabled: true,
+    primaryPointerScale: 1,
+    secondaryPointerScale: 1,
+    primaryPointerStrokeScale: 1,
+    secondaryPointerStrokeScale: 1,
+    hubScale: 0.5,
+    ticksEnabled: true,
+    tooltipsEnabled: true,
+    hoverDimming: true,
+    animationEnabled: true,
+    animationDuration: 450,
+    debugMode: false,
+    tileTooltipLabel: 'Total',
+    primaryTooltipLabel: 'Primary',
+    secondaryTooltipLabel: 'Secondary',
+    tileTooltipMode: 'all',
+    primaryTooltipMode: 'self',
+    secondaryTooltipMode: 'self',
+    unit: 'none',
+    formatter: 'none',
+};
+
+const PRESETS: Array<{name: string; config: Partial<PlaygroundConfig>}> = [
+    {
+        name: 'Aurora',
+        config: {
+            tileColor: '#22c55e',
+            primaryColor: '#38bdf8',
+            secondaryColor: '#8b5cf6',
+            primaryPointerColor: '#38bdf8',
+            secondaryPointerColor: '#a78bfa',
+            tileBackground: '#20283a',
+            gradientEnabled: true,
+            gradientType: 'tile',
+        },
+    },
+    {
+        name: 'Sunset',
+        config: {
+            tileColor: '#fb7185',
+            primaryColor: '#f59e0b',
+            secondaryColor: '#f43f5e',
+            primaryPointerColor: '#fbbf24',
+            secondaryPointerColor: '#fb7185',
+            tileBackground: '#331b25',
+            gradientEnabled: true,
+            gradientType: 'full',
+        },
+    },
+    {
+        name: 'Mono',
+        config: {
+            tileColor: '#e5e7eb',
+            primaryColor: '#ffffff',
+            secondaryColor: '#94a3b8',
+            primaryPointerColor: '#ffffff',
+            secondaryPointerColor: '#94a3b8',
+            tileBackground: '#283040',
+            gradientEnabled: false,
+        },
+    },
+];
+
+const unitOptions: Array<{value: Unit; label: string}> = [
+    {value: 'none', label: 'No unit'},
+    {value: 'km', label: 'Kilometers'},
+    {value: 'mile', label: 'Miles'},
+    {value: 'celsius', label: 'Celsius'},
+    {value: 'fahrenheit', label: 'Fahrenheit'},
+    {value: 'day', label: 'Days'},
+];
+
+const formatterOptions: Record<Unit, Array<{value: Formatter; label: string}>> = {
+    none: [{value: 'none', label: 'No formatter'}],
+    km: [
+        {value: 'none', label: 'No formatter'},
+        {value: 'kmToMile', label: 'km → miles'},
+    ],
+    mile: [
+        {value: 'none', label: 'No formatter'},
+        {value: 'mileToKm', label: 'miles → km'},
+    ],
+    celsius: [
+        {value: 'none', label: 'No formatter'},
+        {value: 'celsiusToFahrenheit', label: '°C → °F'},
+    ],
+    fahrenheit: [
+        {value: 'none', label: 'No formatter'},
+        {value: 'fahrenheitToCelsius', label: '°F → °C'},
+    ],
+    day: [
+        {value: 'none', label: 'No formatter'},
+        {value: 'dayHourMinute', label: 'days, hours, minutes'},
+        {value: 'dayHour', label: 'days, hours'},
+    ],
+};
+
+function formatValue(value: number, unit: Unit, formatter: Formatter): string {
+    switch (formatter) {
+        case 'kmToMile':
+            return `${(value * 0.621371).toFixed(2)} mi`;
+        case 'mileToKm':
+            return `${(value * 1.60934).toFixed(2)} km`;
+        case 'celsiusToFahrenheit':
+            return `${((value * 9) / 5 + 32).toFixed(1)}°F`;
+        case 'fahrenheitToCelsius':
+            return `${(((value - 32) * 5) / 9).toFixed(1)}°C`;
+        case 'dayHourMinute': {
+            const days = Math.floor(value);
+            const hours = Math.floor((value - days) * 8);
+            const minutes = Math.floor(((value - days) * 8 - hours) * 60);
+            return `${days} d, ${hours} h, ${minutes} m`;
+        }
+        case 'dayHour': {
+            const days = Math.floor(value);
+            const hours = Math.floor((value - days) * 8);
+            return `${days} d, ${hours} h`;
+        }
+        default:
+            switch (unit) {
+                case 'km': return `${value} km`;
+                case 'mile': return `${value} mi`;
+                case 'celsius': return `${value}°C`;
+                case 'fahrenheit': return `${value}°F`;
+                case 'day': return `${value} d`;
+                default: return `${value}`;
+            }
+    }
+}
 
 function App() {
+    const [config, setConfig] = useState<PlaygroundConfig>(DEFAULT_CONFIG);
+    const [tab, setTab] = useState(0);
+    const [copied, setCopied] = useState(false);
 
-    const [bookedValue, setBookedVal] = useState<number>(40);
-    const [plannedValue, setPlannedVal] = useState<number>(35);
-
-    const [thresholdYellowValue, setThresholdYellowVal] = useState<number>(60);
-    const [thresholdRedValue, setThresholdRedVal] = useState<number>(80);
-
-    const [withOpacitySwitchValue, setWithOpacitySwitchVal] =
-        useState<boolean>(true);
-
-    const [colorTileThresholdRedValue, setColorTileThresholdRedVal] =
-        useState<string>('#ff0c4d');
-
-    const [
-        colorTileThresholdYellowValue,
-        setColorTileThresholdYellowVal
-    ] = useState<string>('#ffff00');
-
-    const [
-        colorTileThresholdDefaultValue,
-        setColorTileThresholdDefaultVal
-    ] = useState<string>('#00ff00');
-
-    const [colorTileBgValue, setColorTileBgVal] =
-        useState<string>('#ddd');
-
-    const [colorBookedBarValue, setColorBookedBarVal] =
-        useState<string>('#000000');
-
-    const [colorPlannedBarValue, setColorPlannedBarVal] =
-        useState<string>('#aaaaaa');
-
-    const [enableToolTipValue, setEnableTooltipVal] =
-        useState<boolean>(true);
-
-    const [enableUnitTicksValue, setEnableUnitTicksVal] =
-        useState<boolean>(true);
-
-    const [tilesValue, setTilesVal] =
-        useState<number>(10);
-
-    const [tilesIsGradient, setTilesIsGradient] =
-        useState<boolean>(true);
-
-    const [pointerBookedScale, setPointerBookedScale] =
-        useState<number>(1);
-
-    const [pointerBookedStrokeScale, setPointerBookedStrokeScale] =
-        useState<number>(1);
-
-    const [pointerBookedColor, setPointerBookedColor] =
-        useState<string>('#0ed30e');
-
-    const [pointerPlannedScale, setPointerPlannedScale] =
-        useState<number>(1);
-
-    const [pointerPlannedStrokeScale, setPointerPlannedStrokeScale] =
-        useState<number>(1);
-
-    const [tickLabelColor, setTickLabelColor] =
-        useState<string>('#ffffff');
-
-    const [tickColor, setTickColor] =
-        useState<string>('#777777');
-
-    const [pointerPlannedColor, setPointerPlannedColor] =
-        useState<string>('#025bff');
-
-    const [circleScale, setCircleScale] =
-        useState<number>(0.5);
-
-    const [selectedUnit, setSelectedUnit] =
-        useState<string>('undefined');
-
-    const [selectedFormatter, setSelectedFormatter] =
-        useState<string>('undefined');
-
-    const [
-        selectedGradientType,
-        setSelectedGradientType
-    ] = useState<'full' | 'tile' | undefined>('tile');
-
-    const [tickEveryNthStep, setTickEveryNthStep] =
-        useState<number>(10);
-
-    const [outerArcPadAngle, setOuterArcPadAngle] =
-        useState<number>(2);
-
-    const [tickFontSize, setTickFontSize] =
-        useState<number>(1);
-
-    const [outerArcPadRadius, setOuterArcPadRadius] =
-        useState<number>(2);
-
-    const [outerArcCornerRadius, setOuterArcCornerRadius] =
-        useState<number>(5);
-
-    const [tickRadiusScale, setTickRadiusScale] =
-        useState<number>(1.12);
-
-    const [tileFillStyle, setTileFillStyle] =
-        useState<TileFillStyle>(TileFillStyle.FILLED);
-
-    const [tileBorderColor, setTileBorderColor] =
-        useState<string>('#000000');
-
-    const [tileBorderThickness, setTileBorderThickness] =
-        useState<number>(1);
-
-    /*
-     * primaryArcPadAngle / primaryArcPadRadius
-     * secondaryArcPadAngle / secondaryArcPadRadius
-     *
-     * wurden entfernt, weil sie nach der neuen Layer-API
-     * nirgendwo mehr verwendet wurden.
-     */
-
-    const [
-        primaryArcCornerRadius,
-        setPrimaryArcCornerRadius
-    ] = useState<number>(5);
-
-    const [
-        secondaryArcCornerRadius,
-        setSecondaryArcCornerRadius
-    ] = useState<number>(5);
-
-    const [
-        tileTooltipLabel,
-        setTileToolTipLabel
-    ] = useState<string>('Sum');
-
-    const [
-        primaryTooltipLabel,
-        setPrimaryToolTipLabel
-    ] = useState<string>('Primary');
-
-    const [
-        secondaryTooltipLabel,
-        setSecondaryToolTipLabel
-    ] = useState<string>('Secondary');
-
-    const [activeTab, setActiveTab] =
-        useState<number>(0);
-
-    const [activeAdvancedSubtab, setActiveAdvancedSubtab] =
-        useState<number>(0);
-
-
-    const theme = useTheme();
-
-    const isMobile =
-        useMediaQuery(theme.breakpoints.down('md'));
-
-
-    const formatterDayHourMinute = (value: number) => {
-
-        const days = Math.floor(value);
-
-        const hours =
-            Math.floor((value - days) * 8);
-
-        const minutes =
-            Math.floor(
-                ((value - days) * 8 - hours) * 60
-            );
-
-        return `${days} d, ${hours} h, ${minutes} m`;
+    const update = <K extends keyof PlaygroundConfig>(key: K, value: PlaygroundConfig[K]) => {
+        setConfig((current) => ({...current, [key]: value}));
     };
 
+    const totalValue = config.primaryValue + config.secondaryValue;
 
-    const formatterDayHour = (value: number) => {
+    const codeSnippet = useMemo(() => `\n<GaugeChart\n  scale={{ min: 0, max: ${config.maxValue} }}\n  layers={[\n    {\n      id: 'tiles',\n      value: ${totalValue},\n      innerRadius: ${config.tileInnerRadius},\n      outerRadius: ${config.tileOuterRadius},\n      render: 'segmented',\n      segments: ${config.tiles},\n      color: '${config.tileColor}',\n      backgroundColor: '${config.tileBackground}',\n      gradient: { enabled: ${config.gradientEnabled}, type: '${config.gradientType}' },\n      hoverable: true,\n      tooltip: { label: '${config.tileTooltipLabel}', mode: '${config.tileTooltipMode}' },\n      zIndex: 3,\n    },\n    {\n      id: 'primary',\n      value: ${config.primaryValue},\n      valueMode: 'absolute',\n      innerRadius: ${config.barInnerRadius},\n      outerRadius: ${config.barOuterRadius},\n      render: 'solid',\n      color: '${config.primaryColor}',\n      backgroundColor: 'transparent',\n      pointer: { enabled: ${config.primaryPointerEnabled}, color: '${config.primaryPointerColor}', scale: ${config.primaryPointerScale}, strokeScale: ${config.primaryPointerStrokeScale} },\n      tooltip: { label: '${config.primaryTooltipLabel}', mode: '${config.primaryTooltipMode}' },\n      hoverable: true,\n      zIndex: 2,\n    },\n    {\n      id: 'secondary',\n      value: ${config.secondaryValue},\n      valueMode: 'cumulative',\n      baseLayerId: 'primary',\n      innerRadius: ${config.barInnerRadius},\n      outerRadius: ${config.barOuterRadius},\n      render: 'solid',\n      color: '${config.secondaryColor}',\n      backgroundColor: 'transparent',\n      pointer: { enabled: ${config.secondaryPointerEnabled}, color: '${config.secondaryPointerColor}', scale: ${config.secondaryPointerScale}, strokeScale: ${config.secondaryPointerStrokeScale} },\n      tooltip: { label: '${config.secondaryTooltipLabel}', mode: '${config.secondaryTooltipMode}' },\n      hoverable: true,\n      zIndex: 1,\n    },\n  ]}\n  ticks={{ enabled: ${config.ticksEnabled} }}\n  hub={{ color: '${config.hubColor}', scale: ${config.hubScale} }}\n  animation={{ enabled: ${config.animationEnabled}, durationMs: ${config.animationDuration} }}\n  interaction={{ tooltips: ${config.tooltipsEnabled}, tooltipMode: 'all', hoverDimming: ${config.hoverDimming} }}\n  size="xl"\n  debugMode={${config.debugMode}}\n/>`.trim(), [config, totalValue]);
 
-        const days = Math.floor(value);
-
-        const hours =
-            Math.floor((value - days) * 8);
-
-        return `${days} d, ${hours} h`;
+    const copyCode = async () => {
+        await navigator.clipboard.writeText(codeSnippet);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1200);
     };
 
-
-    const formatterCelsiusToFahrenheit = (
-        value: number
-    ) => {
-
-        const fahrenheit =
-            (value * 9 / 5) + 32;
-
-        return `${fahrenheit.toFixed(1)}°F`;
-    };
-
-
-    const formatterFahrenheitToCelsius = (
-        value: number
-    ) => {
-
-        const celsius =
-            (value - 32) * 5 / 9;
-
-        return `${celsius.toFixed(1)}°C`;
-    };
-
-
-    const formatterKmToMile = (
-        value: number
-    ) => {
-
-        const miles =
-            value * 0.621371;
-
-        return `${miles.toFixed(2)} Miles`;
-    };
-
-
-    const formatterMileToKm = (
-        value: number
-    ) => {
-
-        const kilometers =
-            value * 1.60934;
-
-        return `${kilometers.toFixed(2)} km`;
-    };
-
-
-    const unitOptions = [
-        {
-            value: 'undefined',
-            label: 'No Unit'
-        },
-        {
-            value: 'km',
-            label: 'Kilometers'
-        },
-        {
-            value: 'mile',
-            label: 'Miles'
-        },
-        {
-            value: 'celsius',
-            label: 'Celsius'
-        },
-        {
-            value: 'fahrenheit',
-            label: 'Fahrenheit'
-        },
-        {
-            value: 'day',
-            label: 'Days'
-        },
-    ];
-
-    type FormatterOption = {
-        value: string;
-        label: string;
-    };
-
-    const formatterOptions: Record<string, FormatterOption[]> = {
-        km: [
-            {
-                value: 'undefined',
-                label: 'No Formatter'
-            },
-            {
-                value: 'kmToMile',
-                label: 'Km to Miles'
-            },
-        ],
-
-        mile: [
-            {
-                value: 'undefined',
-                label: 'No Formatter'
-            },
-            {
-                value: 'mileToKm',
-                label: 'Miles to Km'
-            },
-        ],
-
-        celsius: [
-            {
-                value: 'undefined',
-                label: 'No Formatter'
-            },
-            {
-                value: 'celsiusToFahrenheit',
-                label: 'Celsius to Fahrenheit'
-            },
-        ],
-
-        fahrenheit: [
-            {
-                value: 'undefined',
-                label: 'No Formatter'
-            },
-            {
-                value: 'fahrenheitToCelsius',
-                label: 'Fahrenheit to Celsius'
-            },
-        ],
-
-        day: [
-            {
-                value: 'undefined',
-                label: 'No Formatter'
-            },
-            {
-                value: 'dayHourMinute',
-                label: 'Days, Hours, Minutes'
-            },
-            {
-                value: 'dayHour',
-                label: 'Days, Hours'
-            },
-        ],
-
-        undefined: [
-            {
-                value: 'undefined',
-                label: 'No Formatter'
-            },
-        ],
-    };
-
-
-    const gradientType = [
-        {
-            value: 'full',
-            label: 'Full'
-        },
-        {
-            value: 'tile',
-            label: 'Tile'
-        },
-    ];
-
-
-    const fillStyleOptions = [
-        {
-            value: TileFillStyle.FILLED,
-            label: 'Filled'
-        },
-        {
-            value: TileFillStyle.DOTTED,
-            label: 'Dotted'
-        },
-        {
-            value: TileFillStyle.DASHED,
-            label: 'Dashed'
-        },
-        {
-            value: TileFillStyle.OUTLINED,
-            label: 'Outlined'
-        },
-    ];
-
-
-    const handleUnitChange = (
-        event: any
-    ) => {
-
-        const unit =
-            event.target.value as string;
-
-        setSelectedUnit(unit);
-
-        /*
-         * Beim Unit-Wechsel Formatter zurücksetzen.
-         */
-        setSelectedFormatter('undefined');
-    };
-
-
-    const handleFormatterChange = (
-        event: any
-    ) => {
-
-        const formatter =
-            event.target.value as string;
-
-        setSelectedFormatter(formatter);
-    };
-
-
-    const handleGradientTypeChange = (
-        event: any
-    ) => {
-
-        const gradientTypeSel =
-            event.target.value as 'full' | 'tile';
-
-        setSelectedGradientType(
-            gradientTypeSel
-        );
-    };
-
-
-    const handleFillStyleChange = (
-        event: any
-    ) => {
-
-        const fillStyle =
-            event.target.value as TileFillStyle;
-
-        setTileFillStyle(fillStyle);
-    };
-
-
-    /*
-     * Normaler Value + Unit Formatter.
-     *
-     * Wird sowohl für Tooltip als auch Ticks benutzt,
-     * wenn kein spezieller Formatter gewählt wurde.
-     */
-    const formatValue = (
-        value: number
-    ) => {
-
-        switch (selectedUnit) {
-
-            case 'km':
-                return `${value} km`;
-
-            case 'mile':
-                return `${value} mi`;
-
-            case 'celsius':
-                return `${value}°C`;
-
-            case 'fahrenheit':
-                return `${value}°F`;
-
-            case 'day':
-                return `${value} d`;
-
-            default:
-                return `${value}`;
-        }
-    };
-
-
-    const formatToolTipValue = (
-        formatter: string,
-        value: number
-    ) => {
-
-        switch (formatter) {
-
-            case 'kmToMile':
-                return formatterKmToMile(value);
-
-            case 'mileToKm':
-                return formatterMileToKm(value);
-
-            case 'celsiusToFahrenheit':
-                return formatterCelsiusToFahrenheit(value);
-
-            case 'fahrenheitToCelsius':
-                return formatterFahrenheitToCelsius(value);
-
-            case 'dayHourMinute':
-                return formatterDayHourMinute(value);
-
-            case 'dayHour':
-                return formatterDayHour(value);
-
-            /*
-             * Wichtig:
-             * kein "unit" mehr zurückgeben,
-             * sondern echten Value + Unit.
-             */
-            default:
-                return formatValue(value);
-        }
-    };
-
-
-    const numberSettings = [
-        {
-            label: 'Primary:',
-            value: bookedValue,
-            onChange: setBookedVal,
-            type: 'number'
-        },
-        {
-            label: 'Secondary:',
-            value: plannedValue,
-            onChange: setPlannedVal,
-            type: 'number'
-        },
-        {
-            label: 'ThresholdMid:',
-            value: thresholdYellowValue,
-            onChange: setThresholdYellowVal,
-            type: 'number'
-        },
-        {
-            label: 'ThresholdMax:',
-            value: thresholdRedValue,
-            onChange: setThresholdRedVal,
-            type: 'number'
-        },
-        {
-            label: 'AmountOfTiles:',
-            value: tilesValue,
-            onChange: setTilesVal,
-            type: 'number'
-        },
-        {
-            label: 'TickFontSize (rem):',
-            value: tickFontSize,
-            onChange: setTickFontSize,
-            type: 'number'
-        },
-        {
-            label: 'PointerPrimaryScale:',
-            value: pointerBookedScale,
-            onChange: setPointerBookedScale,
-            type: 'number'
-        },
-        {
-            label: 'PointerPrimaryStrokeScale:',
-            value: pointerBookedStrokeScale,
-            onChange: setPointerBookedStrokeScale,
-            type: 'number'
-        },
-        {
-            label: 'PointerSecondaryScale:',
-            value: pointerPlannedScale,
-            onChange: setPointerPlannedScale,
-            type: 'number'
-        },
-        {
-            label: 'PointerSecondaryStrokeScale:',
-            value: pointerPlannedStrokeScale,
-            onChange: setPointerPlannedStrokeScale,
-            type: 'number'
-        },
-        {
-            label: 'CircleScale:',
-            value: circleScale,
-            onChange: setCircleScale,
-            type: 'number'
-        },
-    ];
-
-
-    const booleanSettings = [
-        {
-            label: 'EnableOpacitySwitch:',
-            checked: withOpacitySwitchValue,
-            onChange: setWithOpacitySwitchVal
-        },
-        {
-            label: 'EnableTooltip:',
-            checked: enableToolTipValue,
-            onChange: setEnableTooltipVal
-        },
-        {
-            label: 'EnableTicks:',
-            checked: enableUnitTicksValue,
-            onChange: setEnableUnitTicksVal
-        },
-        {
-            label: 'IsTileColorGradient:',
-            checked: tilesIsGradient,
-            onChange: setTilesIsGradient
-        },
-    ];
-
-
-    const colorSettings = [
-        {
-            label: 'TileColorThresholdMid:',
-            value: colorTileThresholdYellowValue,
-            onChange: setColorTileThresholdYellowVal
-        },
-        {
-            label: 'TileColorThresholdMax:',
-            value: colorTileThresholdRedValue,
-            onChange: setColorTileThresholdRedVal
-        },
-        {
-            label: 'TileColorThresholdDefault:',
-            value: colorTileThresholdDefaultValue,
-            onChange: setColorTileThresholdDefaultVal
-        },
-        {
-            label: 'TileColor:',
-            value: colorTileBgValue,
-            onChange: setColorTileBgVal
-        },
-        {
-            label: 'TileBorderColor:',
-            value: tileBorderColor,
-            onChange: setTileBorderColor
-        },
-        {
-            label: 'PrimaryBarColor:',
-            value: colorBookedBarValue,
-            onChange: setColorBookedBarVal
-        },
-        {
-            label: 'SecondaryBarColor:',
-            value: colorPlannedBarValue,
-            onChange: setColorPlannedBarVal
-        },
-        {
-            label: 'PointerPrimaryColor:',
-            value: pointerBookedColor,
-            onChange: setPointerBookedColor
-        },
-        {
-            label: 'PointerSecondaryColor:',
-            value: pointerPlannedColor,
-            onChange: setPointerPlannedColor
-        },
-        {
-            label: 'TickLabelColor:',
-            value: tickLabelColor,
-            onChange: setTickLabelColor
-        },
-        {
-            label: 'TickColor:',
-            value: tickColor,
-            onChange: setTickColor
-        },
-    ];
-
-
-    const otherSettings = [
-        {
-            label: 'TickEveryNthStep:',
-            value: tickEveryNthStep,
-            onChange: setTickEveryNthStep,
-        },
-        {
-            label: 'TileBorderThickness:',
-            value: tileBorderThickness,
-            onChange: setTileBorderThickness,
-        },
-        {
-            label: 'OuterArcPadAngle:',
-            value: outerArcPadAngle,
-            onChange: setOuterArcPadAngle,
-        },
-        {
-            label: 'OuterArcPadRadius:',
-            value: outerArcPadRadius,
-            onChange: setOuterArcPadRadius,
-        },
-        {
-            label: 'OuterArcCornerRadius:',
-            value: outerArcCornerRadius,
-            onChange: setOuterArcCornerRadius,
-        },
-        {
-            label: 'PrimaryArcCornerRadius:',
-            value: primaryArcCornerRadius,
-            onChange: setPrimaryArcCornerRadius,
-        },
-        {
-            label: 'SecondaryArcCornerRadius:',
-            value: secondaryArcCornerRadius,
-            onChange: setSecondaryArcCornerRadius,
-        },
-        {
-            label: 'TickRadiusScale:',
-            value: tickRadiusScale,
-            onChange: setTickRadiusScale,
-        },
-    ];
-
-
-    const handleTabChange = (
-        _event: React.SyntheticEvent,
-        newValue: number
-    ) => {
-
-        setActiveTab(newValue);
-    };
-
-
-    const handleAdvancedSubtabChange = (
-        _event: React.SyntheticEvent,
-        newValue: number
-    ) => {
-
-        setActiveAdvancedSubtab(newValue);
-    };
-
-
-    const renderSettings = () => {
-
-        switch (activeTab) {
-
-            /*
-             * BASIC
-             */
-            case 0:
-                return (
-                    <Stack
-                        spacing={4}
-                        direction="column"
-                        width="100%"
-                        className="basic-stack"
-                    >
-
-                        <Typography
-                            variant="h6"
-                            color="white"
-                        >
-                            Basic Settings
-                        </Typography>
-
-                        <Divider
-                            sx={{
-                                backgroundColor:
-                                    'rgba(255,255,255,0.2)'
-                            }}
-                        />
-
-                        <Stack
-                            spacing={3}
-                            direction={
-                                isMobile
-                                    ? 'column'
-                                    : 'row'
-                            }
-                            flexWrap="wrap"
-                        >
-
-                            {numberSettings
-                                .slice(0, 6)
-                                .map(
-                                    ({
-                                         label,
-                                         value,
-                                         onChange,
-                                         type
-                                     }, index) => (
-
-                                        <Stack
-                                            key={index}
-                                            direction="row"
-                                            justifyContent="space-between"
-                                            alignItems="center"
-                                            sx={{
-                                                minWidth: '200px',
-                                                flex: '1 0 auto',
-                                                margin: '8px'
-                                            }}
-                                        >
-
-                                            <InputLabel
-                                                style={{
-                                                    color: '#fff'
-                                                }}
-                                            >
-                                                {label}
-                                            </InputLabel>
-
-                                            <FilledInput
-                                                color="primary"
-                                                value={value}
-                                                type={type}
-                                                style={{
-                                                    textAlign: 'right',
-                                                    width: '100px',
-                                                    color: 'white'
-                                                }}
-                                                sx={{
-                                                    borderColor: '#1976d2',
-
-                                                    '&.Mui-focused': {
-                                                        borderColor:
-                                                            '#1976d2'
-                                                    }
-                                                }}
-                                                onChange={(e) => {
-
-                                                    const next =
-                                                        Number(
-                                                            e.target.value
-                                                        );
-
-                                                    onChange(
-                                                        next < 0
-                                                            ? 0
-                                                            : next
-                                                    );
-                                                }}
-                                            />
-
-                                        </Stack>
-                                    )
-                                )}
-
-                        </Stack>
-
-                        <Stack
-                            spacing={3}
-                            direction={
-                                isMobile
-                                    ? 'column'
-                                    : 'row'
-                            }
-                            flexWrap="wrap"
-                        >
-
-                            {booleanSettings.map(
-                                ({
-                                     label,
-                                     checked,
-                                     onChange
-                                 }, index) => (
-
-                                    <Stack
-                                        key={index}
-                                        direction="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                        sx={{
-                                            minWidth: '200px',
-                                            flex: '1 0 auto',
-                                            margin: '8px'
-                                        }}
-                                    >
-
-                                        <InputLabel
-                                            style={{
-                                                color: '#fff'
-                                            }}
-                                        >
-                                            {label}
-                                        </InputLabel>
-
-                                        <Checkbox
-                                            checked={checked}
-                                            onChange={(_, value) =>
-                                                onChange(value)
-                                            }
-                                            disableRipple
-                                        />
-
-                                    </Stack>
-                                )
-                            )}
-
-                        </Stack>
-
-                        <Stack
-                            spacing={3}
-                            direction={
-                                isMobile
-                                    ? 'column'
-                                    : 'row'
-                            }
-                        >
-
-                            <FormControl
-                                sx={{
-                                    minWidth: '200px',
-                                    flex: 1
-                                }}
-                            >
-
-                                <InputLabel
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-                                    Unit
-                                </InputLabel>
-
-                                <Select
-                                    value={selectedUnit}
-                                    onChange={handleUnitChange}
-                                    label="Unit"
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-
-                                    {unitOptions.map(
-                                        option => (
-
-                                            <MenuItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </MenuItem>
-                                        )
-                                    )}
-
-                                </Select>
-
-                            </FormControl>
-
-
-                            <FormControl
-                                sx={{
-                                    minWidth: '200px',
-                                    flex: 1
-                                }}
-                            >
-
-                                <InputLabel
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-                                    Formatter
-                                </InputLabel>
-
-                                <Select
-                                    value={selectedFormatter}
-                                    onChange={handleFormatterChange}
-                                    label="Formatter"
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-
-                                    {(formatterOptions[selectedUnit] ?? formatterOptions.undefined).map(
-                                        (option) => (
-                                            <MenuItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </MenuItem>
-                                        )
-                                    )}
-
-                                </Select>
-
-                            </FormControl>
-
-                        </Stack>
-
-                    </Stack>
-                );
-
-
-            /*
-             * APPEARANCE
-             */
-            case 1:
-                return (
-                    <Stack
-                        spacing={4}
-                        direction="column"
-                        width="100%"
-                        className="appearance-stack"
-                    >
-
-                        <Typography
-                            variant="h6"
-                            color="white"
-                        >
-                            Appearance Settings
-                        </Typography>
-
-                        <Divider
-                            sx={{
-                                backgroundColor:
-                                    'rgba(255,255,255,0.2)'
-                            }}
-                        />
-
-
-                        <Typography
-                            variant="subtitle1"
-                            color="white"
-                        >
-                            Colors
-                        </Typography>
-
-                        <Stack
-                            spacing={3}
-                            direction={
-                                isMobile
-                                    ? 'column'
-                                    : 'row'
-                            }
-                            flexWrap="wrap"
-                        >
-
-                            {colorSettings.map(
-                                ({
-                                     label,
-                                     value,
-                                     onChange
-                                 }, index) => (
-
-                                    <Stack
-                                        key={index}
-                                        direction="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                        sx={{
-                                            minWidth: '200px',
-                                            flex: '1 0 auto',
-                                            margin: '8px'
-                                        }}
-                                    >
-
-                                        <InputLabel
-                                            style={{
-                                                color: '#fff'
-                                            }}
-                                        >
-                                            {label}
-                                        </InputLabel>
-
-                                        <input
-                                            value={value}
-                                            type="color"
-                                            onChange={(e) =>
-                                                onChange(
-                                                    e.target.value
-                                                )
-                                            }
-                                        />
-
-                                    </Stack>
-                                )
-                            )}
-
-                        </Stack>
-
-
-                        <Typography
-                            variant="subtitle1"
-                            color="white"
-                        >
-                            Style
-                        </Typography>
-
-                        <Stack
-                            spacing={3}
-                            direction={
-                                isMobile
-                                    ? 'column'
-                                    : 'row'
-                            }
-                        >
-
-                            <FormControl
-                                sx={{
-                                    minWidth: '200px',
-                                    flex: 1
-                                }}
-                            >
-
-                                <InputLabel
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-                                    GradientType:
-                                </InputLabel>
-
-                                <Select
-                                    value={selectedGradientType}
-                                    onChange={handleGradientTypeChange}
-                                    label="GradientType"
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-
-                                    {gradientType.map(
-                                        option => (
-
-                                            <MenuItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </MenuItem>
-                                        )
-                                    )}
-
-                                </Select>
-
-                            </FormControl>
-
-
-                            <FormControl
-                                sx={{
-                                    minWidth: '200px',
-                                    flex: 1
-                                }}
-                            >
-
-                                <InputLabel
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-                                    TileFillStyle:
-                                </InputLabel>
-
-                                <Select
-                                    value={tileFillStyle}
-                                    onChange={handleFillStyleChange}
-                                    label="TileFillStyle"
-                                    style={{
-                                        color: '#fff'
-                                    }}
-                                >
-
-                                    {fillStyleOptions.map(
-                                        option => (
-
-                                            <MenuItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </MenuItem>
-                                        )
-                                    )}
-
-                                </Select>
-
-                            </FormControl>
-
-                        </Stack>
-
-                    </Stack>
-                );
-
-
-            /*
-             * ADVANCED
-             */
-            case 2:
-                return (
-                    <Stack
-                        spacing={4}
-                        direction="column"
-                        width="100%"
-                        className="advanced-stack"
-                    >
-
-                        <Typography
-                            variant="h6"
-                            color="white"
-                        >
-                            Advanced Settings
-                        </Typography>
-
-                        <Divider
-                            sx={{
-                                backgroundColor:
-                                    'rgba(255,255,255,0.2)'
-                            }}
-                        />
-
-                        <Box
-                            sx={{
-                                borderBottom: 1,
-                                borderColor: 'divider'
-                            }}
-                        >
-
-                            <Tabs
-                                value={activeAdvancedSubtab}
-                                onChange={
-                                    handleAdvancedSubtabChange
-                                }
-                                variant="fullWidth"
-                                textColor="primary"
-                                indicatorColor="primary"
-                            >
-
-                                <Tab label="Tooltips"/>
-                                <Tab label="Arc Settings"/>
-                                <Tab label="Pointers"/>
-
-                            </Tabs>
-
-                        </Box>
-
-
-                        <Box>
-
-                            {activeAdvancedSubtab === 0 && (
-                                <>
-
-                                    <Typography
-                                        variant="subtitle1"
-                                        color="white"
-                                    >
-                                        Tooltip Labels
-                                    </Typography>
-
-
-                                    <Stack
-                                        spacing={3}
-                                        direction="column"
-                                    >
-
-                                        <Stack
-                                            direction="row"
-                                            justifyContent="space-between"
-                                            alignItems="center"
-                                            sx={{
-                                                width: '100%',
-                                                margin: '8px'
-                                            }}
-                                        >
-
-                                            <InputLabel
-                                                style={{
-                                                    color: '#fff'
-                                                }}
-                                            >
-                                                Tile-tooltip
-                                            </InputLabel>
-
-                                            <FilledInput
-                                                aria-label="Tile-tooltip"
-                                                color="primary"
-                                                value={
-                                                    tileTooltipLabel
-                                                }
-                                                type="text"
-                                                style={{
-                                                    textAlign:
-                                                        'right',
-                                                    width: '300px',
-                                                    color: 'white'
-                                                }}
-                                                onChange={(e) =>
-                                                    setTileToolTipLabel(
-                                                        e.target.value
-                                                    )
-                                                }
-                                            />
-
-                                        </Stack>
-
-
-                                        <Stack
-                                            direction="row"
-                                            justifyContent="space-between"
-                                            alignItems="center"
-                                            sx={{
-                                                width: '100%',
-                                                margin: '8px'
-                                            }}
-                                        >
-
-                                            <InputLabel
-                                                style={{
-                                                    color: '#fff'
-                                                }}
-                                            >
-                                                Primary-tooltip
-                                            </InputLabel>
-
-                                            <FilledInput
-                                                color="primary"
-                                                value={
-                                                    primaryTooltipLabel
-                                                }
-                                                type="text"
-                                                style={{
-                                                    textAlign:
-                                                        'right',
-                                                    width: '300px',
-                                                    color: 'white'
-                                                }}
-                                                onChange={(e) =>
-                                                    setPrimaryToolTipLabel(
-                                                        e.target.value
-                                                    )
-                                                }
-                                            />
-
-                                        </Stack>
-
-
-                                        <Stack
-                                            direction="row"
-                                            justifyContent="space-between"
-                                            alignItems="center"
-                                            sx={{
-                                                width: '100%',
-                                                margin: '8px'
-                                            }}
-                                        >
-
-                                            <InputLabel
-                                                style={{
-                                                    color: '#fff'
-                                                }}
-                                            >
-                                                Secondary-tooltip
-                                            </InputLabel>
-
-                                            <FilledInput
-                                                color="primary"
-                                                value={
-                                                    secondaryTooltipLabel
-                                                }
-                                                type="text"
-                                                style={{
-                                                    textAlign:
-                                                        'right',
-                                                    width: '300px',
-                                                    color: 'white'
-                                                }}
-                                                onChange={(e) =>
-                                                    setSecondaryToolTipLabel(
-                                                        e.target.value
-                                                    )
-                                                }
-                                            />
-
-                                        </Stack>
-
-                                    </Stack>
-
-                                </>
-                            )}
-
-
-                            {activeAdvancedSubtab === 1 && (
-
-                                <Stack
-                                    spacing={3}
-                                    direction="column"
-                                >
-
-                                    {otherSettings.map(
-                                        ({
-                                             label,
-                                             value,
-                                             onChange
-                                         }, index) => (
-
-                                            <Stack
-                                                key={index}
-                                                direction="row"
-                                                justifyContent="space-between"
-                                                alignItems="center"
-                                                sx={{
-                                                    margin: '8px'
-                                                }}
-                                            >
-
-                                                <InputLabel
-                                                    style={{
-                                                        color: '#fff'
-                                                    }}
-                                                >
-                                                    {label}
-                                                </InputLabel>
-
-                                                <FilledInput
-                                                    color="primary"
-                                                    value={value}
-                                                    type="number"
-                                                    style={{
-                                                        textAlign:
-                                                            'right',
-                                                        width:
-                                                            '100px',
-                                                        color:
-                                                            'white'
-                                                    }}
-                                                    onChange={(e) => {
-
-                                                        const next =
-                                                            Number(
-                                                                e.target
-                                                                    .value
-                                                            );
-
-                                                        onChange(
-                                                            next < 0
-                                                                ? 0
-                                                                : next
-                                                        );
-                                                    }}
-                                                />
-
-                                                {
-                                                    label ===
-                                                    'TickEveryNthStep:' && (
-
-                                                        <Tooltip
-                                                            title={
-                                                                'If 0 it calculates the ticks along the tile amount'
-                                                            }
-                                                        >
-                                                            <InfoOutlinedIcon
-                                                                color="primary"
-                                                            />
-                                                        </Tooltip>
-                                                    )
-                                                }
-
-                                            </Stack>
-                                        )
-                                    )}
-
-                                </Stack>
-                            )}
-
-
-                            {activeAdvancedSubtab === 2 && (
-
-                                <Stack
-                                    spacing={3}
-                                    direction={
-                                        isMobile
-                                            ? 'column'
-                                            : 'row'
-                                    }
-                                    flexWrap="wrap"
-                                >
-
-                                    {numberSettings
-                                        .slice(6)
-                                        .map(
-                                            ({
-                                                 label,
-                                                 value,
-                                                 onChange,
-                                                 type
-                                             }, index) => (
-
-                                                <Stack
-                                                    key={index}
-                                                    direction="row"
-                                                    justifyContent="space-between"
-                                                    alignItems="center"
-                                                    sx={{
-                                                        minWidth:
-                                                            '200px',
-                                                        flex:
-                                                            '1 0 auto',
-                                                        margin:
-                                                            '8px'
-                                                    }}
-                                                >
-
-                                                    <InputLabel
-                                                        style={{
-                                                            color:
-                                                                '#fff'
-                                                        }}
-                                                    >
-                                                        {label}
-                                                    </InputLabel>
-
-                                                    <FilledInput
-                                                        color="primary"
-                                                        value={value}
-                                                        type={type}
-                                                        style={{
-                                                            textAlign:
-                                                                'right',
-                                                            width:
-                                                                '100px',
-                                                            color:
-                                                                'white'
-                                                        }}
-                                                        onChange={(e) => {
-
-                                                            const next =
-                                                                Number(
-                                                                    e
-                                                                        .target
-                                                                        .value
-                                                                );
-
-                                                            onChange(
-                                                                next <
-                                                                0
-                                                                    ? 0
-                                                                    : next
-                                                            );
-                                                        }}
-                                                    />
-
-                                                </Stack>
-                                            )
-                                        )}
-
-                                </Stack>
-                            )}
-
-                        </Box>
-
-                    </Stack>
-                );
-
-
-            default:
-                return null;
-        }
-    };
-
+    const numberField = (
+        label: string,
+        key: keyof PlaygroundConfig,
+        options?: {min?: number; max?: number; step?: number},
+    ) => (
+        <TextField
+            fullWidth
+            size="small"
+            type="number"
+            label={label}
+            value={config[key] as number}
+            slotProps={{htmlInput: {min: options?.min, max: options?.max, step: options?.step}}}
+            onChange={(event) => update(key, Number(event.target.value) as never)}
+        />
+    );
+
+    const sliderField = (
+        label: string,
+        key: keyof PlaygroundConfig,
+        min: number,
+        max: number,
+        step: number,
+    ) => (
+        <Box className="control-block">
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="body2" color="text.secondary">{label}</Typography>
+                <Chip size="small" label={String(config[key])}/>
+            </Stack>
+            <Slider
+                min={min}
+                max={max}
+                step={step}
+                value={config[key] as number}
+                onChange={(_, value) => update(key, value as never)}
+            />
+        </Box>
+    );
+
+    const colorField = (label: string, key: keyof PlaygroundConfig) => (
+        <Box className="color-control">
+            <Box
+                component="input"
+                type="color"
+                value={config[key] as string}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => update(key, event.target.value as never)}
+                className="color-swatch"
+                aria-label={label}
+            />
+            <TextField
+                fullWidth
+                size="small"
+                label={label}
+                value={config[key] as string}
+                onChange={(event) => update(key, event.target.value as never)}
+            />
+        </Box>
+    );
+
+    const switchField = (label: string, key: keyof PlaygroundConfig) => (
+        <FormControlLabel
+            className="switch-row"
+            control={
+                <Switch
+                    checked={config[key] as boolean}
+                    onChange={(_, checked) => update(key, checked as never)}
+                />
+            }
+            label={label}
+        />
+    );
 
     return (
-        <div className="app-container">
-
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection:
-                        isMobile
-                            ? 'column'
-                            : 'row',
-
-                    gap: 4,
-
-                    width: '100%',
-                    maxWidth: '1280px',
-
-                    margin: '0 auto'
-                }}
-            >
-
-                <Box
-                    sx={{
-                        flex:
-                            isMobile
-                                ? 'none'
-                                : '1 0 50%',
-
-                        display: 'flex',
-
-                        justifyContent:
-                            'center',
-
-                        alignItems:
-                            'center',
-
-                        padding: 2,
-
-                        order:
-                            isMobile
-                                ? 1
-                                : 0
-                    }}
-                >
-
-                    <GaugeChart
-
-                        scale={{
-                            min: 0,
-                            max: thresholdRedValue
-                        }}
-
-                        layers={[
-                            {
-                                id: 'tiles',
-
-                                value:
-                                    bookedValue +
-                                    plannedValue,
-
-                                innerRadius: 0.72,
-                                outerRadius: 1,
-
-                                render: 'segmented',
-
-                                segments:
-                                tilesValue,
-
-                                color:
-                                colorTileThresholdDefaultValue,
-
-                                backgroundColor:
-                                colorTileBgValue,
-
-                                gradient: {
-                                    enabled:
-                                    tilesIsGradient,
-
-                                    type:
-                                    selectedGradientType,
-                                },
-
-                                hoverable: true,
-
-                                tooltip: {
-                                    label:
-                                    tileTooltipLabel,
-
-                                    mode: 'all',
-                                },
-
-                                zIndex: 3,
-                            },
-
-
-                            {
-                                id: 'booked',
-
-                                value:
-                                bookedValue,
-
-                                valueMode:
-                                    'absolute',
-
-                                innerRadius: 0.58,
-                                outerRadius: 0.70,
-
-                                render:
-                                    'solid',
-
-                                color:
-                                colorBookedBarValue,
-
-                                backgroundColor:
-                                    'transparent',
-
-                                pointer: {
-                                    enabled: true,
-
-                                    color:
-                                    pointerBookedColor,
-
-                                    scale:
-                                    pointerBookedScale,
-
-                                    strokeScale:
-                                    pointerBookedStrokeScale,
-                                },
-
-                                tooltip: {
-                                    label:
-                                    primaryTooltipLabel,
-
-                                    mode:
-                                        'self',
-                                },
-
-                                hoverable: true,
-
-                                zIndex: 2,
-                            },
-
-
-                            {
-                                id: 'planned',
-
-                                /*
-                                 * Wichtig:
-                                 * hier steht NUR plannedValue.
-                                 *
-                                 * Das Package berechnet aufgrund
-                                 * von cumulative + baseLayerId
-                                 * selbst booked + planned.
-                                 */
-                                value:
-                                plannedValue,
-
-                                valueMode:
-                                    'cumulative',
-
-                                baseLayerId:
-                                    'booked',
-
-                                innerRadius: 0.58,
-                                outerRadius: 0.70,
-
-                                render:
-                                    'solid',
-
-                                color:
-                                colorPlannedBarValue,
-
-                                backgroundColor:
-                                    'transparent',
-
-                                pointer: {
-                                    enabled: true,
-
-                                    color:
-                                    pointerPlannedColor,
-
-                                    scale:
-                                    pointerPlannedScale,
-
-                                    strokeScale:
-                                    pointerPlannedStrokeScale,
-                                },
-
-                                tooltip: {
-                                    label:
-                                    secondaryTooltipLabel,
-
-                                    mode:
-                                        'self',
-                                },
-
-                                hoverable: true,
-
-                                zIndex: 1,
-                            },
-                        ]}
-
-                        ticks={{
-                            enabled:
-                            enableUnitTicksValue,
-                        }}
-
-                        hub={{
-                            color: '#000',
-
-                            scale:
-                            circleScale,
-                        }}
-
-                        animation={{
-                            enabled: true,
-
-                            durationMs: 400
-                        }}
-
-                        size="xl"
-
-                        interaction={{
-                            tooltips:
-                            enableToolTipValue,
-
-                            /*
-                             * Bleibt als globaler Fallback.
-                             *
-                             * Layer-spezifische Modi:
-                             *
-                             * tiles   -> all
-                             * booked  -> self
-                             * planned -> self
-                             */
-                            tooltipMode:
-                                'all',
-
-                            hoverDimming:
-                            withOpacitySwitchValue,
-                        }}
-
-                        debugMode={true}
-
-                        formatters={{
-
-                            /*
-                             * Tooltip:
-                             * Value + Unit bzw.
-                             * ausgewählter Formatter
-                             */
-                            value: (
-                                value: number
-                            ) =>
-                                formatToolTipValue(
-                                    selectedFormatter,
-                                    value
-                                ),
-
-                            /*
-                             * Ticks:
-                             * ebenfalls Value + Unit bzw.
-                             * ausgewählter Formatter
-                             */
-                            tick: (
-                                value: number
-                            ) =>
-                                formatToolTipValue(
-                                    selectedFormatter,
-                                    value
-                                ),
-                        }}
-                    />
-
-                </Box>
-
-
-                <Paper
-                    elevation={1}
-
-                    sx={{
-                        flex:
-                            isMobile
-                                ? 'none'
-                                : '1 0 50%',
-
-                        backgroundColor:
-                            'rgba(30, 30, 30, 0.9)',
-
-                        borderRadius: 2,
-
-                        order:
-                            isMobile
-                                ? 0
-                                : 1
-                    }}
-                >
-
-                    <Box
-                        sx={{
-                            borderBottom: 1,
-                            borderColor:
-                                'divider'
-                        }}
-                    >
-
-                        <Tabs
-                            value={activeTab}
-                            onChange={
-                                handleTabChange
-                            }
-                            variant="fullWidth"
-                            textColor="primary"
-                            indicatorColor="primary"
+        <Box className="playground-shell">
+            <Box className="ambient ambient-one"/>
+            <Box className="ambient ambient-two"/>
+
+            <Box component="header" className="topbar">
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Box className="brand-mark"><AutoAwesomeRoundedIcon fontSize="small"/></Box>
+                    <Box>
+                        <Typography className="brand-title">Gauge Chart Playground</Typography>
+                        <Typography variant="caption" color="text.secondary">@darkvoice/gauge-chart · live configurator</Typography>
+                    </Box>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                    <Tooltip title="Restore defaults">
+                        <Button
+                            variant="outlined"
+                            startIcon={<RestartAltRoundedIcon/>}
+                            onClick={() => setConfig(DEFAULT_CONFIG)}
                         >
-
-                            <Tab label="Basic"/>
-
-                            <Tab label="Appearance"/>
-
-                            <Tab label="Advanced"/>
-
-                        </Tabs>
-
-                    </Box>
-
-
-                    <Box
-                        sx={{
-                            p: 3
-                        }}
-                    >
-
-                        {renderSettings()}
-
-                    </Box>
-
-                </Paper>
-
+                            Reset
+                        </Button>
+                    </Tooltip>
+                    <Button variant="contained" startIcon={<ContentCopyRoundedIcon/>} onClick={copyCode}>
+                        {copied ? 'Copied' : 'Copy code'}
+                    </Button>
+                </Stack>
             </Box>
 
-        </div>
+            <Box className="workspace">
+                <Paper className="preview-panel" elevation={0}>
+                    <Box className="panel-heading">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <VisibilityRoundedIcon fontSize="small"/>
+                            <Typography fontWeight={700}>Live preview</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                            <Chip size="small" label={`${config.primaryValue} primary`}/>
+                            <Chip size="small" label={`${config.secondaryValue} secondary`}/>
+                            <Chip size="small" color={totalValue > config.maxValue ? 'warning' : 'success'} label={`${totalValue} / ${config.maxValue}`}/>
+                        </Stack>
+                    </Box>
+
+                    <Box className="gauge-stage">
+                        <Box className="gauge-glow"/>
+                        <GaugeChart
+                            scale={{min: 0, max: config.maxValue}}
+                            layers={[
+                                {
+                                    id: 'tiles',
+                                    value: totalValue,
+                                    // Radius ist der äußere Bereich:
+                                    radius: config.tileOuterRadius,
+                                    // Thickness ist die Differenz zwischen Außen- und Innenradius:
+                                    thickness: Math.max(0.01, config.tileOuterRadius - config.tileInnerRadius),
+                                    render: 'segmented',
+                                    segments: config.tiles,
+                                    color: config.tileColor,
+                                    backgroundColor: config.tileBackground,
+                                    gradient: { enabled: config.gradientEnabled, type: config.gradientType },
+                                    hoverable: true,
+                                    tooltip: { label: config.tileTooltipLabel, mode: config.tileTooltipMode},
+                                    zIndex: 3,
+                                },
+                                {
+                                    id: 'primary',
+                                    value: config.primaryValue,
+                                    valueMode: 'absolute',
+                                    radius: config.barOuterRadius,
+                                    thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
+                                    render: 'solid',
+                                    color: config.primaryColor,
+                                    backgroundColor: 'transparent',
+                                    pointer: {
+                                        enabled: config.primaryPointerEnabled,
+                                        color: config.primaryPointerColor,
+                                        scale: config.primaryPointerScale,
+                                        strokeScale: config.primaryPointerStrokeScale,
+                                    },
+                                    tooltip: { label: config.primaryTooltipLabel, mode: config.primaryTooltipMode },
+                                    hoverable: true,
+                                    zIndex: 2,
+                                },
+                                {
+                                    id: 'secondary',
+                                    value: config.secondaryValue,
+                                    valueMode: 'cumulative',
+                                    baseLayerId: 'primary',
+                                    radius: config.barOuterRadius,
+                                    thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
+                                    render: 'solid',
+                                    color: config.secondaryColor,
+                                    backgroundColor: 'transparent',
+                                    pointer: {
+                                        enabled: config.secondaryPointerEnabled,
+                                        color: config.secondaryPointerColor,
+                                        scale: config.secondaryPointerScale,
+                                        strokeScale: config.secondaryPointerStrokeScale,
+                                    },
+                                    tooltip: { label: config.secondaryTooltipLabel, mode: config.secondaryTooltipMode },
+                                    hoverable: true,
+                                    zIndex: 1,
+                                },
+                            ]}
+                            ticks={{enabled: config.ticksEnabled}}
+                            hub={{color: config.hubColor, scale: config.hubScale}}
+                            animation={{enabled: config.animationEnabled, durationMs: config.animationDuration}}
+                            interaction={{
+                                tooltips: config.tooltipsEnabled,
+                                tooltipMode: 'all',
+                                hoverDimming: config.hoverDimming,
+                            }}
+                            size="xl"
+                            debugMode={config.debugMode}
+                            tooltipScale={1}
+                            theme={{
+                                tooltip: {
+                                    fontSize: '12px',    // 👈 Oder hier direkt im Theme anpassen
+                                    padding: '6px 10px',
+                                    minWidth: '100px',
+                                }
+                            }}
+                            formatters={{
+                                value: (value: number) => formatValue(value, config.unit, config.formatter),
+                                tick: (value: number) => formatValue(value, config.unit, config.formatter),
+                            }}
+                        />
+                    </Box>
+
+                    <Box className="preset-strip">
+                        <Typography variant="caption" color="text.secondary" sx={{mr: 0.5}}>Presets</Typography>
+                        {PRESETS.map((preset) => (
+                            <Button
+                                key={preset.name}
+                                size="small"
+                                variant="outlined"
+                                onClick={() => setConfig((current) => ({...current, ...preset.config}))}
+                            >
+                                {preset.name}
+                            </Button>
+                        ))}
+                    </Box>
+
+                    <Box className="code-card">
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
+                            <Typography variant="subtitle2">Generated JSX</Typography>
+                            <Button size="small" startIcon={<ContentCopyRoundedIcon/>} onClick={copyCode}>
+                                {copied ? 'Copied' : 'Copy'}
+                            </Button>
+                        </Stack>
+                        <Box component="pre">{codeSnippet}</Box>
+                    </Box>
+                </Paper>
+
+                <Paper className="controls-panel" elevation={0}>
+                    <Box className="controls-header">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                            <TuneRoundedIcon fontSize="small"/>
+                            <Box>
+                                <Typography fontWeight={700}>Configurator</Typography>
+                                <Typography variant="caption" color="text.secondary">Tune the chart in real time</Typography>
+                            </Box>
+                        </Stack>
+                    </Box>
+
+                    <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="fullWidth" className="config-tabs">
+                        <Tab icon={<SettingsRoundedIcon/>} iconPosition="start" label="General"/>
+                        <Tab icon={<AutoAwesomeRoundedIcon/>} iconPosition="start" label="Style"/>
+                        <Tab icon={<TuneRoundedIcon/>} iconPosition="start" label="Advanced"/>
+                    </Tabs>
+
+                    <Box className="controls-scroll">
+                        {tab === 0 && (
+                            <Stack spacing={2.5}>
+                                <Section title="Values" subtitle="Primary, secondary and scale">
+                                    <Box className="control-grid">
+                                        {numberField('Primary value', 'primaryValue', {min: 0})}
+                                        {numberField('Secondary value', 'secondaryValue', {min: 0})}
+                                        {numberField('Scale max', 'maxValue', {min: 1})}
+                                        {numberField('Segments', 'tiles', {min: 1, max: 200})}
+                                    </Box>
+                                </Section>
+
+                                <Section title="Formatting" subtitle="Units and value formatting">
+                                    <Box className="control-grid">
+                                        <FormControl size="small" fullWidth>
+                                            <InputLabel>Unit</InputLabel>
+                                            <Select
+                                                value={config.unit}
+                                                label="Unit"
+                                                onChange={(event) => {
+                                                    update('unit', event.target.value as Unit);
+                                                    update('formatter', 'none');
+                                                }}
+                                            >
+                                                {unitOptions.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                                            </Select>
+                                        </FormControl>
+                                        <FormControl size="small" fullWidth>
+                                            <InputLabel>Formatter</InputLabel>
+                                            <Select
+                                                value={config.formatter}
+                                                label="Formatter"
+                                                onChange={(event) => update('formatter', event.target.value as Formatter)}
+                                            >
+                                                {formatterOptions[config.unit].map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+                                </Section>
+
+                                <Section title="Interaction" subtitle="Tooltips, ticks and hover behavior">
+                                    <Box className="switch-grid">
+                                        {switchField('Tooltips', 'tooltipsEnabled')}
+                                        {switchField('Ticks', 'ticksEnabled')}
+                                        {switchField('Hover dimming', 'hoverDimming')}
+                                        {switchField('Debug mode', 'debugMode')}
+                                    </Box>
+                                </Section>
+
+                                <Section title="Animation" subtitle="Motion settings">
+                                    <Box className="switch-grid">{switchField('Animation enabled', 'animationEnabled')}</Box>
+                                    {sliderField('Duration (ms)', 'animationDuration', 0, 2000, 50)}
+                                </Section>
+                            </Stack>
+                        )}
+
+                        {tab === 1 && (
+                            <Stack spacing={2.5}>
+                                <Section title="Colors" subtitle="Every visible chart color">
+                                    <Stack spacing={1.5}>
+                                        {colorField('Tile color', 'tileColor')}
+                                        {colorField('Tile background', 'tileBackground')}
+                                        {colorField('Primary bar', 'primaryColor')}
+                                        {colorField('Secondary bar', 'secondaryColor')}
+                                        {colorField('Primary pointer', 'primaryPointerColor')}
+                                        {colorField('Secondary pointer', 'secondaryPointerColor')}
+                                        {colorField('Hub', 'hubColor')}
+                                    </Stack>
+                                </Section>
+
+                                <Section title="Gradient" subtitle="Segment gradient behavior">
+                                    <Box className="switch-grid">{switchField('Gradient enabled', 'gradientEnabled')}</Box>
+                                    <FormControl size="small" fullWidth disabled={!config.gradientEnabled}>
+                                        <InputLabel>Gradient type</InputLabel>
+                                        <Select value={config.gradientType} label="Gradient type" onChange={(event) => update('gradientType', event.target.value as GradientType)}>
+                                            <MenuItem value="tile">Tile</MenuItem>
+                                            <MenuItem value="full">Full</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Section>
+
+                                <Section title="Geometry" subtitle="Radii and chart proportions">
+                                    {sliderField('Tile inner radius', 'tileInnerRadius', 0.1, 0.95, 0.01)}
+                                    {sliderField('Tile outer radius', 'tileOuterRadius', 0.2, 1, 0.01)}
+                                    {sliderField('Bar inner radius', 'barInnerRadius', 0.1, 0.9, 0.01)}
+                                    {sliderField('Bar outer radius', 'barOuterRadius', 0.2, 1, 0.01)}
+                                    {sliderField('Hub scale', 'hubScale', 0.1, 1.5, 0.05)}
+                                </Section>
+                            </Stack>
+                        )}
+
+                        {tab === 2 && (
+                            <Stack spacing={2}>
+                                <Accordion defaultExpanded disableGutters>
+                                    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon/>}>
+                                        <Box>
+                                            <Typography fontWeight={700}>Pointers</Typography>
+                                            <Typography variant="caption" color="text.secondary">Visibility, size and stroke</Typography>
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Stack spacing={2}>
+                                            <Box className="switch-grid">
+                                                {switchField('Primary pointer', 'primaryPointerEnabled')}
+                                                {switchField('Secondary pointer', 'secondaryPointerEnabled')}
+                                            </Box>
+                                            {sliderField('Primary pointer scale', 'primaryPointerScale', 0.1, 2, 0.05)}
+                                            {sliderField('Primary stroke scale', 'primaryPointerStrokeScale', 0.1, 3, 0.05)}
+                                            {sliderField('Secondary pointer scale', 'secondaryPointerScale', 0.1, 2, 0.05)}
+                                            {sliderField('Secondary stroke scale', 'secondaryPointerStrokeScale', 0.1, 3, 0.05)}
+                                        </Stack>
+                                    </AccordionDetails>
+                                </Accordion>
+
+                                <Accordion defaultExpanded disableGutters>
+                                    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon/>}>
+                                        <Box>
+                                            <Typography fontWeight={700}>Tooltip layers</Typography>
+                                            <Typography variant="caption" color="text.secondary">Labels and layer-specific modes</Typography>
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Stack spacing={2}>
+                                            <TooltipConfigRow label="Tiles" value={config.tileTooltipLabel} mode={config.tileTooltipMode} onLabel={(value) => update('tileTooltipLabel', value)} onMode={(value) => update('tileTooltipMode', value)}/>
+                                            <TooltipConfigRow label="Primary" value={config.primaryTooltipLabel} mode={config.primaryTooltipMode} onLabel={(value) => update('primaryTooltipLabel', value)} onMode={(value) => update('primaryTooltipMode', value)}/>
+                                            <TooltipConfigRow label="Secondary" value={config.secondaryTooltipLabel} mode={config.secondaryTooltipMode} onLabel={(value) => update('secondaryTooltipLabel', value)} onMode={(value) => update('secondaryTooltipMode', value)}/>
+                                        </Stack>
+                                    </AccordionDetails>
+                                </Accordion>
+
+                                <Accordion disableGutters>
+                                    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon/>}>
+                                        <Box>
+                                            <Typography fontWeight={700}>Raw values</Typography>
+                                            <Typography variant="caption" color="text.secondary">Quick numeric access for exact tuning</Typography>
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Box className="control-grid">
+                                            {numberField('Tile inner radius', 'tileInnerRadius', {min: 0, max: 1, step: 0.01})}
+                                            {numberField('Tile outer radius', 'tileOuterRadius', {min: 0, max: 1, step: 0.01})}
+                                            {numberField('Bar inner radius', 'barInnerRadius', {min: 0, max: 1, step: 0.01})}
+                                            {numberField('Bar outer radius', 'barOuterRadius', {min: 0, max: 1, step: 0.01})}
+                                            {numberField('Hub scale', 'hubScale', {min: 0, step: 0.05})}
+                                            {numberField('Animation duration', 'animationDuration', {min: 0, step: 50})}
+                                        </Box>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Stack>
+                        )}
+                    </Box>
+                </Paper>
+            </Box>
+        </Box>
     );
 }
 
+function Section({title, subtitle, children}: {title: string; subtitle?: string; children: React.ReactNode}) {
+    return (
+        <Box className="section-card">
+            <Box mb={2}>
+                <Typography fontWeight={700}>{title}</Typography>
+                {subtitle && <Typography variant="caption" color="text.secondary">{subtitle}</Typography>}
+            </Box>
+            {children}
+        </Box>
+    );
+}
+
+function TooltipConfigRow({
+                              label,
+                              value,
+                              mode,
+                              onLabel,
+                              onMode,
+                          }: {
+    label: string;
+    value: string;
+    mode: TooltipMode;
+    onLabel: (value: string) => void;
+    onMode: (value: TooltipMode) => void;
+}) {
+    return (
+        <Box>
+            <Typography variant="caption" color="text.secondary" sx={{display: 'block', mb: 0.75}}>{label}</Typography>
+            <Stack direction={{xs: 'column', sm: 'row'}} spacing={1}>
+                <TextField fullWidth size="small" label="Label" value={value} onChange={(event) => onLabel(event.target.value)}/>
+                <FormControl size="small" sx={{minWidth: 120}}>
+                    <InputLabel>Mode</InputLabel>
+                    <Select value={mode} label="Mode" onChange={(event) => onMode(event.target.value as TooltipMode)}>
+                        <MenuItem value="self">Self</MenuItem>
+                        <MenuItem value="all">All</MenuItem>
+                    </Select>
+                </FormControl>
+            </Stack>
+        </Box>
+    );
+}
 
 export default App;
