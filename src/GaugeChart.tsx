@@ -58,8 +58,8 @@ const Gauge: React.FC<GaugeChartProps> = (props) => {
     );
 
     const resolved = useMemo(
-        () => resolveLayers(props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep),
-        [props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep],
+        () => resolveLayers(props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep, settings.hideCrowdedEndTick),
+        [props.layers, props.scale, layout.radius, mergedTheme, settings.tickStep, settings.hideCrowdedEndTick],
     );
 
     const {tooltip, hoveredLayerId, getLayerHandlers, getLayerOpacity} = useGaugeInteraction({
