@@ -1,5 +1,6 @@
 // Export main component
 export {default as GaugeChart} from './GaugeChart';
+export {default as BarChart} from './BarChart';
 
 // Export types
 export type {
@@ -24,6 +25,10 @@ export type {
     TooltipState,
     TooltipItem,
     GaugeSize,
+    BarChartProps,
+    BarLayer,
+    BarOrientation,
+    BarConfig,
 } from './types';
 
 export type {
@@ -38,6 +43,8 @@ export type {
 export {formatValue, colorSelector} from './utils/gaugeUtils';
 export {calculatePointer, normalize, buildArcPath, valueToAngle} from './utils/gaugeCalculations';
 export {computeGaugeLayout, computeGaugeLayoutFromSize, resolveSizePreset} from './utils/computeGaugeLayout';
+export {computeBarLayout, computeBarLayoutFromSize} from './utils/computeBarLayout';
+export {resolveBarTrackBounds} from './core/barGeometry';
 export {resolveLayerRadii} from './core/gaugeGeometry'
 export {computeTileSegments} from './utils/computeTileSegment'
 export {useAnimatedSvgAttribute} from './hooks/useAnimatedSvgAttribute'

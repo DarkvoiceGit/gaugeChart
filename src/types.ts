@@ -17,7 +17,7 @@ export type GaugeSize =
 
 export type LayerValueMode = 'absolute' | 'cumulative' | 'offset'
 export type LayerRenderMode = 'solid' | 'segmented'
-export type LayerRadiusGrow  = 'inward' | 'outward' | 'center'
+export type LayerRadiusGrow = 'inward' | 'outward' | 'center'
 
 export type PointerStlye = 'arrow' | 'needle'
 
@@ -54,10 +54,9 @@ export interface LayerGradientConfig {
     type?: GradientType | string;
 }
 
-export interface GaugeLayer {
+export interface BaseLayer {
     id: string;
     value: number;
-    radius: number;
     thickness: number;
     grow?: LayerRadiusGrow;
     render: LayerRenderMode;
@@ -70,12 +69,16 @@ export interface GaugeLayer {
     backgroundColor?: string;
     borderColor?: string;
     borderThickness?: number;
-    gradient?: LayerGradientConfig,
+    gradient?: LayerGradientConfig;
+    tooltip?: LayerTooltipConfig;
+    hoverable?: boolean;
+    zIndex?: number;
+}
+
+export interface GaugeLayer extends BaseLayer {
+    radius: number;
     arc?: Partial<ArcConfig>,
     pointer?: LayerPointerConfig,
-    tooltip?: LayerTooltipConfig,
-    hoverable?: boolean,
-    zIndex?: number,
 }
 
 export interface GaugeZone {
@@ -148,5 +151,41 @@ export interface GaugeChartProps {
     formatters?: GaugeFormatters;
     animation?: GaugeAnimationConfig;
     theme?: DeepPartial<GaugeTheme>;
+    tooltipScale?: number;
+    debugMode?: boolean;
+}
+
+export type BarOrientation = 'horizontal' | 'vertical';
+
+export interface BarConfig {
+    cornerRadius?: number;
+    gap?: number;
+    pad?: number;
+}
+
+export interface BarRect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rx?: number;
+}
+
+export interface BarLayer extends BaseLayer {
+    track: number;
+    bar?: Partial<BarConfig>;
+}
+
+export interface BarChartProps {
+    orientation?: BarOrientation;
+    size?: GaugeSize;
+    scale: GaugeScale;
+    layers: BarLayer[];
+    ticks?: GaugeTicksConfig;
+    interaction?: GaugeInteractionConfig;
+    formatters?: GaugeFormatters;
+    animation?: GaugeAnimationConfig;
+    theme?: DeepPartial<GaugeTheme>;
+    tooltipScale?: number;
     debugMode?: boolean;
 }

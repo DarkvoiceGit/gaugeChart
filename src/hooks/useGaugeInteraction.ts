@@ -1,6 +1,6 @@
 import type {MouseEvent as ReactMouseEvent} from 'react';
-import {useCallback, useState, type RefObject} from 'react';
-import type {ResolvedLayer} from '../core/resolveLayers';
+import {useCallback, useState} from 'react';
+import type {ResolvedInteractiveLayer} from '../core/resolvedLayerBase';
 import type {GaugeFormatters, TooltipItem, TooltipState} from '../types';
 import type {GaugeThemeInteraction} from '../types/theme.types';
 import {
@@ -22,8 +22,7 @@ export interface GaugeInteractionState {
 }
 
 export interface UseGaugeInteractionOptions {
-    svgRef: RefObject<SVGSVGElement | null>;
-    layers: ResolvedLayer[];
+    layers: ResolvedInteractiveLayer[];
     formatters?: GaugeFormatters;
     tooltipMode: 'layer' | 'all';
     tooltipsEnabled: boolean;
@@ -36,7 +35,6 @@ export function useGaugeInteraction(options: UseGaugeInteractionOptions): GaugeI
     getLayerOpacity: (layerId: string) => number;
 } {
     const {
-        svgRef,
         layers,
         formatters,
         tooltipMode,
@@ -49,13 +47,13 @@ export function useGaugeInteraction(options: UseGaugeInteractionOptions): GaugeI
     const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
     const showTooltip = useCallback((event: ReactMouseEvent, text: TooltipItem[]) => {
-        setTooltip(createTooltipState(event, svgRef.current, text));
-    }, [svgRef]);
+        setTooltip(createTooltipState(event,  text));
+    }, []);
 
     const moveTooltip = useCallback((event: ReactMouseEvent) => {
-        const position = updateTooltipPositionState(event, svgRef.current);
+        const position = updateTooltipPositionState(event);
         setTooltip((previous) => previous ? {...previous, ...position} : null);
-    }, [svgRef]);
+    }, []);
 
     const hideTooltip = useCallback(() => {
         setTooltip(null);

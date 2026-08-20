@@ -1,5 +1,5 @@
 import type {MouseEvent as ReactMouseEvent} from 'react';
-import type {ResolvedLayer} from '../core/resolveLayers';
+import type {ResolvedInteractiveLayer} from '../core/resolvedLayerBase';
 import type {GaugeFormatters, TooltipItem, TooltipState} from '../types';
 import {formatValue} from './gaugeUtils';
 
@@ -7,20 +7,12 @@ function formatTooltipLabel(label: string | undefined, fallback: string): string
     return label ? `${label}:` : fallback;
 }
 
-function getRelativePointerPosition(
-    event: ReactMouseEvent,
-    svgElement: SVGSVGElement | null,
-): { x: number; y: number } {
-    const bbox = svgElement?.getBoundingClientRect() ?? {left: 0, top: 0};
-    return {
-        x: event.clientX - bbox.left,
-        y: event.clientY - bbox.top,
-    };
+function getClientPointerPosition(event: ReactMouseEvent): { x: number, y: number } {
+    return {x: event.clientX, y: event.clientY};
 }
 
-
 export function buildLayerTooltipContent(options: {
-    layers: ResolvedLayer[];
+    layers: ResolvedInteractiveLayer[];
     hoveredLayerId: string;
     tooltipMode: 'layer' | 'all';
     formatters?: GaugeFormatters;
@@ -33,7 +25,7 @@ export function buildLayerTooltipContent(options: {
 
     const mode = hoveredLayer.tooltip?.mode ?? (options.tooltipMode === 'all' ? 'all' : 'self');
 
-    let visibleLayers: ResolvedLayer[] = [];
+    let visibleLayers: ResolvedInteractiveLayer[] = [];
 
     switch (mode) {
         case 'none':
@@ -58,10 +50,9 @@ export function buildLayerTooltipContent(options: {
 
 export function createTooltipState(
     event: ReactMouseEvent,
-    svgElement: SVGSVGElement | null,
     text: TooltipItem[],
 ): TooltipState {
-    const position = getRelativePointerPosition(event, svgElement);
+    const position = getClientPointerPosition(event);
     return {
         text,
         x: position.x,
@@ -71,7 +62,6 @@ export function createTooltipState(
 
 export function updateTooltipPositionState(
     event: ReactMouseEvent,
-    svgElement: SVGSVGElement | null,
 ): { x: number; y: number } {
-    return getRelativePointerPosition(event, svgElement);
+    return getClientPointerPosition(event);
 }
