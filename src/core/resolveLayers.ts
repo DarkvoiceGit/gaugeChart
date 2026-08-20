@@ -274,6 +274,7 @@ export function resolveLayers(
     baseRadius: number,
     theme: GaugeTheme,
     tickStep?: number,
+    hideCrowdedEndTick?: boolean | number,
     scaleFactor = 1,
 ): ResolvedGaugeLayers {
     const max = scale.max;
@@ -401,7 +402,7 @@ export function resolveLayers(
     return {
         layers: resolvedLayers,
         colorScale,
-        tickLabels: computeTickLabelValues(scaleMin, max, resolvedTickStep),
+        tickLabels: computeTickLabelValues(scaleMin, max, resolvedTickStep, {hideCrowdedEndTick}),
         tileAnglesByLayerId,
         gradientLayerIds,
         pointerMarkers: pointers.filter((pointer) => pointer.style === 'arrow').map((pointer)=>({

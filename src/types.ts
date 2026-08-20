@@ -98,6 +98,12 @@ export interface GaugeInteractionConfig {
 export interface GaugeTicksConfig {
     enabled?: boolean;
     step?: number;
+    /**
+     * hide the last step tick before max when it sits too close to max
+     * true uses a default threshold of haf a step ; a number sets a custom
+     * fraction of step eg( 0.5)
+     * */
+    hideCrowdedEndTick?: boolean | number;
     fontSize?: string;
     labelColor?: string;
     tickColor?: string;
