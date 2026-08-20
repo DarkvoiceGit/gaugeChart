@@ -39,3 +39,21 @@ export function assertValidBarLayerTrack(layer: { id: string; track: number; thi
         throw new RangeError(`layer ${layer.id}: resolved inner track must be less than outer track`);
     }
 }
+
+export function assertValidBarLayers(layers: BarLayer[]): void {
+    if (layers.length === 0) {
+        throw new RangeError('At least one bar layer is required');
+    }
+
+    const ids = new Set<string>();
+    for (const layer of layers) {
+        if (!layer.id.trim()) {
+            throw new RangeError('Each bar layer must have a non-empty id');
+        }
+        if (ids.has(layer.id)) {
+            throw new RangeError(`Duplicate bar layer id: ${layer.id}`);
+        }
+        ids.add(layer.id);
+        assertValidBarLayerTrack(layer);
+    }
+}

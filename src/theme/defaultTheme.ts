@@ -42,7 +42,9 @@ export const DEFAULT_THEME: GaugeTheme = {
             innerScale: 0.92,
             outerScale: 1.07,
             tileInnerOffset: 15,
-            tileOuterOffset: 10
+            tileOuterOffset: 10,
+            barThicknessOffset: 4,
+            tileThicknessOffset: 3
         },
         hoverHitAreaInnerRatio: 0.72
     },
@@ -118,6 +120,13 @@ export const DEFAULT_THEME: GaugeTheme = {
     },
     animation: {
         durationMs: 300
+    },
+    bar: {
+        cornerRadius: 4,
+        solidGap: 0,
+        tileGap: 2,
+        tilePad: 0,
+        trackPadding: 8,
     },
     sizesPresets: {
         xxs: {width: 160, height: 120},

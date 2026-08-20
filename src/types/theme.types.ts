@@ -51,6 +51,8 @@ export interface GaugeThemeHoverHighlight {
     outerScale: number;
     tileInnerOffset: number;
     tileOuterOffset: number;
+    barThicknessOffset: number;
+    tileThicknessOffset: number;
 }
 
 export interface GaugeThemeInteraction {
@@ -184,8 +186,16 @@ export interface GaugeTheme {
     options: GaugeThemeOptions
     animation: GaugeThemeAnimation
     sizesPresets: GaugeThemeSizePresets
+    bar: GaugeThemeBar
 }
 
 export type DeepPartial<T> = {
     [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K]
+}
+export interface GaugeThemeBar {
+    cornerRadius: number;
+    solidGap: number;
+    tileGap: number;
+    tilePad: number;
+    trackPadding: number;
 }
