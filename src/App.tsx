@@ -30,10 +30,13 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import {useMemo, useState} from 'react';
-import {GaugeChart} from '@darkvoice/gauge-chart';
+import {BarChart, GaugeChart, TileFillStyle} from '@darkvoice/gauge-chart';
 
 type GradientType = 'full' | 'tile';
 type TooltipMode = 'all' | 'self';
+type ChartType = 'gauge' | 'bar';
+type BarOrientation = 'horizontal' | 'vertical';
+type PointerStyle = 'arrow' | 'needle';
 type Unit = 'none' | 'km' | 'mile' | 'celsius' | 'fahrenheit' | 'day';
 type Formatter =
     | 'none'
@@ -45,10 +48,15 @@ type Formatter =
     | 'dayHour';
 
 type PlaygroundConfig = {
+    chartType: ChartType;
+    barOrientation: BarOrientation;
     primaryValue: number;
     secondaryValue: number;
     maxValue: number;
     tiles: number;
+    tileFillStyle: TileFillStyle;
+    tileBorderColor: string;
+    tileBorderThickness: number;
     tileInnerRadius: number;
     tileOuterRadius: number;
     barInnerRadius: number;
@@ -64,11 +72,21 @@ type PlaygroundConfig = {
     gradientType: GradientType;
     primaryPointerEnabled: boolean;
     secondaryPointerEnabled: boolean;
+    primaryPointerStyle: PointerStyle;
+    secondaryPointerStyle: PointerStyle;
+    primaryPointerLengthRatio: number;
+    secondaryPointerLengthRatio: number;
     primaryPointerScale: number;
     secondaryPointerScale: number;
     primaryPointerStrokeScale: number;
     secondaryPointerStrokeScale: number;
     hubScale: number;
+    barTileTrack: number;
+    barPrimaryTrack: number;
+    barSecondaryTrack: number;
+    barGap: number;
+    barPad: number;
+    barCornerRadius: number;
     ticksEnabled: boolean;
     tooltipsEnabled: boolean;
     hoverDimming: boolean;
@@ -86,10 +104,15 @@ type PlaygroundConfig = {
 };
 
 const DEFAULT_CONFIG: PlaygroundConfig = {
+    chartType: 'gauge',
+    barOrientation: 'horizontal',
     primaryValue: 40,
     secondaryValue: 35,
     maxValue: 100,
     tiles: 20,
+    tileFillStyle: TileFillStyle.FILLED,
+    tileBorderColor: '#0b1020',
+    tileBorderThickness: 1,
     tileInnerRadius: 0.72,
     tileOuterRadius: 1,
     barInnerRadius: 0.58,
@@ -105,11 +128,21 @@ const DEFAULT_CONFIG: PlaygroundConfig = {
     gradientType: 'tile',
     primaryPointerEnabled: true,
     secondaryPointerEnabled: true,
+    primaryPointerStyle: 'arrow',
+    secondaryPointerStyle: 'arrow',
+    primaryPointerLengthRatio: 1,
+    secondaryPointerLengthRatio: 1,
     primaryPointerScale: 1,
     secondaryPointerScale: 1,
     primaryPointerStrokeScale: 1,
     secondaryPointerStrokeScale: 1,
     hubScale: 0.5,
+    barTileTrack: 0.86,
+    barPrimaryTrack: 0.62,
+    barSecondaryTrack: 0.62,
+    barGap: 4,
+    barPad: 2,
+    barCornerRadius: 6,
     ticksEnabled: true,
     tooltipsEnabled: true,
     hoverDimming: true,
@@ -245,7 +278,135 @@ function App() {
 
     const totalValue = config.primaryValue + config.secondaryValue;
 
-    const codeSnippet = useMemo(() => `\n<GaugeChart\n  scale={{ min: 0, max: ${config.maxValue} }}\n  layers={[\n    {\n      id: 'tiles',\n      value: ${totalValue},\n      innerRadius: ${config.tileInnerRadius},\n      outerRadius: ${config.tileOuterRadius},\n      render: 'segmented',\n      segments: ${config.tiles},\n      color: '${config.tileColor}',\n      backgroundColor: '${config.tileBackground}',\n      gradient: { enabled: ${config.gradientEnabled}, type: '${config.gradientType}' },\n      hoverable: true,\n      tooltip: { label: '${config.tileTooltipLabel}', mode: '${config.tileTooltipMode}' },\n      zIndex: 3,\n    },\n    {\n      id: 'primary',\n      value: ${config.primaryValue},\n      valueMode: 'absolute',\n      innerRadius: ${config.barInnerRadius},\n      outerRadius: ${config.barOuterRadius},\n      render: 'solid',\n      color: '${config.primaryColor}',\n      backgroundColor: 'transparent',\n      pointer: { enabled: ${config.primaryPointerEnabled}, color: '${config.primaryPointerColor}', scale: ${config.primaryPointerScale}, strokeScale: ${config.primaryPointerStrokeScale} },\n      tooltip: { label: '${config.primaryTooltipLabel}', mode: '${config.primaryTooltipMode}' },\n      hoverable: true,\n      zIndex: 2,\n    },\n    {\n      id: 'secondary',\n      value: ${config.secondaryValue},\n      valueMode: 'cumulative',\n      baseLayerId: 'primary',\n      innerRadius: ${config.barInnerRadius},\n      outerRadius: ${config.barOuterRadius},\n      render: 'solid',\n      color: '${config.secondaryColor}',\n      backgroundColor: 'transparent',\n      pointer: { enabled: ${config.secondaryPointerEnabled}, color: '${config.secondaryPointerColor}', scale: ${config.secondaryPointerScale}, strokeScale: ${config.secondaryPointerStrokeScale} },\n      tooltip: { label: '${config.secondaryTooltipLabel}', mode: '${config.secondaryTooltipMode}' },\n      hoverable: true,\n      zIndex: 1,\n    },\n  ]}\n  ticks={{ enabled: ${config.ticksEnabled} }}\n  hub={{ color: '${config.hubColor}', scale: ${config.hubScale} }}\n  animation={{ enabled: ${config.animationEnabled}, durationMs: ${config.animationDuration} }}\n  interaction={{ tooltips: ${config.tooltipsEnabled}, tooltipMode: 'all', hoverDimming: ${config.hoverDimming} }}\n  size="xl"\n  debugMode={${config.debugMode}}\n/>`.trim(), [config, totalValue]);
+    // Keep BarChart tracks valid even during HMR or while editing numeric inputs.
+    // The package requires every track to be a finite positive number.
+    const positiveTrack = (value: number | undefined, fallback: number) =>
+        Number.isFinite(value) && (value as number) > 0 ? (value as number) : fallback;
+
+    const barTileTrack = positiveTrack(config.barTileTrack, DEFAULT_CONFIG.barTileTrack);
+    const barPrimaryTrack = positiveTrack(config.barPrimaryTrack, DEFAULT_CONFIG.barPrimaryTrack);
+    const barSecondaryTrack = positiveTrack(config.barSecondaryTrack, DEFAULT_CONFIG.barSecondaryTrack);
+
+    const codeSnippet = useMemo(() => {
+        const commonTail = `  ticks={{ enabled: ${config.ticksEnabled} }}\n  animation={{ enabled: ${config.animationEnabled}, durationMs: ${config.animationDuration} }}\n  interaction={{ tooltips: ${config.tooltipsEnabled}, tooltipMode: 'all', hoverDimming: ${config.hoverDimming} }}\n  size="xl"\n  debugMode={${config.debugMode}}`;
+
+        if (config.chartType === 'bar') {
+            return `
+import { BarChart, TileFillStyle } from '@darkvoice/gauge-chart';
+
+<BarChart
+  orientation="${config.barOrientation}"
+  scale={{ min: 0, max: ${config.maxValue} }}
+  layers={[
+    {
+      id: 'tiles',
+      value: ${totalValue},
+      track: ${barTileTrack},
+      thickness: ${Math.max(0.01, config.tileOuterRadius - config.tileInnerRadius)},
+      render: 'segmented',
+      segments: ${config.tiles},
+      color: '${config.tileColor}',
+      backgroundColor: '${config.tileBackground}',
+      fillStyle: TileFillStyle.${config.tileFillStyle.toUpperCase()},
+      borderColor: '${config.tileBorderColor}',
+      borderThickness: ${config.tileBorderThickness},
+      gradient: { enabled: ${config.gradientEnabled}, type: '${config.gradientType}' },
+      bar: { gap: ${config.barGap}, pad: ${config.barPad}, cornerRadius: ${config.barCornerRadius} },
+      tooltip: { label: '${config.tileTooltipLabel}', mode: '${config.tileTooltipMode}' },
+      hoverable: true,
+      zIndex: 3,
+    },
+    {
+      id: 'primary',
+      value: ${config.primaryValue},
+      valueMode: 'absolute',
+      track: ${barPrimaryTrack},
+      thickness: ${Math.max(0.01, config.barOuterRadius - config.barInnerRadius)},
+      render: 'solid',
+      color: '${config.primaryColor}',
+      backgroundColor: 'transparent',
+      bar: { gap: ${config.barGap}, pad: ${config.barPad}, cornerRadius: ${config.barCornerRadius} },
+      tooltip: { label: '${config.primaryTooltipLabel}', mode: '${config.primaryTooltipMode}' },
+      hoverable: true,
+      zIndex: 2,
+    },
+    {
+      id: 'secondary',
+      value: ${config.secondaryValue},
+      valueMode: 'cumulative',
+      baseLayerId: 'primary',
+      track: ${barSecondaryTrack},
+      thickness: ${Math.max(0.01, config.barOuterRadius - config.barInnerRadius)},
+      render: 'solid',
+      color: '${config.secondaryColor}',
+      backgroundColor: 'transparent',
+      bar: { gap: ${config.barGap}, pad: ${config.barPad}, cornerRadius: ${config.barCornerRadius} },
+      tooltip: { label: '${config.secondaryTooltipLabel}', mode: '${config.secondaryTooltipMode}' },
+      hoverable: true,
+      zIndex: 1,
+    },
+  ]}
+${commonTail}
+/>`.trim();
+        }
+
+        return `
+import { GaugeChart, TileFillStyle } from '@darkvoice/gauge-chart';
+
+<GaugeChart
+  scale={{ min: 0, max: ${config.maxValue} }}
+  layers={[
+    {
+      id: 'tiles',
+      value: ${totalValue},
+      radius: ${config.tileOuterRadius},
+      thickness: ${Math.max(0.01, config.tileOuterRadius - config.tileInnerRadius)},
+      render: 'segmented',
+      segments: ${config.tiles},
+      color: '${config.tileColor}',
+      backgroundColor: '${config.tileBackground}',
+      fillStyle: TileFillStyle.${config.tileFillStyle.toUpperCase()},
+      borderColor: '${config.tileBorderColor}',
+      borderThickness: ${config.tileBorderThickness},
+      gradient: { enabled: ${config.gradientEnabled}, type: '${config.gradientType}' },
+      tooltip: { label: '${config.tileTooltipLabel}', mode: '${config.tileTooltipMode}' },
+      hoverable: true,
+      zIndex: 3,
+    },
+    {
+      id: 'primary',
+      value: ${config.primaryValue},
+      valueMode: 'absolute',
+      radius: ${config.barOuterRadius},
+      thickness: ${Math.max(0.01, config.barOuterRadius - config.barInnerRadius)},
+      render: 'solid',
+      color: '${config.primaryColor}',
+      backgroundColor: 'transparent',
+      pointer: { enabled: ${config.primaryPointerEnabled}, style: '${config.primaryPointerStyle}', color: '${config.primaryPointerColor}', scale: ${config.primaryPointerScale}, strokeScale: ${config.primaryPointerStrokeScale}, lengthRatio: ${config.primaryPointerLengthRatio} },
+      tooltip: { label: '${config.primaryTooltipLabel}', mode: '${config.primaryTooltipMode}' },
+      hoverable: true,
+      zIndex: 2,
+    },
+    {
+      id: 'secondary',
+      value: ${config.secondaryValue},
+      valueMode: 'cumulative',
+      baseLayerId: 'primary',
+      radius: ${config.barOuterRadius},
+      thickness: ${Math.max(0.01, config.barOuterRadius - config.barInnerRadius)},
+      render: 'solid',
+      color: '${config.secondaryColor}',
+      backgroundColor: 'transparent',
+      pointer: { enabled: ${config.secondaryPointerEnabled}, style: '${config.secondaryPointerStyle}', color: '${config.secondaryPointerColor}', scale: ${config.secondaryPointerScale}, strokeScale: ${config.secondaryPointerStrokeScale}, lengthRatio: ${config.secondaryPointerLengthRatio} },
+      tooltip: { label: '${config.secondaryTooltipLabel}', mode: '${config.secondaryTooltipMode}' },
+      hoverable: true,
+      zIndex: 1,
+    },
+  ]}
+  hub={{ color: '${config.hubColor}', scale: ${config.hubScale} }}
+${commonTail}
+/>`.trim();
+    }, [config, totalValue]);
 
     const copyCode = async () => {
         await navigator.clipboard.writeText(codeSnippet);
@@ -265,7 +426,11 @@ function App() {
             label={label}
             value={config[key] as number}
             slotProps={{htmlInput: {min: options?.min, max: options?.max, step: options?.step}}}
-            onChange={(event) => update(key, Number(event.target.value) as never)}
+            onChange={(event) => {
+                if (event.target.value === '') return;
+                const next = Number(event.target.value);
+                if (Number.isFinite(next)) update(key, next as never);
+            }}
         />
     );
 
@@ -333,7 +498,7 @@ function App() {
                 <Stack direction="row" spacing={1.5} alignItems="center">
                     <Box className="brand-mark"><AutoAwesomeRoundedIcon fontSize="small"/></Box>
                     <Box>
-                        <Typography className="brand-title">Gauge Chart Playground</Typography>
+                        <Typography className="brand-title">Gauge / Bar Chart Playground</Typography>
                         <Typography variant="caption" color="text.secondary">@darkvoice/gauge-chart · live configurator</Typography>
                     </Box>
                 </Stack>
@@ -369,88 +534,182 @@ function App() {
 
                     <Box className="gauge-stage">
                         <Box className="gauge-glow"/>
-                        <GaugeChart
-                            scale={{min: 0, max: config.maxValue}}
-                            layers={[
-                                {
-                                    id: 'tiles',
-                                    value: totalValue,
-                                    // Radius ist der äußere Bereich:
-                                    radius: config.tileOuterRadius,
-                                    // Thickness ist die Differenz zwischen Außen- und Innenradius:
-                                    thickness: Math.max(0.01, config.tileOuterRadius - config.tileInnerRadius),
-                                    render: 'segmented',
-                                    segments: config.tiles,
-                                    color: config.tileColor,
-                                    backgroundColor: config.tileBackground,
-                                    gradient: { enabled: config.gradientEnabled, type: config.gradientType },
-                                    hoverable: true,
-                                    tooltip: { label: config.tileTooltipLabel, mode: config.tileTooltipMode},
-                                    zIndex: 3,
-                                },
-                                {
-                                    id: 'primary',
-                                    value: config.primaryValue,
-                                    valueMode: 'absolute',
-                                    radius: config.barOuterRadius,
-                                    thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
-                                    render: 'solid',
-                                    color: config.primaryColor,
-                                    backgroundColor: 'transparent',
-                                    pointer: {
-                                        enabled: config.primaryPointerEnabled,
-                                        color: config.primaryPointerColor,
-                                        scale: config.primaryPointerScale,
-                                        strokeScale: config.primaryPointerStrokeScale,
+                        {config.chartType === 'gauge' ? (
+                            <GaugeChart
+                                scale={{min: 0, max: config.maxValue}}
+                                layers={[
+                                    {
+                                        id: 'tiles',
+                                        value: totalValue,
+                                        radius: config.tileOuterRadius,
+                                        thickness: Math.max(0.01, config.tileOuterRadius - config.tileInnerRadius),
+                                        render: 'segmented',
+                                        segments: config.tiles,
+                                        color: config.tileColor,
+                                        backgroundColor: config.tileBackground,
+                                        fillStyle: config.tileFillStyle,
+                                        borderColor: config.tileBorderColor,
+                                        borderThickness: config.tileBorderThickness,
+                                        gradient: {enabled: config.gradientEnabled, type: config.gradientType},
+                                        hoverable: true,
+                                        tooltip: {label: config.tileTooltipLabel, mode: config.tileTooltipMode},
+                                        zIndex: 3,
                                     },
-                                    tooltip: { label: config.primaryTooltipLabel, mode: config.primaryTooltipMode },
-                                    hoverable: true,
-                                    zIndex: 2,
-                                },
-                                {
-                                    id: 'secondary',
-                                    value: config.secondaryValue,
-                                    valueMode: 'cumulative',
-                                    baseLayerId: 'primary',
-                                    radius: config.barOuterRadius,
-                                    thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
-                                    render: 'solid',
-                                    color: config.secondaryColor,
-                                    backgroundColor: 'transparent',
-                                    pointer: {
-                                        enabled: config.secondaryPointerEnabled,
-                                        color: config.secondaryPointerColor,
-                                        scale: config.secondaryPointerScale,
-                                        strokeScale: config.secondaryPointerStrokeScale,
+                                    {
+                                        id: 'primary',
+                                        value: config.primaryValue,
+                                        valueMode: 'absolute',
+                                        radius: config.barOuterRadius,
+                                        thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
+                                        render: 'solid',
+                                        color: config.primaryColor,
+                                        backgroundColor: 'transparent',
+                                        pointer: {
+                                            enabled: config.primaryPointerEnabled,
+                                            style: config.primaryPointerStyle,
+                                            color: config.primaryPointerColor,
+                                            scale: config.primaryPointerScale,
+                                            strokeScale: config.primaryPointerStrokeScale,
+                                            lengthRatio: config.primaryPointerLengthRatio,
+                                        },
+                                        tooltip: {label: config.primaryTooltipLabel, mode: config.primaryTooltipMode},
+                                        hoverable: true,
+                                        zIndex: 2,
                                     },
-                                    tooltip: { label: config.secondaryTooltipLabel, mode: config.secondaryTooltipMode },
-                                    hoverable: true,
-                                    zIndex: 1,
-                                },
-                            ]}
-                            ticks={{enabled: config.ticksEnabled}}
-                            hub={{color: config.hubColor, scale: config.hubScale}}
-                            animation={{enabled: config.animationEnabled, durationMs: config.animationDuration}}
-                            interaction={{
-                                tooltips: config.tooltipsEnabled,
-                                tooltipMode: 'all',
-                                hoverDimming: config.hoverDimming,
-                            }}
-                            size="xl"
-                            debugMode={config.debugMode}
-                            tooltipScale={1}
-                            theme={{
-                                tooltip: {
-                                    fontSize: '12px',    // 👈 Oder hier direkt im Theme anpassen
-                                    padding: '6px 10px',
-                                    minWidth: '100px',
-                                }
-                            }}
-                            formatters={{
-                                value: (value: number) => formatValue(value, config.unit, config.formatter),
-                                tick: (value: number) => formatValue(value, config.unit, config.formatter),
-                            }}
-                        />
+                                    {
+                                        id: 'secondary',
+                                        value: config.secondaryValue,
+                                        valueMode: 'cumulative',
+                                        baseLayerId: 'primary',
+                                        radius: config.barOuterRadius,
+                                        thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
+                                        render: 'solid',
+                                        color: config.secondaryColor,
+                                        backgroundColor: 'transparent',
+                                        pointer: {
+                                            enabled: config.secondaryPointerEnabled,
+                                            style: config.secondaryPointerStyle,
+                                            color: config.secondaryPointerColor,
+                                            scale: config.secondaryPointerScale,
+                                            strokeScale: config.secondaryPointerStrokeScale,
+                                            lengthRatio: config.secondaryPointerLengthRatio,
+                                        },
+                                        tooltip: {label: config.secondaryTooltipLabel, mode: config.secondaryTooltipMode},
+                                        hoverable: true,
+                                        zIndex: 1,
+                                    },
+                                ]}
+                                ticks={{enabled: config.ticksEnabled}}
+                                hub={{color: config.hubColor, scale: config.hubScale}}
+                                animation={{enabled: config.animationEnabled, durationMs: config.animationDuration}}
+                                interaction={{
+                                    tooltips: config.tooltipsEnabled,
+                                    tooltipMode: 'all',
+                                    hoverDimming: config.hoverDimming,
+                                }}
+                                size="xl"
+                                debugMode={config.debugMode}
+                                tooltipScale={1}
+                                theme={{
+                                    tooltip: {
+                                        fontSize: '12px',
+                                        padding: '6px 10px',
+                                        minWidth: '100px',
+                                    },
+                                }}
+                                formatters={{
+                                    value: (value: number) => formatValue(value, config.unit, config.formatter),
+                                    tick: (value: number) => formatValue(value, config.unit, config.formatter),
+                                }}
+                            />
+                        ) : (
+                            <BarChart
+                                orientation={config.barOrientation}
+                                scale={{min: 0, max: config.maxValue}}
+                                layers={[
+                                    {
+                                        id: 'tiles',
+                                        value: totalValue,
+                                        track: barTileTrack,
+                                        thickness: Math.max(0.01, config.tileOuterRadius - config.tileInnerRadius),
+                                        render: 'segmented',
+                                        segments: config.tiles,
+                                        color: config.tileColor,
+                                        backgroundColor: config.tileBackground,
+                                        fillStyle: config.tileFillStyle,
+                                        borderColor: config.tileBorderColor,
+                                        borderThickness: config.tileBorderThickness,
+                                        gradient: {enabled: config.gradientEnabled, type: config.gradientType},
+                                        bar: {
+                                            gap: config.barGap,
+                                            pad: config.barPad,
+                                            cornerRadius: config.barCornerRadius,
+                                        },
+                                        hoverable: true,
+                                        tooltip: {label: config.tileTooltipLabel, mode: config.tileTooltipMode},
+                                        zIndex: 3,
+                                    },
+                                    {
+                                        id: 'primary',
+                                        value: config.primaryValue,
+                                        valueMode: 'absolute',
+                                        track: barPrimaryTrack,
+                                        thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
+                                        render: 'solid',
+                                        color: config.primaryColor,
+                                        backgroundColor: 'transparent',
+                                        bar: {
+                                            gap: config.barGap,
+                                            pad: config.barPad,
+                                            cornerRadius: config.barCornerRadius,
+                                        },
+                                        tooltip: {label: config.primaryTooltipLabel, mode: config.primaryTooltipMode},
+                                        hoverable: true,
+                                        zIndex: 2,
+                                    },
+                                    {
+                                        id: 'secondary',
+                                        value: config.secondaryValue,
+                                        valueMode: 'cumulative',
+                                        baseLayerId: 'primary',
+                                        track: barSecondaryTrack,
+                                        thickness: Math.max(0.01, config.barOuterRadius - config.barInnerRadius),
+                                        render: 'solid',
+                                        color: config.secondaryColor,
+                                        backgroundColor: 'transparent',
+                                        bar: {
+                                            gap: config.barGap,
+                                            pad: config.barPad,
+                                            cornerRadius: config.barCornerRadius,
+                                        },
+                                        tooltip: {label: config.secondaryTooltipLabel, mode: config.secondaryTooltipMode},
+                                        hoverable: true,
+                                        zIndex: 1,
+                                    },
+                                ]}
+                                ticks={{enabled: config.ticksEnabled}}
+                                animation={{enabled: config.animationEnabled, durationMs: config.animationDuration}}
+                                interaction={{
+                                    tooltips: config.tooltipsEnabled,
+                                    tooltipMode: 'all',
+                                    hoverDimming: config.hoverDimming,
+                                }}
+                                size="xl"
+                                debugMode={config.debugMode}
+                                tooltipScale={1}
+                                theme={{
+                                    tooltip: {
+                                        fontSize: '12px',
+                                        padding: '6px 10px',
+                                        minWidth: '100px',
+                                    },
+                                }}
+                                formatters={{
+                                    value: (value: number) => formatValue(value, config.unit, config.formatter),
+                                    tick: (value: number) => formatValue(value, config.unit, config.formatter),
+                                }}
+                            />
+                        )}
                     </Box>
 
                     <Box className="preset-strip">
@@ -498,6 +757,36 @@ function App() {
                     <Box className="controls-scroll">
                         {tab === 0 && (
                             <Stack spacing={2.5}>
+                                <Section title="Chart" subtitle="Switch between radial gauge and linear bar chart">
+                                    <Box className="control-grid">
+                                        <FormControl size="small" fullWidth>
+                                            <InputLabel>Chart type</InputLabel>
+                                            <Select
+                                                value={config.chartType}
+                                                label="Chart type"
+                                                onChange={(event) => update('chartType', event.target.value as ChartType)}
+                                            >
+                                                <MenuItem value="gauge">Gauge</MenuItem>
+                                                <MenuItem value="bar">Bar chart</MenuItem>
+                                            </Select>
+                                        </FormControl>
+
+                                        {config.chartType === 'bar' && (
+                                            <FormControl size="small" fullWidth>
+                                                <InputLabel>Orientation</InputLabel>
+                                                <Select
+                                                    value={config.barOrientation}
+                                                    label="Orientation"
+                                                    onChange={(event) => update('barOrientation', event.target.value as BarOrientation)}
+                                                >
+                                                    <MenuItem value="horizontal">Horizontal</MenuItem>
+                                                    <MenuItem value="vertical">Vertical</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        )}
+                                    </Box>
+                                </Section>
+
                                 <Section title="Values" subtitle="Primary, secondary and scale">
                                     <Box className="control-grid">
                                         {numberField('Primary value', 'primaryValue', {min: 0})}
@@ -565,6 +854,44 @@ function App() {
                                     </Stack>
                                 </Section>
 
+                                <Section title="Tile appearance" subtitle="Filled, dotted, dashed or outlined segmented tiles">
+                                    <Stack spacing={1.5}>
+                                        <FormControl size="small" fullWidth>
+                                            <InputLabel>Tile fill style</InputLabel>
+                                            <Select
+                                                value={config.tileFillStyle}
+                                                label="Tile fill style"
+                                                onChange={(event) => update('tileFillStyle', event.target.value as TileFillStyle)}
+                                            >
+                                                <MenuItem value={TileFillStyle.FILLED}>Filled</MenuItem>
+                                                <MenuItem value={TileFillStyle.DOTTED}>Dotted</MenuItem>
+                                                <MenuItem value={TileFillStyle.DASHED}>Dashed</MenuItem>
+                                                <MenuItem value={TileFillStyle.OUTLINED}>Outlined</MenuItem>
+                                            </Select>
+                                        </FormControl>
+
+                                        <Box className="color-control">
+                                            <Box
+                                                component="input"
+                                                type="color"
+                                                value={config.tileBorderColor}
+                                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => update('tileBorderColor', event.target.value)}
+                                                className="color-swatch"
+                                                aria-label="Tile border color"
+                                            />
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                label="Tile border color"
+                                                value={config.tileBorderColor}
+                                                onChange={(event) => update('tileBorderColor', event.target.value)}
+                                            />
+                                        </Box>
+
+                                        {sliderField('Tile border thickness', 'tileBorderThickness', 0, 10, 0.25)}
+                                    </Stack>
+                                </Section>
+
                                 <Section title="Gradient" subtitle="Segment gradient behavior">
                                     <Box className="switch-grid">{switchField('Gradient enabled', 'gradientEnabled')}</Box>
                                     <FormControl size="small" fullWidth disabled={!config.gradientEnabled}>
@@ -576,38 +903,79 @@ function App() {
                                     </FormControl>
                                 </Section>
 
-                                <Section title="Geometry" subtitle="Radii and chart proportions">
-                                    {sliderField('Tile inner radius', 'tileInnerRadius', 0.1, 0.95, 0.01)}
-                                    {sliderField('Tile outer radius', 'tileOuterRadius', 0.2, 1, 0.01)}
-                                    {sliderField('Bar inner radius', 'barInnerRadius', 0.1, 0.9, 0.01)}
-                                    {sliderField('Bar outer radius', 'barOuterRadius', 0.2, 1, 0.01)}
-                                    {sliderField('Hub scale', 'hubScale', 0.1, 1.5, 0.05)}
-                                </Section>
+                                {config.chartType === 'gauge' ? (
+                                    <Section title="Gauge geometry" subtitle="Radii and chart proportions">
+                                        {sliderField('Tile inner radius', 'tileInnerRadius', 0.1, 0.95, 0.01)}
+                                        {sliderField('Tile outer radius', 'tileOuterRadius', 0.2, 1, 0.01)}
+                                        {sliderField('Bar inner radius', 'barInnerRadius', 0.1, 0.9, 0.01)}
+                                        {sliderField('Bar outer radius', 'barOuterRadius', 0.2, 1, 0.01)}
+                                        {sliderField('Hub scale', 'hubScale', 0.1, 1.5, 0.05)}
+                                    </Section>
+                                ) : (
+                                    <Section title="Bar geometry" subtitle="Track position, spacing and corner radius">
+                                        {sliderField('Tile track', 'barTileTrack', 0.05, 0.95, 0.01)}
+                                        {sliderField('Primary track', 'barPrimaryTrack', 0.05, 0.95, 0.01)}
+                                        {sliderField('Secondary track', 'barSecondaryTrack', 0.05, 0.95, 0.01)}
+                                        {sliderField('Bar gap', 'barGap', 0, 20, 1)}
+                                        {sliderField('Bar pad', 'barPad', 0, 20, 1)}
+                                        {sliderField('Corner radius', 'barCornerRadius', 0, 30, 1)}
+                                    </Section>
+                                )}
                             </Stack>
                         )}
 
                         {tab === 2 && (
                             <Stack spacing={2}>
-                                <Accordion defaultExpanded disableGutters>
-                                    <AccordionSummary expandIcon={<ExpandMoreRoundedIcon/>}>
-                                        <Box>
-                                            <Typography fontWeight={700}>Pointers</Typography>
-                                            <Typography variant="caption" color="text.secondary">Visibility, size and stroke</Typography>
-                                        </Box>
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Stack spacing={2}>
-                                            <Box className="switch-grid">
-                                                {switchField('Primary pointer', 'primaryPointerEnabled')}
-                                                {switchField('Secondary pointer', 'secondaryPointerEnabled')}
+                                {config.chartType === 'gauge' && (
+                                    <Accordion defaultExpanded disableGutters>
+                                        <AccordionSummary expandIcon={<ExpandMoreRoundedIcon/>}>
+                                            <Box>
+                                                <Typography fontWeight={700}>Pointers</Typography>
+                                                <Typography variant="caption" color="text.secondary">Style, visibility, size, stroke and length</Typography>
                                             </Box>
-                                            {sliderField('Primary pointer scale', 'primaryPointerScale', 0.1, 2, 0.05)}
-                                            {sliderField('Primary stroke scale', 'primaryPointerStrokeScale', 0.1, 3, 0.05)}
-                                            {sliderField('Secondary pointer scale', 'secondaryPointerScale', 0.1, 2, 0.05)}
-                                            {sliderField('Secondary stroke scale', 'secondaryPointerStrokeScale', 0.1, 3, 0.05)}
-                                        </Stack>
-                                    </AccordionDetails>
-                                </Accordion>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <Stack spacing={2}>
+                                                <Box className="switch-grid">
+                                                    {switchField('Primary pointer', 'primaryPointerEnabled')}
+                                                    {switchField('Secondary pointer', 'secondaryPointerEnabled')}
+                                                </Box>
+
+                                                <Box className="control-grid">
+                                                    <FormControl size="small" fullWidth>
+                                                        <InputLabel>Primary style</InputLabel>
+                                                        <Select
+                                                            value={config.primaryPointerStyle}
+                                                            label="Primary style"
+                                                            onChange={(event) => update('primaryPointerStyle', event.target.value as PointerStyle)}
+                                                        >
+                                                            <MenuItem value="arrow">Arrow</MenuItem>
+                                                            <MenuItem value="needle">Needle</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                    <FormControl size="small" fullWidth>
+                                                        <InputLabel>Secondary style</InputLabel>
+                                                        <Select
+                                                            value={config.secondaryPointerStyle}
+                                                            label="Secondary style"
+                                                            onChange={(event) => update('secondaryPointerStyle', event.target.value as PointerStyle)}
+                                                        >
+                                                            <MenuItem value="arrow">Arrow</MenuItem>
+                                                            <MenuItem value="needle">Needle</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </Box>
+
+                                                {sliderField('Primary pointer scale', 'primaryPointerScale', 0.1, 2, 0.05)}
+                                                {sliderField('Primary stroke scale', 'primaryPointerStrokeScale', 0.1, 3, 0.05)}
+                                                {sliderField('Primary length ratio', 'primaryPointerLengthRatio', 0.1, 1.5, 0.05)}
+                                                {sliderField('Secondary pointer scale', 'secondaryPointerScale', 0.1, 2, 0.05)}
+                                                {sliderField('Secondary stroke scale', 'secondaryPointerStrokeScale', 0.1, 3, 0.05)}
+                                                {sliderField('Secondary length ratio', 'secondaryPointerLengthRatio', 0.1, 1.5, 0.05)}
+                                            </Stack>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                )}
 
                                 <Accordion defaultExpanded disableGutters>
                                     <AccordionSummary expandIcon={<ExpandMoreRoundedIcon/>}>
@@ -640,6 +1008,12 @@ function App() {
                                             {numberField('Bar outer radius', 'barOuterRadius', {min: 0, max: 1, step: 0.01})}
                                             {numberField('Hub scale', 'hubScale', {min: 0, step: 0.05})}
                                             {numberField('Animation duration', 'animationDuration', {min: 0, step: 50})}
+                                            {config.chartType === 'bar' && numberField('Tile track', 'barTileTrack', {min: 0.01, max: 1, step: 0.01})}
+                                            {config.chartType === 'bar' && numberField('Primary track', 'barPrimaryTrack', {min: 0.01, max: 1, step: 0.01})}
+                                            {config.chartType === 'bar' && numberField('Secondary track', 'barSecondaryTrack', {min: 0.01, max: 1, step: 0.01})}
+                                            {config.chartType === 'bar' && numberField('Bar gap', 'barGap', {min: 0, step: 1})}
+                                            {config.chartType === 'bar' && numberField('Bar pad', 'barPad', {min: 0, step: 1})}
+                                            {config.chartType === 'bar' && numberField('Corner radius', 'barCornerRadius', {min: 0, step: 1})}
                                         </Box>
                                     </AccordionDetails>
                                 </Accordion>
